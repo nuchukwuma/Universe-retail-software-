@@ -1,0 +1,186 @@
+/* ===== Receipts: narrow, monospaced, black on white =====
+   80mm paper prints about 72mm wide; 58mm paper about 48mm wide. */
+
+.receipt {
+  margin: 0 auto;
+  padding: 3mm 0;
+  font-family: 'Courier New', Courier, monospace;
+  line-height: 1.3;
+  color: #000;
+  background: #fff;
+}
+
+.receipt-80 {
+  width: 72mm;
+  font-size: 12px;
+}
+
+.receipt-58 {
+  width: 48mm;
+  font-size: 10px;
+}
+
+.receipt-a4 {
+  width: 150mm;
+  font-size: 14px;
+}
+
+.receipt-logo {
+  display: block;
+  width: 18mm;
+  height: 18mm;
+  margin: 0 auto 2mm;
+  object-fit: contain;
+  border-radius: 50%;
+  filter: grayscale(1); /* thermal printers only print black */
+}
+
+.receipt-store {
+  text-align: center;
+  font-size: 1.25em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.receipt-center {
+  text-align: center;
+}
+
+.receipt-title,
+.receipt-duplicate {
+  margin-top: 2mm;
+  text-align: center;
+  font-weight: 700;
+}
+
+.receipt-title {
+  font-size: 1.1em;
+}
+
+.receipt-divider {
+  margin: 2mm 0;
+  border-top: 1px dashed #000;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 2mm;
+}
+
+.receipt-row > span:first-child {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.receipt-row > span:last-child {
+  text-align: right;
+}
+
+.receipt-row-strong {
+  font-size: 1.25em;
+  font-weight: 700;
+}
+
+.receipt-row-indent {
+  padding-left: 3mm;
+}
+
+.receipt-item {
+  margin-bottom: 1mm;
+}
+
+.receipt-item-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.receipt-small {
+  margin: 1mm 0;
+  font-size: 0.85em;
+}
+
+.receipt-barcode {
+  text-align: center;
+}
+
+.receipt-barcode svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.receipt-footer {
+  margin-top: 2mm;
+  text-align: center;
+  font-weight: 700;
+}
+
+.receipt-sign {
+  margin-top: 6mm;
+}
+
+/* ===== Receipt preview on screen ===== */
+.receipt-preview {
+  display: flex;
+  justify-content: center;
+  max-height: 55vh;
+  overflow: auto;
+  padding: 16px;
+  border-radius: 10px;
+  background: #e9edf2;
+}
+
+.receipt-preview-paper {
+  height: fit-content;
+  padding: 2mm 4mm;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.receipt-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.btn-whatsapp {
+  background: #25d366;
+  border-color: #25d366;
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn-whatsapp:hover {
+  background: #1ebe5b;
+}
+
+/* ===== Printing a receipt =====
+   While printing, only the receipt (.print-root) is shown. Everything else
+   - menus, buttons, the checkout - is hidden. */
+.print-root {
+  position: absolute;
+  top: 0;
+  left: -10000px; /* kept off-screen; it is only there to be printed */
+  background: #fff;
+}
+
+@media print {
+  body.printing {
+    margin: 0;
+    background: #fff;
+  }
+
+  body.printing > *:not(.print-root) {
+    display: none !important;
+  }
+
+  body.printing > .print-root {
+    position: static;
+  }
+
+  body:not(.printing) > .print-root {
+    display: none;
+  }
+}

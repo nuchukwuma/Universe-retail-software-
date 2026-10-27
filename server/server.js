@@ -15,6 +15,11 @@ const stockRoutes = require('./routes/stockRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const saleRoutes = require('./routes/saleRoutes');
 const customerRoutes = require('./routes/customerRoutes');
+const returnRoutes = require('./routes/returnRoutes');
+const heldBillRoutes = require('./routes/heldBillRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
+const feedbackRoutes = require('./routes/feedbackRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 
@@ -40,6 +45,11 @@ app.use('/api/stock', stockRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/sales', saleRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/returns', returnRoutes);
+app.use('/api/held-bills', heldBillRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Any /api address we do not know about
 app.use('/api', (req, res) => {

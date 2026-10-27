@@ -1,5 +1,7 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api/api';
+import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import TopBar from '../components/TopBar';
 import Toast, { useToast } from '../components/Toast';
 import LoadingScreen from '../components/LoadingScreen';
@@ -8,18 +10,12 @@ import BillPanel from '../components/checkout/BillPanel';
 import ProductGrid from '../components/checkout/ProductGrid';
 import CategoryList from '../components/checkout/CategoryList';
 import ActionBar from '../components/checkout/ActionBar';
-import PaymentModal from '../components/checkout/PaymentModal';
-import SaleCompleteModal from '../components/checkout/SaleCompleteModal';
-import CustomerPickerModal from '../components/checkout/CustomerPickerModal';
-import ShortcutsModal from '../components/checkout/ShortcutsModal';
-import BarcodeNotFoundModal from '../components/checkout/BarcodeNotFoundModal';
+import CheckoutModals from '../components/checkout/CheckoutModals';
+import { useReceiptPrinting } from '../components/receipts/useReceiptPrinting';
 import { useBill } from '../hooks/useBill';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { formatNaira } from '../utils/formatNaira';
 import '../styles/checkout.css';
-
-// The camera library is big, so load it only when first used.
-const CameraScanner = lazy(() => import('../components/CameraScanner'));
 
 // Returns the products to show in the grid: search results (from all
 // categories) when there is search text, otherwise the chosen category.
@@ -34,9 +30,14 @@ function filterProducts(products, categoryId, search) {
 
 // The checkout screen: the first page a cashier sees after login.
 function CheckoutPage() {
+  const { user } = useAuth();
+  const { settings } = useSettings();
   const billState = useBill();
-  const { bill, totals, addProduct, clearBill, setCustomer } = billState;
+  const {
+    bill, totals, addProduct, clearBill, setCustomer, loadBill, setItemDiscount, setBillDiscount, setApproval, updatePrices,
+  } = billState;
   const { toast, showToast } = useToast();
+  const { printSale } = useReceiptPrinting();
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -45,25 +46,33 @@ function CheckoutPage() {
   const [categoryId, setCategoryId] = useState('all');
   const [search, setSearch] = useState('');
   const [lastAddedId, setLastAddedId] = useState(null);
-  // Which pop-up is open: null, 'payment', 'customer', 'shortcuts', 'camera',
-  // { type: 'notFound', code } or { type: 'complete', sale }
+  // Which pop-up is open, e.g. 'payment', 'discount', { type: 'receipt', sale } or null.
   const [modal, setModal] = useState(null);
   const [saving, setSaving] = useState(false);
   const [payError, setPayError] = useState('');
+  const [holdError, setHoldError] = useState('');
+  const [pendingPayments, setPendingPayments] = useState(null); // kept while a manager approves
   const [mobileView, setMobileView] = useState('products'); // phones show products OR the bill
   const searchRef = useRef(null);
 
-  // Load all products and categories once, so adding items is instant.
+  const isCashier = user.role === 'cashier';
+
+  // Load all products and categories, so adding items is instant.
+  // Refresh them every 5 minutes so price changes reach the till.
   useEffect(() => {
     loadProducts();
+    const timer = setInterval(loadProducts, 5 * 60 * 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  // Fetches products and categories from the server.
+  // Fetches products and categories from the server, and puts the
+  // latest prices on the bill.
   async function loadProducts() {
     try {
       const [productList, categoryList] = await Promise.all([api.get('/products'), api.get('/categories')]);
       setProducts(productList);
       setCategories(categoryList);
+      updatePrices(productList);
       setLoadError('');
     } catch (err) {
       setLoadError(err.message);
@@ -86,6 +95,11 @@ function CheckoutPage() {
     [products, categoryId, search]
   );
 
+  // Closes whatever pop-up is open.
+  function closeModal() {
+    setModal(null);
+  }
+
   // Adds one of a product to the bill and highlights it.
   function addToBill(product) {
     addProduct(product);
@@ -100,6 +114,9 @@ function CheckoutPage() {
       showToast(`Added: ${product.name}`, 'success');
     } else if (fromCamera) {
       showToast(`No product has the barcode ${code}`, 'error');
+    } else if (/^R?\d{6}-\d{4}$/i.test(code)) {
+      // A receipt barcode was scanned: open the Return box for it.
+      showToast('That is a receipt barcode. Use Return to refund items.', 'info');
     } else {
       setModal({ type: 'notFound', code });
     }
@@ -134,26 +151,36 @@ function CheckoutPage() {
     }
   }
 
-  // Opens the payment box (only if there is something to pay for).
-  function openPayment() {
+  // Opens a pop-up that needs items on the bill (Pay, Hold, Discount).
+  function openForBill(name) {
     if (bill.items.length === 0) {
       showToast('The bill is empty', 'error');
       return;
     }
     setPayError('');
-    setModal('payment');
+    setHoldError('');
+    setModal(name);
   }
 
-  // Sends the sale to the server. On success, clears the bill and shows the result.
-  async function completeSale(payments) {
+  // ----- Payment -----
+
+  // Sends the sale to the server. On success, clears the bill and shows the receipt.
+  async function completeSale(payments, approvalToken = bill.approval?.token) {
     setSaving(true);
     setPayError('');
     try {
       const sale = await api.post('/sales', {
-        items: bill.items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+        items: bill.items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          discountType: item.discountType,
+          discountValue: item.discountValue,
+        })),
         priceType: bill.priceType,
+        billDiscount: bill.discount,
         customerId: bill.customer?._id || null,
         customerName: bill.customerName,
+        approvalToken,
         payments,
       });
 
@@ -164,20 +191,130 @@ function CheckoutPage() {
           return sold ? { ...p, quantity: p.quantity - sold.quantity } : p;
         })
       );
+      const customerPhone = bill.customer?.phone || '';
       clearBill();
       setLastAddedId(null);
-      setModal({ type: 'complete', sale });
+      setPendingPayments(null);
       loadProducts();
+
+      // Auto-print (Settings) prints straight away; otherwise show the preview.
+      if (settings.autoPrint) {
+        const printed = await printSale(sale);
+        setModal({ type: 'complete', sale: printed });
+      } else {
+        setModal({ type: 'receipt', sale, customerPhone });
+      }
     } catch (err) {
-      setPayError(err.message);
+      if (err.code === 'APPROVAL_REQUIRED') {
+        // A large discount needs a manager: ask, then try again.
+        setPendingPayments(payments);
+        setModal('approveSale');
+      } else {
+        setPayError(err.message);
+      }
     } finally {
       setSaving(false);
     }
   }
 
-  // Shown for buttons that arrive in Stage 4.
-  function comingSoon(name) {
-    showToast(`${name} will be added in Stage 4`, 'info');
+  // After a manager approves a large discount, saves the approval and retries the sale.
+  function approveAndRetrySale(approval) {
+    setApproval(approval);
+    setModal('payment');
+    completeSale(pendingPayments, approval.token);
+  }
+
+  // "Reprint later" on the receipt preview: close it; it can be printed from Sales History.
+  function reprintLater() {
+    closeModal();
+    showToast('Saved. Print it any time from Sales History.', 'info');
+  }
+
+  // ----- Discount -----
+
+  // Applies (or removes, when type is '') a discount chosen in the Discount box.
+  function applyDiscount({ target, type, value, approval }) {
+    if (target === 'bill') {
+      setBillDiscount(type ? { type, value } : null);
+    } else {
+      setItemDiscount(target, type, value);
+    }
+    if (approval) setApproval(approval);
+    closeModal();
+    showToast(type ? 'Discount applied' : 'Discount removed', 'success');
+  }
+
+  // ----- Hold and Recall -----
+
+  // Saves the current bill on the server to finish later, and empties the till.
+  async function holdBill(label) {
+    setSaving(true);
+    setHoldError('');
+    try {
+      await api.post('/held-bills', {
+        label: label || `Bill held at ${new Date().toLocaleTimeString('en-NG', { hour: 'numeric', minute: '2-digit' })}`,
+        bill,
+        itemCount: totals.quantityCount,
+        total: totals.total,
+      });
+      clearBill();
+      setLastAddedId(null);
+      closeModal();
+      showToast('Bill put on hold. Use Recall to bring it back.', 'success');
+    } catch (err) {
+      setHoldError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Opens the Recall box (only when the till is empty, so no bill is lost).
+  function openRecall() {
+    if (bill.items.length > 0) {
+      showToast('Finish, hold or cancel the current bill first.', 'error');
+      return;
+    }
+    setModal('recall');
+  }
+
+  // Brings a held bill back onto the till, then reloads products so the
+  // bill shows today's prices.
+  async function recallBill(held) {
+    try {
+      await api.delete(`/held-bills/${held._id}`);
+    } catch (err) {
+      showToast(err.message, 'error');
+      return;
+    }
+
+    // Products deleted while the bill was on hold cannot be sold.
+    const items = held.bill.items.filter((item) => productsById[item.productId]);
+    const removed = held.bill.items.length - items.length;
+
+    loadBill({ ...held.bill, items });
+    closeModal();
+    showToast(removed > 0 ? `Bill recalled. ${removed} deleted product(s) were removed.` : 'Bill recalled', 'success');
+    loadProducts();
+  }
+
+  // ----- Other actions -----
+
+  // Links the chosen customer to the bill.
+  function pickCustomer(customer) {
+    setCustomer(customer);
+    closeModal();
+  }
+
+  // After feedback is saved.
+  function feedbackSaved() {
+    closeModal();
+    showToast('Thank you! Feedback saved.', 'success');
+  }
+
+  // After a return is saved: show the return receipt and refresh stock.
+  function returnDone(result) {
+    setModal({ type: 'returnReceipt', ret: result.return });
+    loadProducts();
   }
 
   // Keyboard shortcuts (switched off while a pop-up is open).
@@ -187,13 +324,23 @@ function CheckoutPage() {
       F2: () => searchRef.current?.focus(),
       F3: () => setModal('customer'),
       F4: () => setModal('camera'),
+      F6: () => openForBill('hold'),
+      F7: openRecall,
+      F8: () => openForBill('discount'),
       F9: cancelBill,
-      F10: openPayment,
+      F10: () => openForBill('payment'),
     },
     modal === null
   );
 
   if (loading) return <LoadingScreen message="Loading products..." />;
+
+  // Everything the pop-up boxes need.
+  const checkout = {
+    bill, totals, settings, isCashier, lastAddedId, saving, payError, holdError,
+    closeModal, completeSale, approveAndRetrySale, reprintLater, applyDiscount, holdBill, recallBill,
+    pickCustomer, feedbackSaved, returnDone, handleScan,
+  };
 
   return (
     <div className="checkout-page">
@@ -261,43 +408,18 @@ function CheckoutPage() {
         total={totals.total}
         hasItems={bill.items.length > 0}
         actions={{
-          onFeedback: () => comingSoon('Feedback'),
-          onRecall: () => comingSoon('Recall'),
-          onReturn: () => comingSoon('Return'),
+          onFeedback: () => setModal('feedback'),
+          onRecall: openRecall,
+          onReturn: () => setModal('return'),
           onCancel: cancelBill,
-          onHold: () => comingSoon('Hold'),
-          onDiscount: () => comingSoon('Discount'),
-          onPay: openPayment,
+          onHold: () => openForBill('hold'),
+          onDiscount: () => openForBill('discount'),
+          onPay: () => openForBill('payment'),
         }}
       />
       <div className="checkout-hint">Press <kbd>F1</kbd> for shortcut list</div>
 
-      {modal === 'payment' && (
-        <PaymentModal
-          total={totals.total}
-          saving={saving}
-          error={payError}
-          onConfirm={completeSale}
-          onClose={() => setModal(null)}
-        />
-      )}
-      {modal === 'customer' && (
-        <CustomerPickerModal
-          onSelect={(customer) => {
-            setCustomer(customer);
-            setModal(null);
-          }}
-          onClose={() => setModal(null)}
-        />
-      )}
-      {modal === 'shortcuts' && <ShortcutsModal onClose={() => setModal(null)} />}
-      {modal === 'camera' && (
-        <Suspense fallback={null}>
-          <CameraScanner continuous onScan={(code) => handleScan(code, true)} onClose={() => setModal(null)} />
-        </Suspense>
-      )}
-      {modal?.type === 'notFound' && <BarcodeNotFoundModal code={modal.code} onClose={() => setModal(null)} />}
-      {modal?.type === 'complete' && <SaleCompleteModal sale={modal.sale} onClose={() => setModal(null)} />}
+      <CheckoutModals modal={modal} c={checkout} />
     </div>
   );
 }

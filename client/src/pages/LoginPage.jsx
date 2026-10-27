@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { STORE_NAME, STORE_LOGO } from '../config';
+import { useSettings } from '../context/SettingsContext';
 
 // The login screen. Every staff member logs in here first.
 function LoginPage() {
   const { user, login } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
@@ -37,8 +38,8 @@ function LoginPage() {
   return (
     <div className="login-page">
       <form className="login-card" onSubmit={handleSubmit}>
-        <img src={STORE_LOGO} alt={`${STORE_NAME} logo`} className="login-logo" />
-        <h1>{STORE_NAME}</h1>
+        <img src={settings.logo || '/logo.png'} alt={`${settings.storeName} logo`} className="login-logo" />
+        <h1>{settings.storeName}</h1>
         <p className="muted">Staff login</p>
 
         {error && <div className="alert alert-error">{error}</div>}

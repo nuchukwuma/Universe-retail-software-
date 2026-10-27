@@ -33,4 +33,11 @@ async function nextReceiptNumber() {
   return `${dateCode}-${String(number).padStart(4, '0')}`;
 }
 
-module.exports = { nextCounterValue, nextReceiptNumber, lagosDateCode };
+// Returns the next return number, e.g. "R261027-0003".
+async function nextReturnNumber() {
+  const dateCode = lagosDateCode();
+  const number = await nextCounterValue(`return-${dateCode}`);
+  return `R${dateCode}-${String(number).padStart(4, '0')}`;
+}
+
+module.exports = { nextCounterValue, nextReceiptNumber, nextReturnNumber, lagosDateCode };

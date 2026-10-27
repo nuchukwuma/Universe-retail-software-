@@ -13,6 +13,10 @@ async function requireLogin(req, res, next) {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
+    // A manager-approval token is not a login - refuse it here.
+    if (payload.kind === 'approval') {
+      return res.status(401).json({ message: 'Please log in first.' });
+    }
     const user = await User.findById(payload.userId);
 
     if (!user || !user.isActive) {
