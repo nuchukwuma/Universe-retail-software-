@@ -565,6 +565,105 @@
   align-self: center;
 }
 
+/* ===== Discounts on the bill ===== */
+.bill-row-discount {
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 600;
+}
+
+.bill-discount-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #e8f5e9;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.discount-form,
+.approval-form {
+  display: grid;
+  gap: 12px;
+}
+
+.discount-type {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.approval-reason {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff3e0;
+  color: var(--orange);
+  font-weight: 600;
+}
+
+.change-none {
+  background: var(--grey-bg);
+  color: var(--text);
+}
+
+.change-due {
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+/* ===== Held bills list ===== */
+.held-list li {
+  display: flex;
+  align-items: stretch;
+}
+
+.held-list li > button:first-child {
+  flex: 1;
+}
+
+.held-delete {
+  border: none;
+  border-bottom: 1px solid var(--grey-border);
+  background: none;
+  padding: 0 12px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* ===== Feedback ===== */
+.rating-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.rating-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  border: 2px solid var(--grey-border);
+  border-radius: 12px;
+  background: var(--white);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rating-button span {
+  font-size: 32px;
+}
+
+.rating-button.active {
+  border-color: var(--blue);
+  background: var(--blue-light);
+}
+
 /* Phone-only tabs (hidden on bigger screens) */
 .mobile-tabs {
   display: none;

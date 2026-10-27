@@ -13,8 +13,8 @@ A web-based point-of-sale and retail management system for a Nigerian supermarke
 | 1 | Project setup, login and roles | ✅ Done |
 | 2 | Products, categories and inventory | ✅ Done |
 | 3 | Checkout screen, barcode scanning and payments | ✅ Done |
-| 4 | Receipts and printing, hold/recall, returns, discounts | ⏳ Next |
-| 5 | Telegram sales alerts | |
+| 4 | Receipts and printing, hold/recall, returns, discounts | ✅ Done |
+| 5 | Telegram sales alerts | ⏳ Next |
 | 6 | Reports and Excel export | |
 | 7 | Public website | |
 
@@ -106,14 +106,58 @@ works with the webcam without this.)
 
 | Role    | Username  | Password     | What they can do |
 |---------|-----------|--------------|------------------|
-| Owner   | `owner`   | `owner123`   | Everything, including staff accounts |
-| Manager | `manager` | `manager123` | Checkout, products, categories, suppliers, stock, labels, customers (reports in Stage 6) |
-| Cashier | `cashier` | `cashier123` | Checkout only |
+| Owner   | `owner`   | `owner123`   | Everything, including staff accounts and Settings |
+| Manager | `manager` | `manager123` | Checkout, products, stock, customers, returns, any discount (reports in Stage 6) |
+| Cashier | `cashier` | `cashier123` | Checkout, Sales History, End of Day. Returns and big discounts need a manager's password |
 
 **Change these passwords** (Back Office → Staff Accounts → Reset password)
 before using the system in a real shop.
 
-### 5. Things to try in Stage 3 (the checkout)
+### 5. Things to try in Stage 4 (receipts, hold/recall, returns, discounts)
+
+**First, as owner:** Back Office → **Settings**. Fill in the store address, phone and the
+message at the bottom of receipts, choose your paper size (80mm, 58mm or A4) and press
+**Print test receipt**. The preview on the right changes as you type. Click **Save Settings**.
+
+Then log in as **cashier**:
+
+1. **Receipt after a sale:** pay for a bill. The receipt preview shows the change to give,
+   plus these buttons:
+   - **Print** sends it to your printer (see "Printing tips" below).
+   - **Download PDF** saves it as a PDF file.
+   - **Share via WhatsApp** opens WhatsApp with the receipt as a message (sent to the
+     customer's number when a saved customer is on the bill).
+   - **Reprint later** / **Skip** close the preview. The sale is saved either way.
+2. **Discount (F8):** choose an item or the whole bill, then % or ₦. Up to 10% (Settings
+   can change this), a cashier can give it alone. Above that, a manager types their
+   username and password on the till (try `manager` / `manager123`).
+3. **Hold (F6) / Recall (F7):** hold a bill with a name like "Lady in red". The till
+   empties for the next customer. Recall brings the bill back, using today's prices.
+   Held bills are saved on the server, so any till can recall them.
+4. **Return:** press Return and scan the barcode at the bottom of a receipt (or type its
+   number, e.g. `261027-0001`). Choose how many of each item come back, the refund
+   method and a reason. A manager approves it, and a **return receipt** prints. The
+   items go back into stock.
+5. **Feedback:** record how a customer felt (😀 😐 🙁) and what they said. Managers
+   read these on the **Feedback** page.
+6. **Sales & Till → Sales History:** find any sale by receipt number, customer or date,
+   and **View / Print** it. The first print is the original. Every print after that is marked
+   **\*\*\* DUPLICATE COPY \*\*\***. Returns can also be started here.
+7. **Sales & Till → End of Day:** totals by cash, transfer and card, minus refunds. Type the
+   cash you counted in the drawer to see if the till is **balanced, over or short**,
+   then print the summary to sign.
+
+**Printing tips**
+
+- In the print window, choose your receipt printer, set **Margins: None** and turn off
+  **Headers and footers**. The app already sets the paper width and length.
+- **Auto-print** (Settings) prints straight after payment, without the preview. To skip
+  the browser's print window too, start Chrome with `--kiosk-printing` added to its
+  shortcut. It then prints silently to the default printer.
+- The logo prints in black and white. If it uses too much ink or paper, untick
+  "Print the logo on receipts" in Settings.
+
+### 6. Things to try in Stage 3 (the checkout)
 
 Log in as **cashier**. The checkout opens straight away.
 
@@ -149,9 +193,7 @@ Log in as **cashier**. The checkout opens straight away.
 > slightly wrong). The bill shows "only X in stock" as a warning, and the Stock Count
 > page fixes the numbers.
 
-Feedback, Recall, Return, Hold and Discount show "coming in Stage 4" for now.
-
-### 6. Things to try in Stage 2
+### 7. Things to try in Stage 2
 
 Log in as **owner** or **manager** and click **Back Office**.
 
@@ -184,7 +226,7 @@ Royal Stallion Rice 5kg = `6150001000012`, Power Oil 1L = `6150002000011`,
 Indomie Chicken = `6150003000034`. You can type these into any barcode box and press Enter
 to act like a scanner.
 
-### 7. Things to try from Stage 1
+### 8. Things to try from Stage 1
 
 1. Log in with a wrong password: you see a clear error message.
 2. Log in as **cashier**: you only see the checkout screen. Typing
@@ -208,8 +250,12 @@ to act like a scanner.
     /components         reusable pieces: TopBar, Modal, BarcodeInput, CameraScanner,
                         ImagePicker, ProductSearch, ProductImage, Toast, ...
       /checkout         the parts of the checkout screen (bill, grid, payment box, ...)
+      /receipts         sale, return and end-of-day receipts; preview, PDF and WhatsApp
+      /returns          the Return pop-up
+    /context            AuthContext (who is logged in), SettingsContext (store settings),
+                        PrintContext (prints a receipt on the right paper size)
     /hooks              useBill (the current bill) and useShortcuts (F-keys)
-    /styles             CSS for the checkout screen and barcode labels
+    /styles             CSS for the checkout screen, receipts and barcode labels
     /pages              one file per screen (Products, Categories, Suppliers, ...)
     /utils              small helpers (Naira, dates, stock alerts, image resizing)
     config.js           store name and logo
@@ -217,10 +263,11 @@ to act like a scanner.
   /config/db.js         connects to MongoDB
   /middleware/auth.js   checks the login token and the user's role
   /models               MongoDB data shapes (User, Category, Product, Supplier, StockMovement,
-                        Sale, Customer, Counter)
+                        Sale, Customer, Counter, Return, HeldBill, Feedback, Settings)
   /routes               API endpoints (auth, users, categories, products, suppliers, stock,
-                        uploads, sales, customers)
-  /utils                shared helpers (sale maths, receipt numbers, barcodes, errors, stock history)
+                        uploads, sales, customers, returns, held-bills, feedback, settings, reports)
+  /utils                shared helpers (sale maths, receipt numbers, barcodes, manager approval,
+                        Lagos dates, errors, stock history)
   /uploads              uploaded pictures (created automatically, not saved in git)
   seed.js               adds sample data
   seedData.js           the sample data itself - edit it to change test data
@@ -256,6 +303,16 @@ to act like a scanner.
 | POST | `/api/customers` | logged in | Add a customer |
 | GET | `/api/customers/:id/sales` | owner, manager | A customer's purchase history |
 | PUT / DELETE | `/api/customers/:id` | owner, manager | Edit or delete a customer |
+| POST | `/api/auth/approve` | logged in | A manager's password check on a cashier's till (gives a 30-minute approval) |
+| GET | `/api/sales?search=&from=&to=` | logged in | Sales History |
+| GET | `/api/sales/by-receipt/:number` | logged in | Find a sale by receipt number (for returns) |
+| POST | `/api/sales/:id/printed` | logged in | Count a print (later prints say DUPLICATE COPY) |
+| GET / POST | `/api/returns` | logged in (manager approval needed to POST) | List or make returns |
+| GET / POST / DELETE | `/api/held-bills(/:id)` | logged in | Hold and recall bills |
+| GET / POST | `/api/feedback` | POST: logged in, GET: owner, manager | Customer feedback |
+| GET | `/api/settings` | anyone | Store settings (name, receipt options) |
+| PUT | `/api/settings` | owner | Change store settings |
+| GET | `/api/reports/end-of-day?date=&cashier=` | logged in (cashiers see only their own) | End-of-day till summary |
 
 ## Common problems
 
@@ -268,5 +325,8 @@ to act like a scanner.
 - **The scanner beeps but nothing is added**: click an empty part of the checkout screen
   (not a text box) and scan again. Also check the scanner is set to send "Enter" after
   each code (most are by default; see its manual).
+- **The receipt prints very long, tiny or with blank space**: in the print window set
+  **Margins: None**, **Scale: Default/100%**, and pick the receipt printer (not "Save as PDF").
+  Check the paper size in Settings matches your printer (58mm or 80mm).
 - **Port already in use**: another program is using port 5000 or 5173. Close it,
   or change `PORT` in `server/.env` (and the proxy address in `client/vite.config.js`).

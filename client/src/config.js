@@ -1,4 +1,13 @@
-// Basic store details shown around the app.
-// (In a later stage these will be editable from the Settings page.)
-export const STORE_NAME = 'Universe Cosmetics & Beauty';
-export const STORE_LOGO = '/logo.png';
+// Default store details, used until the real settings load from the
+// server. The owner changes the real ones on the Settings page.
+export const DEFAULT_SETTINGS = {
+  storeName: 'Universe Cosmetics & Beauty',
+  address: '',
+  phone: '',
+  footerMessage: 'Thank you for shopping with us!',
+  logo: '/logo.png',
+  showLogoOnReceipt: true,
+  paperSize: '80mm',
+  autoPrint: false,
+  maxCashierDiscountPercent: 10,
+};

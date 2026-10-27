@@ -89,7 +89,8 @@ label {
 }
 
 input,
-select {
+select,
+textarea {
   padding: 10px 12px;
   border: 1px solid var(--grey-border);
   border-radius: 8px;
@@ -98,9 +99,59 @@ select {
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   outline: 2px solid var(--blue);
   border-color: var(--blue);
+}
+
+.top-gap {
+  margin-top: 12px;
+}
+
+/* Small labelled boxes in a filter bar (dates, cashier) */
+.filter-bar .date-filter {
+  flex: 0 1 auto;
+  font-size: 13px;
+}
+
+/* Two columns that stack on small screens (End of Day, Settings) */
+.eod-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .eod-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.till-check {
+  display: grid;
+  gap: 6px;
+  font-size: 16px;
+}
+
+.till-ok {
+  background: #e8f5e9;
+  border-color: #a5d6a7;
+}
+
+.till-off {
+  background: #fff3e0;
+  border-color: #ffcc80;
+}
+
+.feedback-emoji {
+  font-size: 22px;
+  margin-right: 8px;
+}
+
+.feedback-comment {
+  margin: 6px 0 0;
 }
 
 .form-grid {

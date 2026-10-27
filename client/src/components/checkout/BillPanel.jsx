@@ -4,7 +4,9 @@ import BillItemRow from './BillItemRow';
 // The left panel of the checkout: price type, customer, the bill lines
 // and the blue totals block.
 function BillPanel({ billState, productsById, lastAddedId, onPickCustomer }) {
-  const { bill, totals, setPriceType, setCustomerName, setCustomer, changeQuantity, setQuantity, removeItem } = billState;
+  const {
+    bill, totals, setPriceType, setCustomerName, setCustomer, changeQuantity, setQuantity, removeItem, setBillDiscount,
+  } = billState;
 
   return (
     <section className="bill-panel">
@@ -58,6 +60,15 @@ function BillPanel({ billState, productsById, lastAddedId, onPickCustomer }) {
           />
         ))}
       </ul>
+
+      {totals.billDiscount > 0 && (
+        <div className="bill-discount-line">
+          <span>
+            🏷️ Bill discount{bill.discount.type === 'percent' && ` (${bill.discount.value}%)`}: -{formatNaira(totals.billDiscount)}
+          </span>
+          <button type="button" className="btn btn-small" onClick={() => setBillDiscount(null)}>Remove</button>
+        </div>
+      )}
 
       <div className="bill-summary">
         <div>

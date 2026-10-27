@@ -1,14 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/api';
 import ProductChecklist from '../components/ProductChecklist';
+import { toWhatsAppNumber } from '../utils/phone';
 
 const EMPTY_FORM = { name: '', phone: '', address: '', notes: '', products: [] };
-
-// Turns a Nigerian phone number like 0803... into 234803... for WhatsApp links.
-function toWhatsAppNumber(phone) {
-  const digits = phone.replace(/\D/g, '');
-  return digits.startsWith('0') ? `234${digits.slice(1)}` : digits;
-}
 
 // Page for keeping a list of suppliers and the products they supply.
 function SuppliersPage() {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/api';
 import BarcodeSvg from '../components/BarcodeSvg';
-import { STORE_NAME } from '../config';
+import { useSettings } from '../context/SettingsContext';
 import { formatNaira } from '../utils/formatNaira';
 import '../styles/labels.css';
 
@@ -15,6 +15,7 @@ const LABEL_SIZES = {
 // without a barcode (e.g. loose rice, palm oil). It can create an
 // in-store barcode for them first.
 function BarcodeLabelsPage() {
+  const { settings } = useSettings();
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [onlyMissing, setOnlyMissing] = useState(true);
@@ -165,7 +166,7 @@ function BarcodeLabelsPage() {
       <div className={`print-area label-sheet label-sheet-${labelSize}`}>
         {labels.map(({ product, key }) => (
           <div key={key} className="label">
-            <span className="label-store">{STORE_NAME}</span>
+            <span className="label-store">{settings.storeName}</span>
             <span className="label-name">{product.name}</span>
             <strong className="label-price">{formatNaira(product.sellingPrice)}</strong>
             <BarcodeSvg value={product.barcode} height={labelSize === 'roll' ? 28 : 34} width={1.4} fontSize={11} />

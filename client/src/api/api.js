@@ -45,7 +45,10 @@ async function request(path, method = 'GET', body) {
     if (response.status === 401 && token) {
       window.dispatchEvent(new Event('pos-session-expired'));
     }
-    throw new Error(data.message || `Request failed (${response.status})`);
+    const error = new Error(data.message || `Request failed (${response.status})`);
+    error.status = response.status; // e.g. 403
+    error.code = data.code; // e.g. 'APPROVAL_REQUIRED'
+    throw error;
   }
 
   return data;

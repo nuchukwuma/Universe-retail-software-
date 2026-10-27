@@ -12,6 +12,12 @@ export function formatDateTime(value) {
   });
 }
 
+// Returns today's date as "YYYY-MM-DD" (this computer's local day),
+// ready for an <input type="date">.
+export function todayDateValue() {
+  return new Date().toLocaleDateString('en-CA');
+}
+
 // Turns a saved date into "YYYY-MM-DD" for an <input type="date">.
 export function toDateInputValue(value) {
   if (!value) return '';

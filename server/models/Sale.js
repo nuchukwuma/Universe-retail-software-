@@ -10,8 +10,11 @@ const saleItemSchema = new mongoose.Schema(
     unitPrice: { type: Number, required: true },
     costPrice: { type: Number, default: 0 },
     quantity: { type: Number, required: true },
+    discountType: { type: String, default: '' }, // 'percent', 'amount' or '' for none
+    discountValue: { type: Number, default: 0 }, // e.g. 10 (%) or 500 (Naira)
     discount: { type: Number, default: 0 }, // Naira off this line
     lineTotal: { type: Number, required: true }, // unitPrice x quantity - discount
+    returnedQuantity: { type: Number, default: 0 }, // how many came back later
   },
   { _id: false }
 );
@@ -35,8 +38,12 @@ const saleSchema = new mongoose.Schema(
     priceType: { type: String, enum: ['standard', 'wholesale'], default: 'standard' },
     customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', default: null },
     customerName: { type: String, default: '' },
-    subtotal: { type: Number, required: true },
-    discountTotal: { type: Number, default: 0 },
+    subtotal: { type: Number, required: true }, // before any discount
+    billDiscountType: { type: String, default: '' }, // discount on the whole bill
+    billDiscountValue: { type: Number, default: 0 },
+    billDiscount: { type: Number, default: 0 }, // Naira off the whole bill
+    discountTotal: { type: Number, default: 0 }, // line discounts + bill discount
+    discountApprovedBy: { type: String, default: '' }, // manager who approved a large discount
     total: { type: Number, required: true },
     payments: [paymentSchema],
     paymentMethod: { type: String, enum: ['cash', 'transfer', 'card', 'split'], required: true },
@@ -45,6 +52,8 @@ const saleSchema = new mongoose.Schema(
     cashier: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     cashierName: { type: String, default: '' },
     status: { type: String, enum: ['completed', 'partly_returned', 'returned'], default: 'completed' },
+    refundedTotal: { type: Number, default: 0 },
+    printCount: { type: Number, default: 0 }, // printed before = next print is a DUPLICATE COPY
   },
   { timestamps: true }
 );
