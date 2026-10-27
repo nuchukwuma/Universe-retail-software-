@@ -5,6 +5,12 @@ import LoginPage from './pages/LoginPage';
 import CheckoutPage from './pages/CheckoutPage';
 import DashboardPage from './pages/DashboardPage';
 import StaffPage from './pages/StaffPage';
+import ProductsPage from './pages/ProductsPage';
+import ProductFormPage from './pages/ProductFormPage';
+import CategoriesPage from './pages/CategoriesPage';
+import SuppliersPage from './pages/SuppliersPage';
+import ReceiveStockPage from './pages/ReceiveStockPage';
+import StockCountPage from './pages/StockCountPage';
 
 // Lists every page (route) in the app and who is allowed to see it.
 function App() {
@@ -31,6 +37,13 @@ function App() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/products/new" element={<ProductFormPage />} />
+        <Route path="/products/:id/edit" element={<ProductFormPage />} />
+        <Route path="/categories" element={<CategoriesPage />} />
+        <Route path="/suppliers" element={<SuppliersPage />} />
+        <Route path="/receive-stock" element={<ReceiveStockPage />} />
+        <Route path="/stock-count" element={<StockCountPage />} />
         <Route
           path="/staff"
           element={
