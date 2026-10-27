@@ -154,6 +154,57 @@ textarea:focus {
   margin: 6px 0 0;
 }
 
+/* ===== Telegram settings ===== */
+.telegram-card {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.telegram-card h2 {
+  margin: 0;
+}
+
+.telegram-setup {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--grey-bg);
+}
+
+.telegram-setup p {
+  margin: 4px 0 0;
+}
+
+.telegram-chats {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--blue-light);
+}
+
+.telegram-chats p {
+  margin: 0 0 6px;
+}
+
+.telegram-chats ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.telegram-stats {
+  margin-bottom: 0;
+}
+
+.table td .badge-orange {
+  margin-left: 0;
+}
+
+.table td.wrap {
+  white-space: normal;
+  min-width: 200px;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

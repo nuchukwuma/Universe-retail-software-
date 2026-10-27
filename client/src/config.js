@@ -10,4 +10,5 @@ export const DEFAULT_SETTINGS = {
   paperSize: '80mm',
   autoPrint: false,
   maxCashierDiscountPercent: 10,
+  telegramAlertsEnabled: true,
 };

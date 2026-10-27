@@ -20,6 +20,8 @@ const heldBillRoutes = require('./routes/heldBillRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const feedbackRoutes = require('./routes/feedbackRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const telegramRoutes = require('./routes/telegramRoutes');
+const { startTelegramWorker } = require('./utils/telegramQueue');
 
 const app = express();
 
@@ -50,6 +52,7 @@ app.use('/api/held-bills', heldBillRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/telegram', telegramRoutes);
 
 // Any /api address we do not know about
 app.use('/api', (req, res) => {
@@ -64,6 +67,9 @@ async function startServer() {
   }
 
   await connectDB();
+
+  // Retries any Telegram alerts that could not be sent yet.
+  startTelegramWorker();
 
   const port = process.env.PORT || 5000;
   app.listen(port, () => {

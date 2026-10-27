@@ -14,6 +14,9 @@ const settingsSchema = new mongoose.Schema(
     autoPrint: { type: Boolean, default: false },
     // Cashiers can give discounts up to this % of the bill without a manager.
     maxCashierDiscountPercent: { type: Number, default: 10, min: 0, max: 100 },
+    // Send a Telegram message after every sale. (The bot token and chat id
+    // are secrets, so they live in the .env file, not here.)
+    telegramAlertsEnabled: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
