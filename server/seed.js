@@ -8,6 +8,7 @@ const User = require('./models/User');
 const Category = require('./models/Category');
 const Product = require('./models/Product');
 const Supplier = require('./models/Supplier');
+const Customer = require('./models/Customer');
 const sample = require('./seedData');
 
 // Creates each sample user if that username does not exist yet.
@@ -81,6 +82,16 @@ async function seedSuppliers(productIdByName) {
   }
 }
 
+// Creates each sample customer if their phone number is not used yet.
+async function seedCustomers() {
+  for (const item of sample.customers) {
+    const exists = await Customer.findOne({ phone: item.phone });
+    if (exists) continue;
+    await Customer.create(item);
+    console.log(`+ Created customer "${item.name}"`);
+  }
+}
+
 // Connects to the database, runs every seed step, then disconnects.
 async function runSeed() {
   try {
@@ -91,6 +102,7 @@ async function runSeed() {
     const categoryIds = await seedCategories();
     const productIds = await seedProducts(categoryIds);
     await seedSuppliers(productIds);
+    await seedCustomers();
 
     console.log('Seeding finished.');
   } catch (error) {

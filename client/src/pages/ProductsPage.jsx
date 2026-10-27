@@ -68,7 +68,10 @@ function ProductsPage() {
     <div>
       <div className="page-header">
         <h1 className="page-title">Products</h1>
-        <Link to="/products/new" className="btn btn-primary">+ Add Product</Link>
+        <div className="actions">
+          <Link to="/barcode-labels" className="btn">🏷️ Print Labels</Link>
+          <Link to="/products/new" className="btn btn-primary">+ Add Product</Link>
+        </div>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}

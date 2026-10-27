@@ -51,11 +51,13 @@ function formToProduct(form) {
 // /products/new             -> add a new product
 // /products/new?barcode=123 -> add a new product with the barcode filled in
 // /products/:id/edit        -> edit an existing product
+// Adding "&from=checkout" goes back to the checkout after saving.
 function ProductFormPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
+  const backTo = searchParams.get('from') === 'checkout' ? '/checkout' : '/products';
 
   const [form, setForm] = useState({ ...EMPTY_PRODUCT, barcode: searchParams.get('barcode') || '' });
   const [categories, setCategories] = useState([]);
@@ -104,7 +106,7 @@ function ProductFormPage() {
       } else {
         await api.post('/products', formToProduct(form));
       }
-      navigate('/products');
+      navigate(backTo);
     } catch (err) {
       setError(err.message);
       setSaving(false);
@@ -121,7 +123,7 @@ function ProductFormPage() {
     <div>
       <div className="page-header">
         <h1 className="page-title">{isEditing ? 'Edit Product' : 'Add Product'}</h1>
-        <Link to="/products" className="btn">← Back to products</Link>
+        <Link to={backTo} className="btn">← Back</Link>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
@@ -211,7 +213,7 @@ function ProductFormPage() {
           <button type="submit" className="btn btn-primary" disabled={saving}>
             {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Product'}
           </button>
-          <Link to="/products" className="btn">Cancel</Link>
+          <Link to={backTo} className="btn">Cancel</Link>
         </div>
       </form>
     </div>

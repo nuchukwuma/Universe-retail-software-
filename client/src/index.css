@@ -378,24 +378,6 @@ select:focus {
   gap: 6px;
 }
 
-/* ===== Checkout (placeholder for Stage 1) ===== */
-.checkout-page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: var(--white);
-}
-
-.placeholder-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 24px;
-}
-
 /* ===== Small helpers used on many pages ===== */
 .small {
   font-size: 12px;
@@ -484,7 +466,7 @@ select:focus {
   gap: 10px;
 }
 
-.filter-bar input {
+.filter-bar > input {
   flex: 1 1 240px;
 }
 
@@ -858,6 +840,93 @@ select:focus {
   margin-left: 0;
 }
 
+kbd {
+  border: 1px solid var(--grey-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: monospace;
+  font-size: 12px;
+  background: var(--grey-bg);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.customer-form {
+  display: grid;
+  gap: 12px;
+}
+
+.picker-list,
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+
+.picker-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.picker-list li.muted {
+  padding: 10px;
+}
+
+.picker-list button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border: none;
+  border-bottom: 1px solid var(--grey-border);
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.picker-list button:hover {
+  background: var(--blue-light);
+}
+
+.history-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--grey-border);
+}
+
+.history-list-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* ===== Printing: hide menus and buttons, print only the page content ===== */
+@media print {
+  body {
+    background: var(--white);
+  }
+
+  .top-bar,
+  .side-menu,
+  .no-print {
+    display: none !important;
+  }
+
+  .back-office,
+  .back-office-body {
+    display: block;
+    min-height: 0;
+  }
+
+  .back-office-content {
+    padding: 0;
+  }
+}
+
 /* ===== Tablet and phone screens ===== */
 @media (max-width: 768px) {
   .top-bar {
@@ -902,5 +971,36 @@ select:focus {
   .image-picker {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* ===== Phones: keep the top bar to one short row ===== */
+@media (max-width: 520px) {
+  .top-bar {
+    flex-wrap: nowrap;
+    min-height: 52px;
+    padding: 6px 10px;
+  }
+
+  .top-bar-store,
+  .top-bar-user small {
+    display: none;
+  }
+
+  .top-bar-right {
+    width: auto;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .top-bar-logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .top-bar-link,
+  .btn-logout {
+    padding: 6px 10px;
+    font-size: 13px;
   }
 }
