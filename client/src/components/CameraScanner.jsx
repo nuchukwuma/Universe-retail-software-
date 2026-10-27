@@ -25,12 +25,19 @@ function cameraErrorMessage(error) {
   return 'Could not start the camera. Close other apps using it and try again.';
 }
 
-// Opens the phone or laptop camera and reads one barcode.
-// Calls onScan(code) when a barcode is found, then closes.
-function CameraScanner({ onScan, onClose }) {
+// The same barcode is ignored if it is seen again within this time,
+// so holding an item in front of the camera only counts it once.
+const REPEAT_DELAY_MS = 2000;
+
+// Opens the phone or laptop camera and reads barcodes.
+// Calls onScan(code) for each barcode found.
+// - Normal mode: stops after the first barcode.
+// - "continuous" mode (checkout): keeps scanning until "Done" is pressed.
+function CameraScanner({ onScan, onClose, continuous = false }) {
   const containerRef = useRef(null);
   const onScanRef = useRef(onScan);
   const [error, setError] = useState('');
+  const [lastCode, setLastCode] = useState('');
 
   onScanRef.current = onScan;
 
@@ -57,14 +64,20 @@ function CameraScanner({ onScan, onClose }) {
     });
 
     let finished = false;
+    let previous = { code: '', time: 0 };
     const started = scanner
       .start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 260, height: 150 } },
         (decodedText) => {
-          if (finished) return;
-          finished = true;
-          onScanRef.current(decodedText.trim());
+          const code = decodedText.trim();
+          const now = Date.now();
+          if (finished || (code === previous.code && now - previous.time < REPEAT_DELAY_MS)) return;
+
+          previous = { code, time: now };
+          if (!continuous) finished = true;
+          setLastCode(code);
+          onScanRef.current(code);
         },
         () => {} // called for every frame with no barcode - ignore
       )
@@ -79,16 +92,22 @@ function CameraScanner({ onScan, onClose }) {
         .catch(() => {})
         .finally(() => box.remove());
     };
-  }, []);
+  }, [continuous]);
 
   return (
-    <Modal title="Scan barcode with camera" onClose={onClose}>
+    <Modal title={continuous ? 'Scan items with camera' : 'Scan barcode with camera'} onClose={onClose}>
       {error ? (
         <div className="alert alert-error">{error}</div>
       ) : (
         <p className="muted">Point the camera at the barcode and hold it steady.</p>
       )}
       <div ref={containerRef} className="camera-view" />
+      {continuous && (
+        <div className="form-actions">
+          <span className="muted small camera-last">{lastCode ? `Last scanned: ${lastCode}` : 'Waiting for a barcode...'}</span>
+          <button type="button" className="btn btn-primary" onClick={onClose}>Done</button>
+        </div>
+      )}
     </Modal>
   );
 }

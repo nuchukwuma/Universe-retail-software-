@@ -12,8 +12,8 @@ A web-based point-of-sale and retail management system for a Nigerian supermarke
 |------:|--------------|--------|
 | 1 | Project setup, login and roles | ✅ Done |
 | 2 | Products, categories and inventory | ✅ Done |
-| 3 | Checkout screen, barcode scanning and payments | ⏳ Next |
-| 4 | Receipts and printing, hold/recall, returns, discounts | |
+| 3 | Checkout screen, barcode scanning and payments | ✅ Done |
+| 4 | Receipts and printing, hold/recall, returns, discounts | ⏳ Next |
 | 5 | Telegram sales alerts | |
 | 6 | Reports and Excel export | |
 | 7 | Public website | |
@@ -58,13 +58,13 @@ Open `server/.env` in your editor and check:
 - `MONGO_URI`: leave as is for a local MongoDB, or paste your Atlas connection string.
 - `JWT_SECRET`: change it to any long random sentence.
 
-Add the sample data (staff accounts, 7 categories, 23 products and 3 suppliers):
+Add the sample data (staff accounts, 7 categories, 23 products, 3 suppliers and 3 customers):
 
 ```bash
 npm run seed
 ```
 
-> Already ran the seed in Stage 1? Run it again. It only adds what is missing.
+> Already ran the seed in an earlier stage? Run it again. It only adds what is missing.
 
 Start the API server:
 
@@ -107,13 +107,51 @@ works with the webcam without this.)
 | Role    | Username  | Password     | What they can do |
 |---------|-----------|--------------|------------------|
 | Owner   | `owner`   | `owner123`   | Everything, including staff accounts |
-| Manager | `manager` | `manager123` | Checkout, products, categories, suppliers, stock (reports in Stage 6) |
+| Manager | `manager` | `manager123` | Checkout, products, categories, suppliers, stock, labels, customers (reports in Stage 6) |
 | Cashier | `cashier` | `cashier123` | Checkout only |
 
 **Change these passwords** (Back Office → Staff Accounts → Reset password)
 before using the system in a real shop.
 
-### 5. Things to try in Stage 2
+### 5. Things to try in Stage 3 (the checkout)
+
+Log in as **cashier**. The checkout opens straight away.
+
+1. **Scan with a USB scanner:** just scan. There is no need to click anywhere first.
+   Scanning the same item again adds 1 to its quantity. No scanner? Type a sample
+   barcode (below) on the keyboard and press Enter. It works the same way.
+2. **Tap products:** tap a card to add one. Tap a category on the right to filter.
+   Type in the search box and press Enter to add the only match.
+3. **Change the bill:** + and − buttons, type a quantity, or 🗑 to remove. The row you
+   just added is highlighted. Switch **Price type** to *Wholesale* to see
+   wholesale prices (for example Royal Stallion Rice: ₦12,500 → ₦12,000).
+4. **Customer:** type a walk-in name, or press 👤 (F3) to search saved customers
+   (try "ada") or add a new one.
+5. **Pay** (F10):
+   - **Cash:** type the amount received, or tap a quick amount. The change shows in green.
+   - **Bank Transfer / Card (POS):** confirm, with an optional reference.
+   - **Split:** for example ₦5,000 cash + the rest by transfer ("+ Rest" fills it in).
+     Only cash can be more than the bill.
+   After paying, the receipt number and the change to give are shown. Press Enter for the next sale.
+6. **Unknown barcode:** scan or type `9999999999999`. A friendly message appears.
+   Logged in as manager or owner, **Add as New Product** opens the product form with the
+   barcode filled in, and saving brings you back to the checkout.
+7. **Camera:** press 📷 (F4) to scan several items with the camera, then **Done**.
+8. **Refresh the page in the middle of a bill:** the bill is still there.
+9. **F1** shows all keyboard shortcuts.
+10. **Back office (manager/owner):**
+    - **Customers** shows each customer's visits, total spent and purchase history.
+    - **Barcode Labels** (or Products → Print Labels): tick "Only products without a barcode",
+      enter a number of labels for *Local Ofada Rice*, click **Create barcodes**, then
+      **Print**. Choose *A4 sticker sheet* or *Label printer roll (50 × 30 mm)*.
+
+> Selling more than the system says is in stock is allowed (shelf counts are often
+> slightly wrong). The bill shows "only X in stock" as a warning, and the Stock Count
+> page fixes the numbers.
+
+Feedback, Recall, Return, Hold and Discount show "coming in Stage 4" for now.
+
+### 6. Things to try in Stage 2
 
 Log in as **owner** or **manager** and click **Back Office**.
 
@@ -146,7 +184,7 @@ Royal Stallion Rice 5kg = `6150001000012`, Power Oil 1L = `6150002000011`,
 Indomie Chicken = `6150003000034`. You can type these into any barcode box and press Enter
 to act like a scanner.
 
-### 6. Things to try from Stage 1
+### 7. Things to try from Stage 1
 
 1. Log in with a wrong password: you see a clear error message.
 2. Log in as **cashier**: you only see the checkout screen. Typing
@@ -168,16 +206,21 @@ to act like a scanner.
     /api/api.js         sends requests to the server with the login token
     /context            AuthContext: remembers who is logged in
     /components         reusable pieces: TopBar, Modal, BarcodeInput, CameraScanner,
-                        ImagePicker, ProductSearch, ProductImage, ...
+                        ImagePicker, ProductSearch, ProductImage, Toast, ...
+      /checkout         the parts of the checkout screen (bill, grid, payment box, ...)
+    /hooks              useBill (the current bill) and useShortcuts (F-keys)
+    /styles             CSS for the checkout screen and barcode labels
     /pages              one file per screen (Products, Categories, Suppliers, ...)
     /utils              small helpers (Naira, dates, stock alerts, image resizing)
     config.js           store name and logo
 /server                 Express API
   /config/db.js         connects to MongoDB
   /middleware/auth.js   checks the login token and the user's role
-  /models               MongoDB data shapes (User, Category, Product, Supplier, StockMovement)
-  /routes               API endpoints (auth, users, categories, products, suppliers, stock, uploads)
-  /utils                shared helpers (error messages, stock history)
+  /models               MongoDB data shapes (User, Category, Product, Supplier, StockMovement,
+                        Sale, Customer, Counter)
+  /routes               API endpoints (auth, users, categories, products, suppliers, stock,
+                        uploads, sales, customers)
+  /utils                shared helpers (sale maths, receipt numbers, barcodes, errors, stock history)
   /uploads              uploaded pictures (created automatically, not saved in git)
   seed.js               adds sample data
   seedData.js           the sample data itself - edit it to change test data
@@ -206,6 +249,13 @@ to act like a scanner.
 | POST | `/api/stock/count` | owner, manager | Save a stock count |
 | GET | `/api/stock/movements` | owner, manager | Stock history (deliveries, counts, edits) |
 | POST | `/api/uploads` | owner, manager | Upload a picture |
+| POST | `/api/products/generate-barcodes` | owner, manager | Give in-store barcodes to products without one |
+| POST | `/api/sales` | logged in | Complete a sale (prices are taken from the database, not the browser) |
+| GET | `/api/sales/:id` | logged in | One sale |
+| GET | `/api/customers?search=` | logged in | Find customers (with visits and total spent) |
+| POST | `/api/customers` | logged in | Add a customer |
+| GET | `/api/customers/:id/sales` | owner, manager | A customer's purchase history |
+| PUT / DELETE | `/api/customers/:id` | owner, manager | Edit or delete a customer |
 
 ## Common problems
 
@@ -215,5 +265,8 @@ to act like a scanner.
   not running. Start it with `npm run dev` inside `/server`.
 - **Camera button says "secure (https) address"**: you opened the app on a phone
   over `http://`. Use `npm run dev:phone` and the `https://` address (see step 3).
+- **The scanner beeps but nothing is added**: click an empty part of the checkout screen
+  (not a text box) and scan again. Also check the scanner is set to send "Enter" after
+  each code (most are by default; see its manual).
 - **Port already in use**: another program is using port 5000 or 5173. Close it,
   or change `PORT` in `server/.env` (and the proxy address in `client/vite.config.js`).

@@ -12,6 +12,8 @@ const MENU = [
   { to: '/suppliers', label: '🚚 Suppliers', roles: ['owner', 'manager'] },
   { to: '/receive-stock', label: '📥 Receive Stock', roles: ['owner', 'manager'] },
   { to: '/stock-count', label: '🔢 Stock Count', roles: ['owner', 'manager'] },
+  { to: '/barcode-labels', label: '🏷️ Barcode Labels', roles: ['owner', 'manager'] },
+  { to: '/customers', label: '👤 Customers', roles: ['owner', 'manager'] },
   { to: '/staff', label: '👥 Staff Accounts', roles: ['owner'] },
 ];
 

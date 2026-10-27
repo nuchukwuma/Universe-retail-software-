@@ -7,15 +7,8 @@ function daysFromNow(days) {
   return date;
 }
 
-// Builds a valid 13-digit EAN barcode from 12 digits by adding the
-// check digit at the end. (615 is Nigeria's barcode country prefix.)
-function makeEan13(twelveDigits) {
-  const sum = twelveDigits
-    .split('')
-    .reduce((total, digit, index) => total + Number(digit) * (index % 2 === 0 ? 1 : 3), 0);
-  const checkDigit = (10 - (sum % 10)) % 10;
-  return twelveDigits + checkDigit;
-}
+// The sample barcodes start with 615, Nigeria's barcode country prefix.
+const { makeEan13 } = require('./utils/barcodes');
 
 // Sample staff accounts (one for each role).
 // CHANGE THESE PASSWORDS before using the system in a real shop!
@@ -71,4 +64,10 @@ const suppliers = [
   { name: 'Glow Beauty Wholesale', phone: '09021112233', address: 'Trade Fair Complex, Ojo', products: ['Nivea Body Lotion 400ml', 'Dove Beauty Bar 100g', 'Vaseline Petroleum Jelly 250ml'] },
 ];
 
-module.exports = { users, categories, products, suppliers, daysFromNow };
+const customers = [
+  { name: 'Adaeze Okafor', phone: '08034445566' },
+  { name: 'Tunde Bakare', phone: '08127778899' },
+  { name: 'Mama Nkechi Provisions', phone: '07061234500' },
+];
+
+module.exports = { users, categories, products, suppliers, customers, daysFromNow };

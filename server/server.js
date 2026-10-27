@@ -13,6 +13,8 @@ const productRoutes = require('./routes/productRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const stockRoutes = require('./routes/stockRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const saleRoutes = require('./routes/saleRoutes');
+const customerRoutes = require('./routes/customerRoutes');
 
 const app = express();
 
@@ -36,6 +38,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/stock', stockRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/sales', saleRoutes);
+app.use('/api/customers', customerRoutes);
 
 // Any /api address we do not know about
 app.use('/api', (req, res) => {
