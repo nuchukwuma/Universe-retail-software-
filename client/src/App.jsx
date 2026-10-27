@@ -1,0 +1,50 @@
+import { Navigate, Route, Routes } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
+import BackOfficeLayout from './components/BackOfficeLayout';
+import LoginPage from './pages/LoginPage';
+import CheckoutPage from './pages/CheckoutPage';
+import DashboardPage from './pages/DashboardPage';
+import StaffPage from './pages/StaffPage';
+
+// Lists every page (route) in the app and who is allowed to see it.
+function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+
+      {/* Everyone who is logged in can use the checkout */}
+      <Route
+        path="/checkout"
+        element={
+          <ProtectedRoute>
+            <CheckoutPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Back office pages: managers and owners only */}
+      <Route
+        element={
+          <ProtectedRoute roles={['owner', 'manager']}>
+            <BackOfficeLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route
+          path="/staff"
+          element={
+            <ProtectedRoute roles={['owner']}>
+              <StaffPage />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+
+      {/* Anything else goes to the checkout (or login if logged out) */}
+      <Route path="*" element={<Navigate to="/checkout" replace />} />
+    </Routes>
+  );
+}
+
+export default App;
