@@ -10,6 +10,7 @@ const { logStockMovement, escapeRegex } = require('../utils/stockHelpers');
 const { getSettings } = require('../utils/settings');
 const { findApprover } = require('../utils/approval');
 const { createdAtFilter } = require('../utils/dates');
+const { queueSaleAlert } = require('../utils/telegramQueue');
 const {
   SaleError, buildSaleItems, calculateTotals, discountPercent, checkPayments,
 } = require('../utils/saleCalculations');
@@ -129,6 +130,12 @@ router.post('/', async (req, res) => {
     await reduceStockForSale(sale, req.user);
 
     res.status(201).json(sale);
+
+    // 7. Send the Telegram alert AFTER replying, so the till never waits for
+    //    Telegram. If it fails, it is saved and retried later.
+    queueSaleAlert(sale).catch((error) => {
+      console.error(`Could not queue Telegram alert for ${sale.receiptNumber}:`, error.message);
+    });
   } catch (error) {
     if (error instanceof SaleError) {
       return res.status(400).json({ message: error.message });

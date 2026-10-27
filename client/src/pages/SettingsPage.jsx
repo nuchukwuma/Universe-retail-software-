@@ -4,6 +4,7 @@ import { useSettings } from '../context/SettingsContext';
 import { usePrinter } from '../context/PrintContext';
 import ImagePicker from '../components/ImagePicker';
 import SaleReceipt from '../components/receipts/SaleReceipt';
+import TelegramSettings from '../components/settings/TelegramSettings';
 
 // A made-up sale used for the preview and the "Print test receipt" button.
 const TEST_SALE = {
@@ -31,29 +32,35 @@ function SettingsPage() {
   const { settings, setSettings } = useSettings();
   const { printDocument } = usePrinter();
   const [form, setForm] = useState(settings);
+  const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
-  // When the real settings arrive from the server, fill the form.
+  // When the settings arrive from the server, fill the form
+  // (but never throw away changes the owner is still typing).
   useEffect(() => {
-    setForm(settings);
-  }, [settings]);
+    if (!hasChanges) setForm(settings);
+  }, [settings, hasChanges]);
 
   // Updates one field of the form.
   function setField(name, value) {
     setForm((current) => ({ ...current, [name]: value }));
+    setHasChanges(true);
     setMessage('');
   }
 
   // Saves the settings on the server and uses them straight away.
+  // (The Telegram on/off switch saves itself, so it is not sent here.)
   async function handleSave(event) {
     event.preventDefault();
     setSaving(true);
     setError('');
     try {
-      const saved = await api.put('/settings', { ...form, maxCashierDiscountPercent: Number(form.maxCashierDiscountPercent) });
+      const { telegramAlertsEnabled, ...fields } = form;
+      const saved = await api.put('/settings', { ...fields, maxCashierDiscountPercent: Number(form.maxCashierDiscountPercent) });
       setSettings(saved);
+      setHasChanges(false);
       setMessage('Settings saved.');
     } catch (err) {
       setError(err.message);
@@ -139,6 +146,8 @@ function SettingsPage() {
           </div>
         </div>
       </div>
+
+      <TelegramSettings />
     </div>
   );
 }

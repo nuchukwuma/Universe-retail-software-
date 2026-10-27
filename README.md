@@ -14,8 +14,8 @@ A web-based point-of-sale and retail management system for a Nigerian supermarke
 | 2 | Products, categories and inventory | ✅ Done |
 | 3 | Checkout screen, barcode scanning and payments | ✅ Done |
 | 4 | Receipts and printing, hold/recall, returns, discounts | ✅ Done |
-| 5 | Telegram sales alerts | ⏳ Next |
-| 6 | Reports and Excel export | |
+| 5 | Telegram sales alerts | ✅ Done |
+| 6 | Reports and Excel export | ⏳ Next |
 | 7 | Public website | |
 
 ---
@@ -57,6 +57,8 @@ Open `server/.env` in your editor and check:
 
 - `MONGO_URI`: leave as is for a local MongoDB, or paste your Atlas connection string.
 - `JWT_SECRET`: change it to any long random sentence.
+- `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`: optional, for sales alerts.
+  See "Setting up Telegram sales alerts" below. You can leave them empty for now.
 
 Add the sample data (staff accounts, 7 categories, 23 products, 3 suppliers and 3 customers):
 
@@ -113,7 +115,68 @@ works with the webcam without this.)
 **Change these passwords** (Back Office → Staff Accounts → Reset password)
 before using the system in a real shop.
 
-### 5. Things to try in Stage 4 (receipts, hold/recall, returns, discounts)
+### 5. Setting up Telegram sales alerts (Stage 5)
+
+After every sale, the server sends a message like this to your Telegram group:
+
+```
+🧾 New sale · Universe Cosmetics & Beauty
+Receipt: 261027-0001
+Time: 27 Oct 2026, 9:13
+Cashier: Amaka Cashier
+
+• Royal Stallion Rice 5kg × 2 @ ₦12,500 = ₦25,000
+• Milo 500g × 1 @ ₦5,500 = ₦5,225 (−₦275)
+
+Subtotal: ₦30,500
+Discount: −₦275
+Total: ₦30,225
+Payment: Cash (paid ₦31,000, change ₦775)
+```
+
+**Step 1: create the bot (2 minutes)**
+
+1. In Telegram, search for **@BotFather** (it has a blue tick) and open it.
+2. Send `/newbot`. Give it a name (e.g. *Universe Sales*) and a username ending in
+   `bot` (e.g. *universe_sales_bot*).
+3. BotFather replies with a **token** like `7123456789:AAH...`. Copy it into
+   `server/.env`:
+   ```
+   TELEGRAM_BOT_TOKEN=7123456789:AAH...
+   ```
+   Keep this token secret. Anyone with it can control your bot.
+
+**Step 2: add the bot to your group**
+
+1. Create a group (e.g. *Shop Sales*) or use an existing one, and add your bot as a member.
+2. In the group, send `/start@your_bot_username` (or just `/start`).
+
+**Step 3: find the chat id**
+
+1. Restart the server (`Ctrl + C`, then `npm run dev`) so it reads the token.
+2. Log in as **owner** → Back Office → **Settings** → scroll to **Telegram sales alerts**
+   and click **Find my chat ID**. Your group appears with a number like `-1001234567890`.
+3. Copy it into `server/.env`, then restart the server again:
+   ```
+   TELEGRAM_CHAT_ID=-1001234567890
+   ```
+
+**Step 4: test it**
+
+On the same Settings section, click **Send test message**. It should appear in your
+group within a few seconds. If not, the box shows Telegram's exact reason (for example
+"chat not found" means the chat id is wrong, or the bot is not in the group).
+
+**How it behaves**
+
+- The tick box **"Send a Telegram message after every sale"** switches alerts on and off.
+- The till never waits for Telegram. The sale completes first, then the alert is sent.
+- **If the internet or Telegram is down**, the sale still completes. The alert is saved and
+  retried automatically (after 1, 2, 5, 10 and 30 minutes, then every hour, for about a day).
+  The Settings section shows alerts that are waiting or failed, the reason, and a
+  **Retry failed alerts** button. Errors are also written to the server terminal.
+
+### 6. Things to try in Stage 4 (receipts, hold/recall, returns, discounts)
 
 **First, as owner:** Back Office → **Settings**. Fill in the store address, phone and the
 message at the bottom of receipts, choose your paper size (80mm, 58mm or A4) and press
@@ -157,7 +220,7 @@ Then log in as **cashier**:
 - The logo prints in black and white. If it uses too much ink or paper, untick
   "Print the logo on receipts" in Settings.
 
-### 6. Things to try in Stage 3 (the checkout)
+### 7. Things to try in Stage 3 (the checkout)
 
 Log in as **cashier**. The checkout opens straight away.
 
@@ -193,7 +256,7 @@ Log in as **cashier**. The checkout opens straight away.
 > slightly wrong). The bill shows "only X in stock" as a warning, and the Stock Count
 > page fixes the numbers.
 
-### 7. Things to try in Stage 2
+### 8. Things to try in Stage 2
 
 Log in as **owner** or **manager** and click **Back Office**.
 
@@ -226,7 +289,7 @@ Royal Stallion Rice 5kg = `6150001000012`, Power Oil 1L = `6150002000011`,
 Indomie Chicken = `6150003000034`. You can type these into any barcode box and press Enter
 to act like a scanner.
 
-### 8. Things to try from Stage 1
+### 9. Things to try from Stage 1
 
 1. Log in with a wrong password: you see a clear error message.
 2. Log in as **cashier**: you only see the checkout screen. Typing
@@ -263,7 +326,8 @@ to act like a scanner.
   /config/db.js         connects to MongoDB
   /middleware/auth.js   checks the login token and the user's role
   /models               MongoDB data shapes (User, Category, Product, Supplier, StockMovement,
-                        Sale, Customer, Counter, Return, HeldBill, Feedback, Settings)
+                        Sale, Customer, Counter, Return, HeldBill, Feedback, Settings,
+                        TelegramMessage = the outbox of alerts waiting to be sent)
   /routes               API endpoints (auth, users, categories, products, suppliers, stock,
                         uploads, sales, customers, returns, held-bills, feedback, settings, reports)
   /utils                shared helpers (sale maths, receipt numbers, barcodes, manager approval,
@@ -313,6 +377,10 @@ to act like a scanner.
 | GET | `/api/settings` | anyone | Store settings (name, receipt options) |
 | PUT | `/api/settings` | owner | Change store settings |
 | GET | `/api/reports/end-of-day?date=&cashier=` | logged in (cashiers see only their own) | End-of-day till summary |
+| GET | `/api/telegram/status` | owner | Is Telegram set up? Alerts sent, waiting and failed |
+| POST | `/api/telegram/test` | owner | Send a test message now |
+| GET | `/api/telegram/chats` | owner | Chats the bot has seen (to find the chat id) |
+| POST | `/api/telegram/retry` | owner | Retry failed alerts now |
 
 ## Common problems
 
@@ -328,5 +396,11 @@ to act like a scanner.
 - **The receipt prints very long, tiny or with blank space**: in the print window set
   **Margins: None**, **Scale: Default/100%**, and pick the receipt printer (not "Save as PDF").
   Check the paper size in Settings matches your printer (58mm or 80mm).
+- **Telegram: "Unauthorized"**: the bot token in `server/.env` is wrong. Copy it again
+  from @BotFather (send `/mybots` → your bot → API Token), then restart the server.
+- **Telegram: "chat not found"**: the chat id is wrong, or the bot is not a member of the
+  group. Use **Find my chat ID** again. Group ids start with `-100`.
+- **Telegram: "Find my chat ID" shows nothing**: send `/start` in the group after adding
+  the bot, then click it again.
 - **Port already in use**: another program is using port 5000 or 5173. Close it,
   or change `PORT` in `server/.env` (and the proxy address in `client/vite.config.js`).
