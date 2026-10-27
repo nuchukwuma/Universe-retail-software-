@@ -20,8 +20,10 @@ export function setToken(token) {
 
 // Sends a request to /api/<path> and returns the JSON response.
 // Throws an Error with a readable message if something goes wrong.
+// "body" can be a normal object (sent as JSON) or FormData (for files).
 async function request(path, method = 'GET', body) {
-  const headers = { 'Content-Type': 'application/json' };
+  const isFile = body instanceof FormData;
+  const headers = isFile ? {} : { 'Content-Type': 'application/json' };
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -30,7 +32,7 @@ async function request(path, method = 'GET', body) {
     response = await fetch(`/api${path}`, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFile ? body : body ? JSON.stringify(body) : undefined,
     });
   } catch (networkError) {
     throw new Error('Cannot reach the server. Check that it is running and your network is on.');
@@ -55,4 +57,5 @@ export const api = {
   post: (path, body) => request(path, 'POST', body),
   put: (path, body) => request(path, 'PUT', body),
   delete: (path) => request(path, 'DELETE'),
+  upload: (path, formData) => request(path, 'POST', formData),
 };
