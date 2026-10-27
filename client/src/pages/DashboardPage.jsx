@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import ProductImage from '../components/ProductImage';
 import { ROLE_LABELS } from '../utils/roles';
 import { formatDate, todayDateValue } from '../utils/dates';
@@ -20,6 +21,7 @@ function compareWithYesterday(today, yesterday) {
 // this month so far, and stock alerts.
 function DashboardPage() {
   const { user } = useAuth();
+  const { settings, reloadSettings } = useSettings();
   const [stats, setStats] = useState(null);
   const [alerts, setAlerts] = useState({ lowStock: [], expiring: [] });
   const [loading, setLoading] = useState(true);
@@ -41,7 +43,15 @@ function DashboardPage() {
     loadDashboard();
   }, []);
 
+  // Re-read the settings so the backup warning below is up to date.
+  useEffect(() => {
+    reloadSettings();
+  }, [reloadSettings]);
+
   const expiredCount = alerts.expiring.filter((p) => expiryStatus(p) === 'expired').length;
+  const daysSinceBackup = settings.lastBackupAt ? (Date.now() - new Date(settings.lastBackupAt)) / 86400000 : null;
+  const backupWarning =
+    user.role === 'owner' && (settings.lastBackupError || daysSinceBackup === null || daysSinceBackup > 2);
   const today = todayDateValue();
   const show = (value) => (loading || !stats ? '…' : value);
 
@@ -51,6 +61,16 @@ function DashboardPage() {
       <p className="muted">Welcome, {user.name} ({ROLE_LABELS[user.role]}). Here is how the shop is doing today.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
+      {backupWarning && (
+        <div className="alert alert-error backup-warning">
+          💾 {settings.lastBackupError
+            ? `The last backup failed: ${settings.lastBackupError}`
+            : daysSinceBackup === null
+              ? 'No backup has been made yet.'
+              : `The last backup was ${Math.floor(daysSinceBackup)} days ago.`}{' '}
+          <Link to="/backup">Open Backup &amp; Restore</Link>
+        </div>
+      )}
 
       <div className="stat-cards">
         <Link to={`/reports?report=daily&from=${today}&to=${today}`} className="stat-card">

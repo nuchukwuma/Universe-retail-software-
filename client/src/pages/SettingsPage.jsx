@@ -5,6 +5,7 @@ import { usePrinter } from '../context/PrintContext';
 import ImagePicker from '../components/ImagePicker';
 import SaleReceipt from '../components/receipts/SaleReceipt';
 import TelegramSettings from '../components/settings/TelegramSettings';
+import PrinterPicker from '../components/settings/PrinterPicker';
 
 // A made-up sale used for the preview and the "Print test receipt" button.
 const TEST_SALE = {
@@ -112,6 +113,7 @@ function SettingsPage() {
               <option value="A4">A4 paper</option>
             </select>
           </label>
+          <PrinterPicker value={form.printerName} onChange={(name) => setField('printerName', name)} />
           <label className="checkbox-row span-full">
             <input type="checkbox" checked={form.autoPrint} onChange={(e) => setField('autoPrint', e.target.checked)} />
             Auto-print receipts (print straight after payment, without the preview)

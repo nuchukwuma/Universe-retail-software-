@@ -4,7 +4,7 @@ const { requireLogin, requireRole } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
 const { getSettings } = require('../utils/settings');
 const { todayInLagos, lagosDayRange } = require('../utils/dates');
-const { isTelegramConfigured, sendTelegramMessage, findRecentChats, testMessageText } = require('../utils/telegram');
+const { getTelegramConfig, sendTelegramMessage, findRecentChats, testMessageText } = require('../utils/telegram');
 const { processQueue } = require('../utils/telegramQueue');
 
 const router = express.Router();
@@ -12,18 +12,55 @@ const router = express.Router();
 // Only the owner can see or change Telegram alerts.
 router.use(requireLogin, requireRole('owner'));
 
-// Hides most of the chat id, e.g. "-1001234567890" -> "-100*******890".
-function maskChatId(chatId) {
-  const text = String(chatId || '');
-  if (text.length <= 7) return text;
-  return text.slice(0, 4) + '*'.repeat(text.length - 7) + text.slice(-3);
-}
+// PUT /api/telegram/config
+// Saves the bot token and/or chat id typed on the Settings page.
+// Body: { botToken?, chatId? }  (leave botToken out to keep the saved one)
+router.put('/config', async (req, res) => {
+  try {
+    const settings = await getSettings();
+    const { botToken, chatId } = req.body;
+
+    if (typeof botToken === 'string' && botToken.trim()) {
+      if (!/^\d+:[\w-]{20,}$/.test(botToken.trim())) {
+        return res.status(400).json({ message: 'That does not look like a bot token. It looks like 7123456789:AAH... (copy it from @BotFather).' });
+      }
+      settings.telegramBotToken = botToken.trim();
+    }
+    if (typeof chatId === 'string') {
+      if (chatId.trim() && !/^-?\d+$/.test(chatId.trim())) {
+        return res.status(400).json({ message: 'The chat id must be a number, e.g. -1001234567890.' });
+      }
+      settings.telegramChatId = chatId.trim();
+    }
+
+    await settings.save();
+    res.json({ message: 'Telegram details saved.' });
+  } catch (error) {
+    handleError(res, error, 'Could not save the Telegram details.');
+  }
+});
+
+// DELETE /api/telegram/config
+// Forgets the saved bot token and chat id.
+router.delete('/config', async (req, res) => {
+  try {
+    const settings = await getSettings();
+    settings.telegramBotToken = '';
+    settings.telegramChatId = '';
+    await settings.save();
+    res.json({ message: 'Telegram details removed.' });
+  } catch (error) {
+    handleError(res, error, 'Could not remove the Telegram details.');
+  }
+});
 
 // GET /api/telegram/status
 // Shows whether Telegram is set up, and how the outbox is doing.
+// The bot token itself is never sent back - only whether it is set.
 router.get('/status', async (req, res) => {
   try {
     const settings = await getSettings();
+    const { botToken, chatId } = await getTelegramConfig();
     const today = lagosDayRange(todayInLagos());
 
     const [pending, failed, sentToday, recent] = await Promise.all([
@@ -35,10 +72,10 @@ router.get('/status', async (req, res) => {
 
     res.json({
       enabled: settings.telegramAlertsEnabled,
-      botTokenSet: Boolean(process.env.TELEGRAM_BOT_TOKEN),
-      chatIdSet: Boolean(process.env.TELEGRAM_CHAT_ID),
-      configured: isTelegramConfigured(),
-      chatId: maskChatId(process.env.TELEGRAM_CHAT_ID),
+      botTokenSet: Boolean(botToken),
+      chatIdSet: Boolean(chatId),
+      configured: Boolean(botToken && chatId),
+      chatId,
       pending,
       failed,
       sentToday,

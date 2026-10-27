@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/api';
 import ProductChecklist from '../components/ProductChecklist';
-import { toWhatsAppNumber } from '../utils/phone';
 
 const EMPTY_FORM = { name: '', phone: '', address: '', notes: '', products: [] };
 
@@ -144,15 +143,7 @@ function SuppliersPage() {
               <div className="supplier-card-top">
                 <div>
                   <h3>{supplier.name}</h3>
-                  {supplier.phone && (
-                    <p>
-                      <a href={`tel:${supplier.phone}`}>📞 {supplier.phone}</a>
-                      {' · '}
-                      <a href={`https://wa.me/${toWhatsAppNumber(supplier.phone)}`} target="_blank" rel="noreferrer">
-                        WhatsApp
-                      </a>
-                    </p>
-                  )}
+                  {supplier.phone && <p>📞 {supplier.phone}</p>}
                   {supplier.address && <p className="muted small">{supplier.address}</p>}
                   {supplier.notes && <p className="muted small">{supplier.notes}</p>}
                 </div>

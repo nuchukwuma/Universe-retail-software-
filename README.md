@@ -1,10 +1,16 @@
-# Universe Retail POS
+# Universe POS
 
-A web-based point-of-sale and retail management system for a Nigerian supermarket / beauty store.
+A point-of-sale and shop management app for **Universe Cosmetics & Beauty**, made to be
+installed on **one Windows laptop**. Everything (sales, products, staff, customers,
+pictures, backups) is saved **on that laptop only**. Nothing is stored online.
 
-- **Frontend:** React (built with Vite), in `/client`
-- **Backend:** Node.js + Express, in `/server`
-- **Database:** MongoDB (models in `/server/models`, API routes in `/server/routes`)
+- **Desktop app:** Electron, in `/desktop` (the window, printing, the installer)
+- **Screens:** React (built with Vite), in `/client`
+- **Server:** Node.js + Express, in `/server`, which runs inside the desktop app
+- **Database:** MongoDB, installed on the same laptop
+
+The only thing that ever goes online is the optional **Telegram sales alert**, and the
+owner can switch it off.
 
 ## Build progress
 
@@ -16,141 +22,124 @@ A web-based point-of-sale and retail management system for a Nigerian supermarke
 | 4 | Receipts and printing, hold/recall, returns, discounts | ✅ Done |
 | 5 | Telegram sales alerts | ✅ Done |
 | 6 | Reports and Excel export | ✅ Done |
-| 7 | Public website | ⏳ Next |
+| 7 | Desktop app for Windows 8: installer, first-run setup, backups, direct printing | ✅ Done |
+
+The public website from the original plan was dropped: the app is offline and lives on one
+laptop, so there is nothing for a website to show. WhatsApp sharing was removed too.
 
 ---
 
-## How to run it (step by step)
+## Installing on the shop laptop
 
-### 1. Install the tools (one time only)
+### What the laptop needs
 
-1. **Node.js 18 or newer:** download the "LTS" version from <https://nodejs.org>.
-   Check it worked by opening a terminal and typing `node -v`.
-2. **MongoDB:** choose one:
-   - **On your computer:** install *MongoDB Community Server* from
-     <https://www.mongodb.com/try/download/community>. On Windows, tick
-     "Install MongoDB as a Service" so it starts by itself.
-   - **In the cloud (free):** create a free cluster on
-     <https://www.mongodb.com/atlas>, then copy its connection string
-     (it looks like `mongodb+srv://user:pass@cluster0.xxxx.mongodb.net/universe_pos`).
+- **Windows 8.1, 64-bit.** (Plain Windows 8 should first be updated to 8.1 for free
+  through the Windows Store. MongoDB does not support 32-bit Windows.)
+  To check: press **Windows key + Pause/Break**. Under *System* you should see
+  **Windows 8.1** and **64-bit Operating System**.
+- About **2 GB of free disk space**, plus room for backups.
+- A **USB flash drive** for backups (strongly recommended).
+- Windows 10 or 11 also work, with the same steps.
 
-### 2. Set up the backend (server)
+### Step 1: install MongoDB 4.2 (the database), one time only
 
-Open a terminal in the project folder and run:
+MongoDB 4.2 is the newest MongoDB that runs on Windows 8.1. Newer versions do not.
 
-```bash
-cd server
-npm install
-```
+1. Open the MongoDB download archive:
+   <https://www.mongodb.com/try/download/community-edition/releases/archive>
+2. Find **4.2.25** (the last 4.2 version), *Windows x64*, and download the **.msi** file.
+3. Run it and choose:
+   - **Complete** setup.
+   - Keep **"Install MongoD as a Service"** ticked, with **"Run service as Network Service user"**.
+     This makes MongoDB start by itself every time the laptop is switched on.
+   - **Untick "Install MongoDB Compass"**. It is not needed.
+4. Check it worked: press the Windows key, type `services.msc` and press Enter.
+   **MongoDB Server** should say *Running*.
 
-Create your settings file by copying the example:
+> If the installer says a file such as `VCRUNTIME140.dll` or `api-ms-win-crt` is missing,
+> run **Windows Update** until no updates are left (in particular update **KB2999226**),
+> install the **Microsoft Visual C++ Redistributable (x64)**, then run the MongoDB installer again.
 
-```bash
-# Mac / Linux
-cp .env.example .env
+### Step 2: get the Universe POS installer
 
-# Windows (Command Prompt)
-copy .env.example .env
-```
+The installer is a file called `Universe-POS-Setup-1.0.0.exe`. GitHub builds it for you
+on a Windows computer every time the code changes:
 
-Open `server/.env` in your editor and check:
+1. On GitHub, open this repository and click the **Actions** tab.
+2. Click the newest **"Build Windows installer"** run with a green tick.
+3. At the bottom, under **Artifacts**, download **Universe-POS-Setup** (a .zip file).
+4. Unzip it and copy the `.exe` onto the shop laptop (a USB drive works).
 
-- `MONGO_URI`: leave as is for a local MongoDB, or paste your Atlas connection string.
-- `JWT_SECRET`: change it to any long random sentence.
-- `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`: optional, for sales alerts.
-  See "Setting up Telegram sales alerts" below. You can leave them empty for now.
+(Developers can also build it themselves. See "For developers" below.)
 
-Add the sample data (staff accounts, 7 categories, 23 products, 3 suppliers and 3 customers):
+### Step 3: install Universe POS
 
-```bash
-npm run seed
-```
+1. Double-click `Universe-POS-Setup-1.0.0.exe`.
+2. Windows may say *"Windows protected your PC"*, because the app is not signed by a
+   paid certificate. Click **More info → Run anyway**.
+3. Follow the steps. A **Universe POS** icon appears on the desktop.
 
-> Already ran the seed in an earlier stage? Run it again. It only adds what is missing.
+### Step 4: first start
 
-Start the API server:
+1. Open **Universe POS** from the desktop icon. It opens full-size.
+2. The first time, it shows **Welcome! Let's set up the shop**:
+   - the shop name (printed on receipts),
+   - your name, a **username** and a **password** for the owner account.
+     *Write them down and keep them somewhere safe.*
+   - Tick **"Add sample products"** if you want practice products. You can delete them later.
+3. Click **Start using the app**. You are logged in as the owner.
 
-```bash
-npm run dev
-```
+If you see **"Universe POS could not start"**, MongoDB is not running. The screen explains
+what to do and tries again by itself every 20 seconds.
 
-You should see `Connected to MongoDB` and `API server running on http://localhost:5000`.
-Leave this terminal open.
+### Step 5: set up the shop
 
-### 3. Set up the frontend (client)
+All of these are in **Back Office** (button at the top), logged in as the owner:
 
-Open a **second** terminal in the project folder and run:
+1. **Staff Accounts:** add your managers and cashiers, each with their own username and password.
+2. **Settings:**
+   - Store address, phone and the message at the bottom of receipts.
+   - **Receipt paper size:** 80mm, 58mm or A4.
+   - **Receipt printer:** choose your receipt printer from the list. Receipts then print
+     **straight away, with no print window**. (Choose "Show the print window each time"
+     if you want to pick the printer every time.) Click **Save Settings**, then
+     **Print test receipt**.
+   - **Auto-print:** prints the receipt as soon as the customer has paid.
+3. **Backup & Restore:** see below. Do this on day one.
+4. **Products / Categories / Suppliers / Receive Stock:** enter your stock.
+   Products without a barcode can get one from **Barcode Labels**.
 
-```bash
-cd client
-npm install
-npm run dev
-```
+### Backups (important!)
 
-Open <http://localhost:5173> in your browser.
+Because the data is only on this laptop, a broken or stolen laptop would lose everything
+**unless you have a backup somewhere else**.
 
-> To use the app from a tablet or phone on the same Wi-Fi, use the
-> "Network" address that Vite prints (for example `http://192.168.0.5:5173`).
+- The app makes an **automatic backup once a day** and keeps the newest 30.
+- Back Office → **Backup & Restore**:
+  - **Choose folder…** and pick your **USB drive** (for example `E:\Shop Backups`),
+    then **Save folder**. Leave the USB drive plugged in, or plug it in daily.
+  - **Back up now** makes a backup straight away. Do this at closing time.
+  - **Open folder** shows the backups in Windows Explorer.
+- If the USB drive is missing when a backup is due, the backup fails safely, and the owner
+  sees a red warning on the Dashboard and the Backup page. Plug the drive in and press
+  **Back up now**.
+- The Dashboard also warns the owner when there has been no backup for 2 days.
+- Every few weeks, copy the newest backup folder to a second place (another USB drive,
+  or a computer at home).
 
-**Using a phone camera to scan barcodes:** phone browsers only allow the camera on
-secure (https) addresses. Stop the client and start it with:
+**Restoring** (for example on a new laptop):
 
-```bash
-npm run dev:phone
-```
+1. Install MongoDB and Universe POS on the new laptop (Steps 1 to 4).
+2. Back Office → Backup & Restore → **Choose folder…** → pick the folder that *contains*
+   the `universe-pos-backup-...` folders → **Save folder**.
+3. Click **Restore…** next to the backup you want and type `RESTORE`.
+   Everything (sales, products, staff, settings, pictures) is replaced with the backup.
+   A safety copy of the data from before the restore is saved first, so it can be undone.
+4. Log in again with the usernames and passwords from the backup.
 
-Then open the `https://...` Network address on the phone. The browser will warn that the
-certificate is "not private". That is expected for a test certificate on your own
-network: tap **Advanced → Proceed**. (On the computer itself, `http://localhost:5173`
-works with the webcam without this.)
+### Telegram sales alerts (optional, needs internet)
 
-### 4. Log in with a sample account
-
-| Role    | Username  | Password     | What they can do |
-|---------|-----------|--------------|------------------|
-| Owner   | `owner`   | `owner123`   | Everything, including staff accounts and Settings |
-| Manager | `manager` | `manager123` | Checkout, products, stock, customers, returns, any discount, reports and profit |
-| Cashier | `cashier` | `cashier123` | Checkout, Sales History, End of Day. Returns and big discounts need a manager's password |
-
-**Change these passwords** (Back Office → Staff Accounts → Reset password)
-before using the system in a real shop.
-
-### 5. Things to try in Stage 6 (dashboard and reports)
-
-Log in as **owner** or **manager** (cashiers cannot see reports or profit). Make a few
-sales first so there is something to report.
-
-1. **Dashboard:** cards for today's sales (compared with yesterday), number of
-   transactions, profit today and low-stock count, plus this month so far. Click any card
-   to open the matching report.
-2. **Reports** (side menu) has five tabs. Each one has a date filter with quick buttons
-   (Today, Yesterday, Last 7 days, This month, Last month, This year) and a green
-   **Export to Excel** button that downloads a real `.xlsx` file with Naira formatting.
-   - **Daily sales:** one row per day with sales, items, discounts, net sales, refunds,
-     cash / transfer / card and profit, plus a TOTAL line.
-   - **By cashier:** each cashier's sales, average sale, discounts given and refunds.
-   - **Best sellers:** products ranked by quantity sold, with revenue, profit and margin.
-     You can filter by category.
-   - **Profit:** revenue, cost of goods, profit and margin by category, and the top 10 most
-     profitable products.
-   - **Stock levels:** every product's stock now, its value at cost and selling price, how
-     many sold in the chosen dates, and roughly how many **days of stock are left**.
-3. The chosen report and dates are kept in the page address, so you can bookmark
-   "this month's profit".
-
-**How the numbers are worked out**
-
-- **Net sales** = what customers paid after discounts.
-- **Profit** = net sales − refunds − cost of goods. Cost of goods uses the cost price at the
-  time of each sale, so keep cost prices up to date (Receive Stock does this).
-- A return is counted on the day of the **original sale**, so the reports show the true
-  profit of each day's sales. (The End of Day page counts refunds on the day the money
-  was given back, because that is what matters for the till.)
-- Days are counted in Lagos time (midnight to midnight).
-
-### 6. Setting up Telegram sales alerts (Stage 5)
-
-After every sale, the server sends a message like this to your Telegram group:
+After every sale, the app can send a message like this to a Telegram group:
 
 ```
 🧾 New sale · Universe Cosmetics & Beauty
@@ -161,287 +150,289 @@ Cashier: Amaka Cashier
 • Royal Stallion Rice 5kg × 2 @ ₦12,500 = ₦25,000
 • Milo 500g × 1 @ ₦5,500 = ₦5,225 (−₦275)
 
-Subtotal: ₦30,500
-Discount: −₦275
 Total: ₦30,225
 Payment: Cash (paid ₦31,000, change ₦775)
 ```
 
-**Step 1: create the bot (2 minutes)**
+1. **Create the bot:** in Telegram, open **@BotFather** (blue tick), send `/newbot`, give it
+   a name and a username ending in `bot`. It replies with a **token** like `7123456789:AAH...`.
+   Keep it secret.
+2. **Add the bot to your group** (for example *Shop Sales*) and send `/start` in the group.
+3. In Universe POS: Back Office → **Settings** → **Telegram sales alerts**:
+   - Paste the token into **Bot token** and click **Save Telegram details**.
+   - Click **Find my chat ID**, click your group in the list, then **Save Telegram details** again.
+   - Click **Send test message**. It should arrive within a few seconds.
+4. The tick box **"Send a Telegram message after every sale"** switches alerts on and off.
 
-1. In Telegram, search for **@BotFather** (it has a blue tick) and open it.
-2. Send `/newbot`. Give it a name (e.g. *Universe Sales*) and a username ending in
-   `bot` (e.g. *universe_sales_bot*).
-3. BotFather replies with a **token** like `7123456789:AAH...`. Copy it into
-   `server/.env`:
-   ```
-   TELEGRAM_BOT_TOKEN=7123456789:AAH...
-   ```
-   Keep this token secret. Anyone with it can control your bot.
+The till never waits for Telegram. **If the internet is down, sales still complete**, and the
+alerts are sent later by themselves. The token is saved only on the laptop and is never shown again.
 
-**Step 2: add the bot to your group**
+### Barcode scanners and the camera
 
-1. Create a group (e.g. *Shop Sales*) or use an existing one, and add your bot as a member.
-2. In the group, send `/start@your_bot_username` (or just `/start`).
+- **USB barcode scanner:** plug it in and scan. No setup is needed. The scanner must send
+  "Enter" after each code (most do by default).
+- **Webcam:** press 📷 (F4) on the checkout to scan barcodes with the laptop camera.
 
-**Step 3: find the chat id**
+### Keyboard shortcuts
 
-1. Restart the server (`Ctrl + C`, then `npm run dev`) so it reads the token.
-2. Log in as **owner** → Back Office → **Settings** → scroll to **Telegram sales alerts**
-   and click **Find my chat ID**. Your group appears with a number like `-1001234567890`.
-3. Copy it into `server/.env`, then restart the server again:
-   ```
-   TELEGRAM_CHAT_ID=-1001234567890
-   ```
+On the checkout: **F1** shows the list (F2 search, F3 customer, F4 camera, F6 hold, F7 recall,
+F8 discount, F9 cancel, F10 pay).
 
-**Step 4: test it**
+Anywhere in the app:
 
-On the same Settings section, click **Send test message**. It should appear in your
-group within a few seconds. If not, the box shows Telegram's exact reason (for example
-"chat not found" means the chat id is wrong, or the bot is not in the group).
+| Keys | What it does |
+|------|--------------|
+| F11 | Full screen on/off |
+| Ctrl + R | Reload the screen |
+| Ctrl + `+` / Ctrl + `-` / Ctrl + 0 | Bigger / smaller / normal text |
+| Ctrl + Shift + D | Open the app's data folder |
+| Ctrl + Q | Close the app |
 
-**How it behaves**
+### Where things are saved on the laptop
 
-- The tick box **"Send a Telegram message after every sale"** switches alerts on and off.
-- The till never waits for Telegram. The sale completes first, then the alert is sent.
-- **If the internet or Telegram is down**, the sale still completes. The alert is saved and
-  retried automatically (after 1, 2, 5, 10 and 30 minutes, then every hour, for about a day).
-  The Settings section shows alerts that are waiting or failed, the reason, and a
-  **Retry failed alerts** button. Errors are also written to the server terminal.
+| What | Where |
+|------|-------|
+| Sales, products, staff, settings | MongoDB's own folder (`C:\Program Files\MongoDB\Server\4.2\data`) |
+| Product pictures and logo | `%APPDATA%\Universe POS\uploads` |
+| Backups (until you choose a USB drive) | `%APPDATA%\Universe POS\backups` |
+| Log file (for finding problems) | `%APPDATA%\Universe POS\logs\universe-pos.log` |
+| App settings (port, database address) | `%APPDATA%\Universe POS\config.json` |
 
-### 7. Things to try in Stage 4 (receipts, hold/recall, returns, discounts)
+(`%APPDATA%` is usually `C:\Users\<your name>\AppData\Roaming`. Type it into the
+Windows Explorer address bar to open it.)
 
-**First, as owner:** Back Office → **Settings**. Fill in the store address, phone and the
-message at the bottom of receipts, choose your paper size (80mm, 58mm or A4) and press
-**Print test receipt**. The preview on the right changes as you type. Click **Save Settings**.
+### Updating the app
 
-Then log in as **cashier**:
+Run the new `Universe-POS-Setup-x.y.z.exe`. Your data is kept. Make a backup first, just in case.
 
-1. **Receipt after a sale:** pay for a bill. The receipt preview shows the change to give,
-   plus these buttons:
-   - **Print** sends it to your printer (see "Printing tips" below).
-   - **Download PDF** saves it as a PDF file.
-   - **Share via WhatsApp** opens WhatsApp with the receipt as a message (sent to the
-     customer's number when a saved customer is on the bill).
-   - **Reprint later** / **Skip** close the preview. The sale is saved either way.
-2. **Discount (F8):** choose an item or the whole bill, then % or ₦. Up to 10% (Settings
-   can change this), a cashier can give it alone. Above that, a manager types their
-   username and password on the till (try `manager` / `manager123`).
-3. **Hold (F6) / Recall (F7):** hold a bill with a name like "Lady in red". The till
-   empties for the next customer. Recall brings the bill back, using today's prices.
-   Held bills are saved on the server, so any till can recall them.
-4. **Return:** press Return and scan the barcode at the bottom of a receipt (or type its
-   number, e.g. `261027-0001`). Choose how many of each item come back, the refund
-   method and a reason. A manager approves it, and a **return receipt** prints. The
-   items go back into stock.
-5. **Feedback:** record how a customer felt (😀 😐 🙁) and what they said. Managers
-   read these on the **Feedback** page.
-6. **Sales & Till → Sales History:** find any sale by receipt number, customer or date,
-   and **View / Print** it. The first print is the original. Every print after that is marked
-   **\*\*\* DUPLICATE COPY \*\*\***. Returns can also be started here.
-7. **Sales & Till → End of Day:** totals by cash, transfer and card, minus refunds. Type the
-   cash you counted in the drawer to see if the till is **balanced, over or short**,
-   then print the summary to sign.
+### A note on security
 
-**Printing tips**
+Windows 8.1 stopped getting security updates from Microsoft in January 2023, and the
+version of Electron the app uses (22, the last one for Windows 8) no longer gets updates
+either. This is acceptable here because the app only shows its own screens from the
+laptop itself and does not browse the web. To stay safe:
 
-- In the print window, choose your receipt printer, set **Margins: None** and turn off
-  **Headers and footers**. The app already sets the paper width and length.
-- **Auto-print** (Settings) prints straight after payment, without the preview. To skip
-  the browser's print window too, start Chrome with `--kiosk-printing` added to its
-  shortcut. It then prints silently to the default printer.
-- The logo prints in black and white. If it uses too much ink or paper, untick
-  "Print the logo on receipts" in Settings.
+- Use the laptop only for the shop: no web browsing, email or downloads on it.
+- Keep backups on a USB drive.
+- When the shop gets a Windows 10/11 laptop, install the same app there and **restore**
+  the newest backup.
 
-### 8. Things to try in Stage 3 (the checkout)
+---
 
-Log in as **cashier**. The checkout opens straight away.
+## For developers
+
+You need a computer with **Node.js 18 or newer** and **MongoDB** (any version from 4.2).
+(The development tools do not run on Windows 8. The finished app does.)
+
+### Run in development (two terminals)
+
+```bash
+# Terminal 1: the server, on http://localhost:5000
+cd server
+npm install
+cp .env.example .env          # Windows: copy .env.example .env
+npm run seed                  # optional: sample staff and products
+npm run dev
+
+# Terminal 2: the screens, on http://localhost:5173
+cd client
+npm install
+npm run dev
+```
+
+Open <http://localhost:5173>. With `npm run seed`, you can log in as
+`owner` / `owner123`, `manager` / `manager123` or `cashier` / `cashier123`.
+Without it, the first-run setup screen appears.
+
+In a web browser the print window opens for every receipt. Direct printing only works in
+the desktop app.
+
+### Run the desktop app
+
+```bash
+cd client && npm run build && cd ..
+cd desktop
+npm install
+npm start          # copies server + client into desktop/app, then opens the app
+```
+
+It uses the MongoDB at `mongodb://127.0.0.1:27017/universe_pos`. To use another one, edit
+`mongoUri` in `config.json` in the app's data folder.
+
+### Build the Windows installer
+
+On a **Windows** computer:
+
+```bash
+cd desktop
+npm install
+npm run dist       # builds the client, then makes desktop/dist/Universe-POS-Setup-1.0.0.exe
+```
+
+Or push to GitHub: `.github/workflows/build-windows.yml` builds it on a Windows machine
+and attaches it to the run (see Step 2 above). It can also be started by hand from the
+Actions tab ("Run workflow").
+
+The installer contains **Electron 22.3.27** (Chromium 108, Node 16.17), the last Electron
+that runs on Windows 7/8/8.1. Keep it at that version. The server code must therefore work
+on **Node 16**: no `fetch()` (use `server/utils/postJson.js`) and mongoose 7.
+
+---
+
+## Things to try
+
+Log in as the owner, add a manager and a cashier in **Staff Accounts**, and tick
+"Add sample products" at setup (or run `npm run seed` in development) so there is
+something to sell.
+
+### The checkout (cashier)
 
 1. **Scan with a USB scanner:** just scan. There is no need to click anywhere first.
-   Scanning the same item again adds 1 to its quantity. No scanner? Type a sample
-   barcode (below) on the keyboard and press Enter. It works the same way.
-2. **Tap products:** tap a card to add one. Tap a category on the right to filter.
-   Type in the search box and press Enter to add the only match.
-3. **Change the bill:** + and − buttons, type a quantity, or 🗑 to remove. The row you
-   just added is highlighted. Switch **Price type** to *Wholesale* to see
-   wholesale prices (for example Royal Stallion Rice: ₦12,500 → ₦12,000).
-4. **Customer:** type a walk-in name, or press 👤 (F3) to search saved customers
-   (try "ada") or add a new one.
-5. **Pay** (F10):
-   - **Cash:** type the amount received, or tap a quick amount. The change shows in green.
-   - **Bank Transfer / Card (POS):** confirm, with an optional reference.
-   - **Split:** for example ₦5,000 cash + the rest by transfer ("+ Rest" fills it in).
-     Only cash can be more than the bill.
-   After paying, the receipt number and the change to give are shown. Press Enter for the next sale.
-6. **Unknown barcode:** scan or type `9999999999999`. A friendly message appears.
-   Logged in as manager or owner, **Add as New Product** opens the product form with the
-   barcode filled in, and saving brings you back to the checkout.
-7. **Camera:** press 📷 (F4) to scan several items with the camera, then **Done**.
-8. **Refresh the page in the middle of a bill:** the bill is still there.
-9. **F1** shows all keyboard shortcuts.
-10. **Back office (manager/owner):**
-    - **Customers** shows each customer's visits, total spent and purchase history.
-    - **Barcode Labels** (or Products → Print Labels): tick "Only products without a barcode",
-      enter a number of labels for *Local Ofada Rice*, click **Create barcodes**, then
-      **Print**. Choose *A4 sticker sheet* or *Label printer roll (50 × 30 mm)*.
+   Scanning the same item again adds 1. No scanner? Type a sample barcode on the keyboard
+   and press Enter: Royal Stallion Rice 5kg = `6150001000012`, Power Oil 1L = `6150002000011`,
+   Indomie Chicken = `6150003000034`.
+2. **Tap products** in the grid, filter by category on the right, or search.
+3. **Change the bill** with + and −, or 🗑 to remove. Switch **Price type** to *Wholesale*.
+4. **Customer:** type a walk-in name, or press 👤 (F3) to search or add a saved customer.
+5. **Pay** (F10): cash (shows the change), bank transfer, card (POS), or split.
+6. **Receipt:** prints straight to the receipt printer chosen in Settings. The preview also
+   has **Save as PDF**. The first print is the original; later prints from Sales History say
+   **\*\*\* DUPLICATE COPY \*\*\***.
+7. **Discount (F8):** up to 10% (changeable in Settings) a cashier can give alone. Above that,
+   a manager types their username and password on the till.
+8. **Hold (F6) / Recall (F7):** park a bill with a name, serve the next customer, bring it back later.
+9. **Return:** scan the barcode at the bottom of a receipt, choose the items, and a manager
+   approves. A return receipt prints and the items go back into stock.
+10. **Unknown barcode:** a manager or owner can add it as a new product straight away.
+11. **Sales History** and **End of Day** (cash counted vs. expected, printed to sign).
 
-> Selling more than the system says is in stock is allowed (shelf counts are often
-> slightly wrong). The bill shows "only X in stock" as a warning, and the Stock Count
-> page fixes the numbers.
+### Stock (manager / owner)
 
-### 9. Things to try in Stage 2
+- **Products:** search, filter (low stock, expiring, no barcode), add with a picture, scan a
+  barcode into the form. The Dashboard shows low-stock and expiring products.
+- **Receive Stock:** scan, enter the quantity and cost, **Add to Stock**.
+- **Stock Count:** scan everything on the shelf, then **Update Stock to Match Count**.
+- **Barcode Labels:** create barcodes for products without one and print sticker sheets or label rolls.
+- **Suppliers** and **Customers** (with each customer's purchase history).
 
-Log in as **owner** or **manager** and click **Back Office**.
+### Dashboard and reports (manager / owner)
 
-1. **Dashboard:** 4 low-stock products and 3 expiring products (one already expired)
-   from the sample data. Click a card to open the filtered product list.
-2. **Products:** search by name or barcode, filter by category, "Low stock only",
-   "Expiring / expired only" or "No barcode".
-3. **Add Product:** fill in the form and upload a picture (on a phone you can take a photo).
-   - Click the barcode box and scan with your USB scanner: the code is typed in and
-     the form is **not** submitted by the scanner's Enter key.
-   - Or press 📷 to scan with the camera.
-   - Using a barcode that another product already has shows a clear error.
-   - The form shows the profit per item and warns if the selling price is below cost.
-4. **Edit** a product and change its quantity: the change is recorded in stock history.
-5. **Categories:** add one with an emoji icon or a picture. Deleting a category that
-   still has products is blocked with a message.
-6. **Suppliers:** add a supplier, tick the products they supply, and try the call and
-   WhatsApp links.
-7. **Receive Stock:** scan a barcode (or search by name). The product's usual supplier
-   and current cost are filled in. Enter the quantity and click **Add to Stock**.
-   The delivery appears under "Recent deliveries".
-8. **Stock Count:** scan items. Each scan adds 1, and items without a barcode can be found
-   by name. The table shows the difference from the system quantity. Refreshing the page
-   keeps your count. **Update Stock to Match Count** corrects the stock.
-9. Log in as **cashier**: none of these pages can be opened, and the server hides
-   cost prices from cashiers.
+- **Dashboard:** today's sales compared with yesterday, profit, low stock, this month so far.
+- **Reports:** daily sales, by cashier, best sellers, profit, stock levels (with days of stock
+  left). Each has quick date buttons and **Export to Excel**.
+- **Net sales** = what customers paid after discounts. **Profit** = net sales − refunds −
+  cost of goods (at the cost price at the time of each sale). Days run midnight to midnight,
+  Lagos time.
 
-**Sample barcodes** (from `server/seedData.js`):
-Royal Stallion Rice 5kg = `6150001000012`, Power Oil 1L = `6150002000011`,
-Indomie Chicken = `6150003000034`. You can type these into any barcode box and press Enter
-to act like a scanner.
+### Who can do what
 
-### 10. Things to try from Stage 1
-
-1. Log in with a wrong password: you see a clear error message.
-2. Log in as **cashier**: you only see the checkout screen. Typing
-   `http://localhost:5173/staff` in the address bar sends you back to the checkout.
-3. Log in as **manager**: a "Back Office" button appears, with the Dashboard
-   but no Staff Accounts page.
-4. Log in as **owner**: open Back Office → Staff Accounts, then add a new cashier,
-   change a role, disable an account (that person can no longer log in) and reset a password.
-5. Refresh the page: you stay logged in. Click **Logout** to sign out.
+| Role | Can do |
+|------|--------|
+| Owner | Everything, including Staff Accounts, Settings, Telegram and Backup & Restore |
+| Manager | Checkout, products, stock, customers, returns, any discount, reports and profit |
+| Cashier | Checkout, Sales History, End of Day. Returns and big discounts need a manager's password |
 
 ---
 
 ## Folder layout
 
 ```
-/client                 React app (what staff see in the browser)
-  /public               logo and favicon
+/desktop                The Windows app (Electron)
+  main.js               starts the server inside the app and opens the window
+  preload.js            the few extra powers the screens get (print, printers, folders)
+  loading.html          "Starting Universe POS..." screen
+  error.html            shown when MongoDB is not running, with "Try again"
+  /electron             config.json + log file, printing and folder handlers, keyboard shortcuts
+  /scripts/copy-app.js  copies /server and /client/dist into desktop/app before packing
+  /build                the app icon
+/client                 React screens
   /src
     /api/api.js         sends requests to the server with the login token
-    /context            AuthContext: remembers who is logged in
-    /components         reusable pieces: TopBar, Modal, BarcodeInput, CameraScanner,
-                        ImagePicker, ProductSearch, ProductImage, Toast, ...
-      /checkout         the parts of the checkout screen (bill, grid, payment box, ...)
-      /receipts         sale, return and end-of-day receipts; preview, PDF and WhatsApp
-      /returns          the Return pop-up
-      /reports          the five reports, the report table and the date filter
-      /settings         the Telegram part of the Settings page
     /context            AuthContext (who is logged in), SettingsContext (store settings),
-                        PrintContext (prints a receipt on the right paper size)
+                        PrintContext (prints a receipt: directly in the desktop app,
+                        or with the print window in a browser)
+    /components         reusable pieces (TopBar, Modal, BarcodeInput, CameraScanner,
+                        SetupForm, ...) and /checkout, /receipts, /returns, /reports, /settings
     /hooks              useBill (the current bill) and useShortcuts (F-keys)
-    /styles             CSS for the checkout screen, receipts and barcode labels
-    /pages              one file per screen (Products, Categories, Suppliers, ...)
-    /utils              small helpers (Naira, dates, stock alerts, image resizing)
-    config.js           store name and logo
+    /pages              one file per screen (Products, Backup, Settings, ...)
+    /styles             CSS for the checkout, receipts and barcode labels
+    /utils              small helpers (Naira, dates, desktop app check, ...)
 /server                 Express API
+  app.js                builds the app and starts it (used by the desktop app and server.js)
+  server.js             starts the server in development
   /config/db.js         connects to MongoDB
   /middleware/auth.js   checks the login token and the user's role
-  /models               MongoDB data shapes (User, Category, Product, Supplier, StockMovement,
-                        Sale, Customer, Counter, Return, HeldBill, Feedback, Settings,
-                        TelegramMessage = the outbox of alerts waiting to be sent)
-  /routes               API endpoints (auth, users, categories, products, suppliers, stock,
-                        uploads, sales, customers, returns, held-bills, feedback, settings, reports)
-  /utils                shared helpers (sale maths, receipt numbers, barcodes, manager approval,
-                        Lagos dates, errors, stock history)
-  /uploads              uploaded pictures (created automatically, not saved in git)
-  seed.js               adds sample data
-  seedData.js           the sample data itself - edit it to change test data
-  server.js             starts the server
+  /models               MongoDB data shapes (User, Product, Sale, Return, Settings, ...)
+  /routes               API endpoints
+  /utils                shared helpers (sale maths, receipts, Telegram, backups, paths, ...)
+  seed.js, seedData.js  sample data for development
+/.github/workflows      builds the Windows installer on GitHub
 ```
 
-## API endpoints so far
+## API endpoints
 
 | Method | Address | Who | What it does |
 |--------|---------|-----|--------------|
+| GET | `/api/setup/status` | anyone | Is this the very first start (no staff yet)? |
+| POST | `/api/setup` | anyone, only before any staff exist | First-run setup: owner account and shop name |
 | POST | `/api/auth/login` | anyone | Log in, returns a token |
-| GET | `/api/auth/me` | logged in | Returns the current user |
+| GET | `/api/auth/me` | logged in | The current user |
 | PUT | `/api/auth/change-password` | logged in | Change your own password |
-| GET | `/api/users` | owner | List staff |
-| POST | `/api/users` | owner | Add staff |
-| PUT | `/api/users/:id` | owner | Change name, role, status or password |
-| DELETE | `/api/users/:id` | owner | Delete staff |
-| GET | `/api/categories` | logged in | List categories with product counts |
-| POST / PUT / DELETE | `/api/categories(/:id)` | owner, manager | Add, edit, delete a category |
-| GET | `/api/products` | logged in | List products (cost price hidden from cashiers) |
+| POST | `/api/auth/approve` | logged in | A manager's password check on a cashier's till (30-minute approval) |
+| GET / POST / PUT / DELETE | `/api/users(/:id)` | owner | Staff accounts |
+| GET | `/api/categories` | logged in | Categories with product counts |
+| POST / PUT / DELETE | `/api/categories(/:id)` | owner, manager | Manage categories |
+| GET | `/api/products` | logged in | Products (cost price hidden from cashiers) |
 | GET | `/api/products/barcode/:code` | logged in | Find a product by barcode |
 | GET | `/api/products/alerts` | owner, manager | Low-stock and expiring products |
-| POST / PUT / DELETE | `/api/products(/:id)` | owner, manager | Add, edit, delete a product |
-| GET / POST / PUT / DELETE | `/api/suppliers(/:id)` | owner, manager | Manage suppliers |
-| POST | `/api/stock/receive` | owner, manager | Add delivered stock to a product |
-| POST | `/api/stock/count` | owner, manager | Save a stock count |
-| GET | `/api/stock/movements` | owner, manager | Stock history (deliveries, counts, edits) |
-| POST | `/api/uploads` | owner, manager | Upload a picture |
+| POST / PUT / DELETE | `/api/products(/:id)` | owner, manager | Manage products |
 | POST | `/api/products/generate-barcodes` | owner, manager | Give in-store barcodes to products without one |
-| POST | `/api/sales` | logged in | Complete a sale (prices are taken from the database, not the browser) |
-| GET | `/api/sales/:id` | logged in | One sale |
-| GET | `/api/customers?search=` | logged in | Find customers (with visits and total spent) |
-| POST | `/api/customers` | logged in | Add a customer |
-| GET | `/api/customers/:id/sales` | owner, manager | A customer's purchase history |
-| PUT / DELETE | `/api/customers/:id` | owner, manager | Edit or delete a customer |
-| POST | `/api/auth/approve` | logged in | A manager's password check on a cashier's till (gives a 30-minute approval) |
-| GET | `/api/sales?search=&from=&to=` | logged in | Sales History |
-| GET | `/api/sales/by-receipt/:number` | logged in | Find a sale by receipt number (for returns) |
+| GET / POST / PUT / DELETE | `/api/suppliers(/:id)` | owner, manager | Manage suppliers |
+| POST | `/api/stock/receive`, `/api/stock/count` | owner, manager | Receive stock, save a stock count |
+| GET | `/api/stock/movements` | owner, manager | Stock history |
+| POST | `/api/uploads` | owner, manager | Upload a picture |
+| POST | `/api/sales` | logged in | Complete a sale (prices come from the database) |
+| GET | `/api/sales?search=&from=&to=`, `/api/sales/:id`, `/api/sales/by-receipt/:number` | logged in | Find sales |
 | POST | `/api/sales/:id/printed` | logged in | Count a print (later prints say DUPLICATE COPY) |
-| GET / POST | `/api/returns` | logged in (manager approval needed to POST) | List or make returns |
+| GET / POST | `/api/returns` | logged in (manager approval needed to POST) | Returns |
 | GET / POST / DELETE | `/api/held-bills(/:id)` | logged in | Hold and recall bills |
+| GET / POST / PUT / DELETE | `/api/customers(/:id)` | logged in (edit/delete: owner, manager) | Customers |
+| GET | `/api/customers/:id/sales` | owner, manager | A customer's purchases |
 | GET / POST | `/api/feedback` | POST: logged in, GET: owner, manager | Customer feedback |
-| GET | `/api/settings` | anyone | Store settings (name, receipt options) |
-| PUT | `/api/settings` | owner | Change store settings |
-| GET | `/api/reports/end-of-day?date=&cashier=` | logged in (cashiers see only their own) | End-of-day till summary |
-| GET | `/api/telegram/status` | owner | Is Telegram set up? Alerts sent, waiting and failed |
-| POST | `/api/telegram/test` | owner | Send a test message now |
+| GET | `/api/settings` | anyone | Store settings (never includes the Telegram details) |
+| PUT | `/api/settings` | owner | Change store settings and the receipt printer |
+| GET | `/api/reports/end-of-day?date=&cashier=` | logged in (cashiers: their own) | End-of-day till summary |
+| GET | `/api/reports/dashboard`, `daily-sales`, `cashiers`, `best-sellers`, `profit`, `stock-levels` | owner, manager | Dashboard and reports |
+| GET | `/api/telegram/status` | owner | Telegram set up? Alerts sent, waiting and failed |
+| PUT / DELETE | `/api/telegram/config` | owner | Save or remove the bot token and chat id |
+| POST | `/api/telegram/test`, `/api/telegram/retry` | owner | Send a test message, retry failed alerts |
 | GET | `/api/telegram/chats` | owner | Chats the bot has seen (to find the chat id) |
-| POST | `/api/telegram/retry` | owner | Retry failed alerts now |
-| GET | `/api/reports/dashboard` | owner, manager | Dashboard numbers (today, yesterday, this month, stock alerts) |
-| GET | `/api/reports/daily-sales?from=&to=` | owner, manager | Daily sales report |
-| GET | `/api/reports/cashiers?from=&to=` | owner, manager | Sales by cashier |
-| GET | `/api/reports/best-sellers?from=&to=&category=` | owner, manager | Best-selling products |
-| GET | `/api/reports/profit?from=&to=` | owner, manager | Profit by category and top products |
-| GET | `/api/reports/stock-levels?from=&to=` | owner, manager | Stock levels, stock value and days left |
+| GET / POST | `/api/backups` | owner | List backups, back up now |
+| PUT | `/api/backups/settings` | owner | Backup folder, automatic backups on/off |
+| POST | `/api/backups/restore` | owner | Restore a backup (body must include `confirm: "RESTORE"`) |
 
 ## Common problems
 
-- **"Could not connect to MongoDB"**: MongoDB is not running, or `MONGO_URI` in
-  `server/.env` is wrong. On Windows, open *Services* and start "MongoDB Server".
-- **"Cannot reach the server"** on the login page: the backend terminal is
-  not running. Start it with `npm run dev` inside `/server`.
-- **Camera button says "secure (https) address"**: you opened the app on a phone
-  over `http://`. Use `npm run dev:phone` and the `https://` address (see step 3).
-- **The scanner beeps but nothing is added**: click an empty part of the checkout screen
-  (not a text box) and scan again. Also check the scanner is set to send "Enter" after
-  each code (most are by default; see its manual).
-- **The receipt prints very long, tiny or with blank space**: in the print window set
-  **Margins: None**, **Scale: Default/100%**, and pick the receipt printer (not "Save as PDF").
-  Check the paper size in Settings matches your printer (58mm or 80mm).
-- **Telegram: "Unauthorized"**: the bot token in `server/.env` is wrong. Copy it again
-  from @BotFather (send `/mybots` → your bot → API Token), then restart the server.
-- **Telegram: "chat not found"**: the chat id is wrong, or the bot is not a member of the
-  group. Use **Find my chat ID** again. Group ids start with `-100`.
-- **Telegram: "Find my chat ID" shows nothing**: send `/start` in the group after adding
-  the bot, then click it again.
-- **Port already in use**: another program is using port 5000 or 5173. Close it,
-  or change `PORT` in `server/.env` (and the proxy address in `client/vite.config.js`).
+- **"Universe POS could not start" / "Could not connect to MongoDB"**: MongoDB is not
+  running. Wait a minute after switching the laptop on, then **Try again**. Otherwise open
+  `services.msc`, right-click **MongoDB Server** → **Start**. If it is not in the list,
+  install MongoDB (Step 1).
+- **Receipts do not print**: check the printer is on and has paper, and that Settings →
+  **Receipt printer** shows the right printer (it says *(not found)* if Windows cannot see it).
+  Install the printer's Windows driver from its CD or the maker's website first.
+- **The receipt is too long, too short or cut off**: check the **paper size** in Settings
+  matches the printer (58mm or 80mm). In the printer's Windows settings
+  (*Devices and Printers* → right-click → *Printing preferences*), choose the matching roll width.
+- **Backup failed: "Cannot save backups in E:\..."**: the USB drive is not plugged in, or it
+  now has a different letter. Plug it in, or choose the folder again on the Backup page.
+- **The scanner beeps but nothing is added**: click an empty part of the checkout (not a
+  text box) and scan again. Check the scanner sends "Enter" after each code.
+- **The camera does not start**: close other programs using the webcam (Skype, Camera app).
+- **Telegram: "Unauthorized"**: the bot token is wrong. Copy it again from @BotFather
+  (`/mybots` → your bot → API Token) and save it in Settings.
+- **Telegram: "chat not found"**: the bot is not in the group, or the chat id is wrong. Use
+  **Find my chat ID** again. Group ids start with `-100`.
+- **Forgot the owner password**: another owner can reset it in Staff Accounts. If there is no
+  other owner, restore a backup from when you knew the password, or ask a developer to reset it.
+- **Something else**: press **Ctrl + Shift + D**, open the `logs` folder, and send
+  `universe-pos.log` to whoever looks after the app.

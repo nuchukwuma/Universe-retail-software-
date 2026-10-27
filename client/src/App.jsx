@@ -18,6 +18,7 @@ import EndOfDayPage from './pages/EndOfDayPage';
 import SettingsPage from './pages/SettingsPage';
 import FeedbackPage from './pages/FeedbackPage';
 import ReportsPage from './pages/ReportsPage';
+import BackupPage from './pages/BackupPage';
 
 const MANAGERS = ['owner', 'manager'];
 
@@ -76,6 +77,7 @@ function App() {
         {/* Owner only */}
         <Route path="/staff" element={ownerOnly(<StaffPage />)} />
         <Route path="/settings" element={ownerOnly(<SettingsPage />)} />
+        <Route path="/backup" element={ownerOnly(<BackupPage />)} />
       </Route>
 
       {/* Anything else goes to the checkout (or login if logged out) */}

@@ -45,8 +45,7 @@ function CameraScanner({ onScan, onClose, continuous = false }) {
   useEffect(() => {
     if (!window.isSecureContext) {
       setError(
-        'The camera only works on a secure (https) address or on localhost. ' +
-          'On a phone, start the app with "npm run dev:phone" and open the https address.'
+        'The camera can only be used when the app is opened on this computer (localhost) or in the desktop app.'
       );
       return undefined;
     }

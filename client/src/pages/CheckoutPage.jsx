@@ -191,7 +191,6 @@ function CheckoutPage() {
           return sold ? { ...p, quantity: p.quantity - sold.quantity } : p;
         })
       );
-      const customerPhone = bill.customer?.phone || '';
       clearBill();
       setLastAddedId(null);
       setPendingPayments(null);
@@ -202,7 +201,7 @@ function CheckoutPage() {
         const printed = await printSale(sale);
         setModal({ type: 'complete', sale: printed });
       } else {
-        setModal({ type: 'receipt', sale, customerPhone });
+        setModal({ type: 'receipt', sale });
       }
     } catch (err) {
       if (err.code === 'APPROVAL_REQUIRED') {

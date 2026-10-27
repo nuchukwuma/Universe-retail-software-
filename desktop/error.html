@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Universe POS - could not start</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #eef3f9;
+      color: #1d2733;
+    }
+    .box {
+      max-width: 640px;
+      margin: 60px auto;
+      padding: 28px 32px;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    }
+    h1 { margin-top: 0; color: #b42318; font-size: 24px; }
+    .message { padding: 10px 12px; border-radius: 8px; background: #fdecea; font-family: Consolas, monospace; font-size: 13px; white-space: pre-wrap; }
+    ol { line-height: 1.6; }
+    button { padding: 10px 18px; border: none; border-radius: 8px; background: #1565c0; color: #fff; font-size: 16px; cursor: pointer; }
+    button.plain { background: #e3e8ef; color: #1d2733; }
+    .muted { color: #5b6b7d; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Universe POS could not start</h1>
+    <p>The app could not open the shop's database.</p>
+    <div class="message" id="message"></div>
+
+    <p><strong>Usually this means MongoDB is not running. Try this:</strong></p>
+    <ol>
+      <li>Wait one minute - just after the laptop is switched on, MongoDB can take a moment to start.</li>
+      <li>Press <strong>Try again</strong>.</li>
+      <li>Still not working? Press the Windows key, type <strong>services.msc</strong> and press Enter.
+        Find <strong>MongoDB Server</strong>, right-click it and choose <strong>Start</strong>.</li>
+      <li>If MongoDB Server is not in the list, MongoDB is not installed - see the install guide (README).</li>
+    </ol>
+
+    <p>
+      <button type="button" id="retry">Try again</button>
+      <button type="button" class="plain" id="logs">Open log folder</button>
+    </p>
+    <p class="muted" id="countdown"></p>
+    <p class="muted" id="info"></p>
+  </div>
+
+  <script>
+    // Shows the error, and tries again by itself every 20 seconds.
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById('message').textContent = params.get('message') || 'Unknown error';
+
+    let secondsLeft = 20;
+    let info = null;
+
+    // Asks the desktop app to start again.
+    function retry() {
+      document.getElementById('retry').disabled = true;
+      document.getElementById('countdown').textContent = 'Trying again...';
+      window.desktop.retryStart();
+    }
+
+    // Counts down to the next automatic try.
+    function tick() {
+      secondsLeft -= 1;
+      if (secondsLeft <= 0) {
+        retry();
+        return;
+      }
+      document.getElementById('countdown').textContent = `Trying again by itself in ${secondsLeft} seconds.`;
+      setTimeout(tick, 1000);
+    }
+
+    document.getElementById('retry').addEventListener('click', retry);
+    document.getElementById('logs').addEventListener('click', () => {
+      if (info) window.desktop.openFolder(info.logFolder);
+    });
+
+    window.desktop.appInfo().then((data) => {
+      info = data;
+      document.getElementById('info').textContent =
+        `Version ${data.version} - database ${data.mongoUri} - data folder ${data.dataDir}`;
+    });
+    tick();
+  </script>
+</body>
+</html>

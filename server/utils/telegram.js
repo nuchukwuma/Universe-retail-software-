@@ -1,21 +1,35 @@
 // Talks to the Telegram Bot API and writes the sale alert messages.
-// The bot token and chat id come from the .env file.
+// The bot token and chat id are typed in by the owner on the Settings
+// page (saved on this computer). TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID in
+// the .env file still work as a fallback for development.
 
 const { formatNaira } = require('./money');
+const { postJson } = require('./postJson');
+const { getSettings } = require('./settings');
 
 const PAYMENT_LABELS = { cash: 'Cash', transfer: 'Bank Transfer', card: 'Card (POS)', split: 'Split' };
 const MAX_ITEMS_IN_MESSAGE = 40; // Telegram messages must stay under 4096 characters
 
-// Returns true when both the bot token and the chat id are set in .env.
-function isTelegramConfigured() {
-  return Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
+// Returns { botToken, chatId } from Settings (or .env if Settings has none).
+async function getTelegramConfig() {
+  const settings = await getSettings();
+  return {
+    botToken: settings.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN || '',
+    chatId: settings.telegramChatId || process.env.TELEGRAM_CHAT_ID || '',
+  };
+}
+
+// Returns true when both the bot token and the chat id are set.
+async function isTelegramConfigured() {
+  const { botToken, chatId } = await getTelegramConfig();
+  return Boolean(botToken && chatId);
 }
 
 // Builds the address of a Bot API method, e.g. .../bot<token>/sendMessage.
 // TELEGRAM_API_URL can point somewhere else for testing; normally it is not set.
-function apiUrl(method) {
+function apiUrl(botToken, method) {
   const base = process.env.TELEGRAM_API_URL || 'https://api.telegram.org';
-  return `${base}/bot${process.env.TELEGRAM_BOT_TOKEN}/${method}`;
+  return `${base}/bot${botToken}/${method}`;
 }
 
 // An error from Telegram. "retryAfter" (seconds) is set when Telegram
@@ -29,38 +43,34 @@ class TelegramError extends Error {
 
 // Calls one Bot API method and returns its result.
 // Throws a TelegramError with a readable message if anything goes wrong.
-async function callTelegram(method, body) {
-  if (!process.env.TELEGRAM_BOT_TOKEN) {
-    throw new TelegramError('TELEGRAM_BOT_TOKEN is missing from the server .env file.');
+async function callTelegram(botToken, method, body) {
+  if (!botToken) {
+    throw new TelegramError('The Telegram bot token has not been entered yet (Settings → Telegram).');
   }
 
-  let response;
+  let reply;
   try {
-    response = await fetch(apiUrl(method), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body || {}),
-      signal: AbortSignal.timeout(15000), // give up after 15 seconds
-    });
+    reply = await postJson(apiUrl(botToken, method), body, 15000); // give up after 15 seconds
   } catch (error) {
-    throw new TelegramError(`Cannot reach Telegram (${error.name === 'TimeoutError' ? 'timed out' : error.message}). Check the internet connection.`);
+    throw new TelegramError(`Cannot reach Telegram (${error.message}). Check the internet connection.`);
   }
 
-  const data = await response.json().catch(() => ({}));
+  const { data, status } = reply;
   if (!data.ok) {
     const retryAfter = data.parameters?.retry_after || null;
-    throw new TelegramError(`Telegram said: ${data.description || `error ${response.status}`}`, retryAfter);
+    throw new TelegramError(`Telegram said: ${data.description || `error ${status}`}`, retryAfter);
   }
   return data.result;
 }
 
 // Sends a text message to the shop's chat or group.
-function sendTelegramMessage(text) {
-  if (!process.env.TELEGRAM_CHAT_ID) {
-    throw new TelegramError('TELEGRAM_CHAT_ID is missing from the server .env file.');
+async function sendTelegramMessage(text) {
+  const { botToken, chatId } = await getTelegramConfig();
+  if (!chatId) {
+    throw new TelegramError('The Telegram chat id has not been entered yet (Settings → Telegram).');
   }
-  return callTelegram('sendMessage', {
-    chat_id: process.env.TELEGRAM_CHAT_ID,
+  return callTelegram(botToken, 'sendMessage', {
+    chat_id: chatId,
     text,
     parse_mode: 'HTML',
     disable_web_page_preview: true,
@@ -70,7 +80,8 @@ function sendTelegramMessage(text) {
 // Lists the chats and groups the bot has recently seen, to help the owner
 // find the chat id. (Send /start in the group first.)
 async function findRecentChats() {
-  const updates = await callTelegram('getUpdates', { limit: 100 });
+  const { botToken } = await getTelegramConfig();
+  const updates = await callTelegram(botToken, 'getUpdates', { limit: 100 });
   const chats = new Map();
   updates.forEach((update) => {
     const chat = update.message?.chat || update.my_chat_member?.chat || update.channel_post?.chat;
@@ -149,6 +160,7 @@ function testMessageText(storeName, userName) {
 
 module.exports = {
   TelegramError,
+  getTelegramConfig,
   isTelegramConfigured,
   sendTelegramMessage,
   findRecentChats,
