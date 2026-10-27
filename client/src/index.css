@@ -200,6 +200,73 @@ textarea:focus {
   margin-left: 0;
 }
 
+/* ===== Reports ===== */
+.stat-card-link strong {
+  font-size: 26px;
+}
+
+.report-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  padding-bottom: 2px;
+}
+
+.report-tab {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border: 1px solid var(--grey-border);
+  border-radius: 10px;
+  background: var(--white);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.report-tab.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: var(--white);
+}
+
+.date-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.quick-ranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.active-range {
+  background: var(--blue-light);
+  border-color: var(--blue);
+  color: var(--blue-dark);
+  font-weight: 600;
+}
+
+.btn-excel {
+  background: #1d6f42; /* Excel green */
+  border-color: #1d6f42;
+  color: var(--white);
+  font-weight: 600;
+}
+
+.btn-excel:hover {
+  background: #155a35;
+}
+
+.report-table tfoot td {
+  font-weight: 700;
+  border-top: 2px solid var(--text);
+  background: var(--grey-bg);
+}
+
 .table td.wrap {
   white-space: normal;
   min-width: 200px;
@@ -902,6 +969,10 @@ textarea:focus {
 
 .stat-card-red {
   border-left-color: var(--red);
+}
+
+.stat-card-green {
+  border-left-color: var(--green);
 }
 
 .stat-card-orange {

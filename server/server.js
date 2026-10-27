@@ -20,6 +20,7 @@ const heldBillRoutes = require('./routes/heldBillRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const feedbackRoutes = require('./routes/feedbackRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const managerReportRoutes = require('./routes/managerReportRoutes');
 const telegramRoutes = require('./routes/telegramRoutes');
 const { startTelegramWorker } = require('./utils/telegramQueue');
 
@@ -51,7 +52,8 @@ app.use('/api/returns', returnRoutes);
 app.use('/api/held-bills', heldBillRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/feedback', feedbackRoutes);
-app.use('/api/reports', reportRoutes);
+app.use('/api/reports', reportRoutes); // end-of-day (everyone)
+app.use('/api/reports', managerReportRoutes); // sales, profit and stock reports (managers/owners)
 app.use('/api/telegram', telegramRoutes);
 
 // Any /api address we do not know about

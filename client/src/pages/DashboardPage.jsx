@@ -4,52 +4,92 @@ import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import ProductImage from '../components/ProductImage';
 import { ROLE_LABELS } from '../utils/roles';
-import { formatDate } from '../utils/dates';
+import { formatDate, todayDateValue } from '../utils/dates';
+import { formatNaira } from '../utils/formatNaira';
 import { expiryLabel, expiryStatus } from '../utils/stockAlerts';
 
-// Back office home page for managers and owners.
-// Shows stock alerts now; sales cards are added in Stage 6.
+// Compares today with yesterday, e.g. "▲ 12% vs yesterday (₦40,000)".
+function compareWithYesterday(today, yesterday) {
+  if (!yesterday) return `Yesterday: ${formatNaira(0)}`;
+  const change = Math.round(((today - yesterday) / yesterday) * 100);
+  const arrow = change >= 0 ? '▲' : '▼';
+  return `${arrow} ${Math.abs(change)}% vs yesterday (${formatNaira(yesterday)})`;
+}
+
+// Back office home page for managers and owners: today's sales cards,
+// this month so far, and stock alerts.
 function DashboardPage() {
   const { user } = useAuth();
+  const [stats, setStats] = useState(null);
   const [alerts, setAlerts] = useState({ lowStock: [], expiring: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Load the low-stock and expiry alerts when the page opens.
+  // Load the sales numbers and the stock alerts when the page opens.
   useEffect(() => {
-    async function loadAlerts() {
+    async function loadDashboard() {
       try {
-        setAlerts(await api.get('/products/alerts'));
+        const [dashboard, stockAlerts] = await Promise.all([api.get('/reports/dashboard'), api.get('/products/alerts')]);
+        setStats(dashboard);
+        setAlerts(stockAlerts);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     }
-    loadAlerts();
+    loadDashboard();
   }, []);
 
   const expiredCount = alerts.expiring.filter((p) => expiryStatus(p) === 'expired').length;
+  const today = todayDateValue();
+  const show = (value) => (loading || !stats ? '…' : value);
 
   return (
     <div>
       <h1 className="page-title">Dashboard</h1>
-      <p className="muted">
-        Welcome, {user.name} ({ROLE_LABELS[user.role]}). Sales cards and reports will appear here in Stage 6.
-      </p>
+      <p className="muted">Welcome, {user.name} ({ROLE_LABELS[user.role]}). Here is how the shop is doing today.</p>
 
       {error && <div className="alert alert-error">{error}</div>}
 
       <div className="stat-cards">
+        <Link to={`/reports?report=daily&from=${today}&to=${today}`} className="stat-card">
+          <span>Today's sales</span>
+          <strong>{show(formatNaira(stats?.today.netSales))}</strong>
+          <small>{stats && compareWithYesterday(stats.today.netSales, stats.yesterday.netSales)}</small>
+        </Link>
+        <Link to={`/reports?report=cashiers&from=${today}&to=${today}`} className="stat-card">
+          <span>Transactions today</span>
+          <strong>{show(stats?.today.transactions)}</strong>
+          <small>{stats && `${stats.today.itemsSold} items · average ${formatNaira(stats.today.averageSale)}`}</small>
+        </Link>
+        <Link to={`/reports?report=profit&from=${today}&to=${today}`} className="stat-card stat-card-green">
+          <span>Profit today</span>
+          <strong>{show(formatNaira(stats?.today.profit))}</strong>
+          <small>after discounts, refunds and cost of goods</small>
+        </Link>
         <Link to="/products?filter=low" className="stat-card stat-card-red">
           <span>Low stock</span>
-          <strong>{loading ? '…' : alerts.lowStock.length}</strong>
+          <strong>{show(stats?.lowStock)}</strong>
           <small>products at or below reorder level</small>
+        </Link>
+      </div>
+
+      <div className="stat-cards">
+        <Link to={`/reports?report=daily&from=${today.slice(0, 8)}01&to=${today}`} className="stat-card">
+          <span>This month so far</span>
+          <strong>{show(formatNaira(stats?.month.netSales))}</strong>
+          <small>{stats && `${stats.month.transactions} sales · profit ${formatNaira(stats.month.profit)}`}</small>
         </Link>
         <Link to="/products?filter=expiring" className="stat-card stat-card-orange">
           <span>Expiring soon</span>
-          <strong>{loading ? '…' : alerts.expiring.length}</strong>
+          <strong>{show(stats?.expiring)}</strong>
           <small>{expiredCount > 0 ? `${expiredCount} already expired` : 'within the next 30 days'}</small>
+        </Link>
+        <Link to="/reports" className="stat-card stat-card-link">
+          <span>All reports</span>
+          <strong>📈</strong>
+          <small>daily sales, cashiers, best sellers, profit, stock - with Excel export</small>
         </Link>
       </div>
 

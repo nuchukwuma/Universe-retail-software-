@@ -17,6 +17,7 @@ import SalesHistoryPage from './pages/SalesHistoryPage';
 import EndOfDayPage from './pages/EndOfDayPage';
 import SettingsPage from './pages/SettingsPage';
 import FeedbackPage from './pages/FeedbackPage';
+import ReportsPage from './pages/ReportsPage';
 
 const MANAGERS = ['owner', 'manager'];
 
@@ -60,6 +61,7 @@ function App() {
 
         {/* Managers and owners */}
         <Route path="/dashboard" element={managersOnly(<DashboardPage />)} />
+        <Route path="/reports" element={managersOnly(<ReportsPage />)} />
         <Route path="/products" element={managersOnly(<ProductsPage />)} />
         <Route path="/products/new" element={managersOnly(<ProductFormPage />)} />
         <Route path="/products/:id/edit" element={managersOnly(<ProductFormPage />)} />

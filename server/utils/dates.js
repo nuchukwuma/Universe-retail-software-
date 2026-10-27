@@ -32,4 +32,17 @@ function createdAtFilter(fromText, toText) {
   return filter;
 }
 
-module.exports = { todayInLagos, lagosDayRange, createdAtFilter };
+// Moves a "YYYY-MM-DD" date by a number of days, e.g. ('2026-10-27', -1) -> '2026-10-26'.
+function addDays(dateText, days) {
+  const date = new Date(`${dateText}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+// Counts the days from one "YYYY-MM-DD" to another, both included.
+function daysBetween(fromText, toText) {
+  const ms = new Date(`${toText}T00:00:00Z`) - new Date(`${fromText}T00:00:00Z`);
+  return Math.round(ms / ONE_DAY_MS) + 1;
+}
+
+module.exports = { todayInLagos, lagosDayRange, createdAtFilter, addDays, daysBetween };

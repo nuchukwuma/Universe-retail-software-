@@ -8,6 +8,7 @@ const EVERYONE = ['owner', 'manager', 'cashier'];
 // Menu items for the back office. "roles" says who can see each link.
 const MENU = [
   { to: '/dashboard', label: '📊 Dashboard', roles: ['owner', 'manager'] },
+  { to: '/reports', label: '📈 Reports', roles: ['owner', 'manager'] },
   { to: '/sales-history', label: '🧾 Sales History', roles: EVERYONE },
   { to: '/end-of-day', label: '🌙 End of Day', roles: EVERYONE },
   { to: '/products', label: '📦 Products', roles: ['owner', 'manager'] },
