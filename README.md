@@ -15,8 +15,8 @@ A web-based point-of-sale and retail management system for a Nigerian supermarke
 | 3 | Checkout screen, barcode scanning and payments | ✅ Done |
 | 4 | Receipts and printing, hold/recall, returns, discounts | ✅ Done |
 | 5 | Telegram sales alerts | ✅ Done |
-| 6 | Reports and Excel export | ⏳ Next |
-| 7 | Public website | |
+| 6 | Reports and Excel export | ✅ Done |
+| 7 | Public website | ⏳ Next |
 
 ---
 
@@ -109,13 +109,46 @@ works with the webcam without this.)
 | Role    | Username  | Password     | What they can do |
 |---------|-----------|--------------|------------------|
 | Owner   | `owner`   | `owner123`   | Everything, including staff accounts and Settings |
-| Manager | `manager` | `manager123` | Checkout, products, stock, customers, returns, any discount (reports in Stage 6) |
+| Manager | `manager` | `manager123` | Checkout, products, stock, customers, returns, any discount, reports and profit |
 | Cashier | `cashier` | `cashier123` | Checkout, Sales History, End of Day. Returns and big discounts need a manager's password |
 
 **Change these passwords** (Back Office → Staff Accounts → Reset password)
 before using the system in a real shop.
 
-### 5. Setting up Telegram sales alerts (Stage 5)
+### 5. Things to try in Stage 6 (dashboard and reports)
+
+Log in as **owner** or **manager** (cashiers cannot see reports or profit). Make a few
+sales first so there is something to report.
+
+1. **Dashboard:** cards for today's sales (compared with yesterday), number of
+   transactions, profit today and low-stock count, plus this month so far. Click any card
+   to open the matching report.
+2. **Reports** (side menu) has five tabs. Each one has a date filter with quick buttons
+   (Today, Yesterday, Last 7 days, This month, Last month, This year) and a green
+   **Export to Excel** button that downloads a real `.xlsx` file with Naira formatting.
+   - **Daily sales:** one row per day with sales, items, discounts, net sales, refunds,
+     cash / transfer / card and profit, plus a TOTAL line.
+   - **By cashier:** each cashier's sales, average sale, discounts given and refunds.
+   - **Best sellers:** products ranked by quantity sold, with revenue, profit and margin.
+     You can filter by category.
+   - **Profit:** revenue, cost of goods, profit and margin by category, and the top 10 most
+     profitable products.
+   - **Stock levels:** every product's stock now, its value at cost and selling price, how
+     many sold in the chosen dates, and roughly how many **days of stock are left**.
+3. The chosen report and dates are kept in the page address, so you can bookmark
+   "this month's profit".
+
+**How the numbers are worked out**
+
+- **Net sales** = what customers paid after discounts.
+- **Profit** = net sales − refunds − cost of goods. Cost of goods uses the cost price at the
+  time of each sale, so keep cost prices up to date (Receive Stock does this).
+- A return is counted on the day of the **original sale**, so the reports show the true
+  profit of each day's sales. (The End of Day page counts refunds on the day the money
+  was given back, because that is what matters for the till.)
+- Days are counted in Lagos time (midnight to midnight).
+
+### 6. Setting up Telegram sales alerts (Stage 5)
 
 After every sale, the server sends a message like this to your Telegram group:
 
@@ -176,7 +209,7 @@ group within a few seconds. If not, the box shows Telegram's exact reason (for e
   The Settings section shows alerts that are waiting or failed, the reason, and a
   **Retry failed alerts** button. Errors are also written to the server terminal.
 
-### 6. Things to try in Stage 4 (receipts, hold/recall, returns, discounts)
+### 7. Things to try in Stage 4 (receipts, hold/recall, returns, discounts)
 
 **First, as owner:** Back Office → **Settings**. Fill in the store address, phone and the
 message at the bottom of receipts, choose your paper size (80mm, 58mm or A4) and press
@@ -220,7 +253,7 @@ Then log in as **cashier**:
 - The logo prints in black and white. If it uses too much ink or paper, untick
   "Print the logo on receipts" in Settings.
 
-### 7. Things to try in Stage 3 (the checkout)
+### 8. Things to try in Stage 3 (the checkout)
 
 Log in as **cashier**. The checkout opens straight away.
 
@@ -256,7 +289,7 @@ Log in as **cashier**. The checkout opens straight away.
 > slightly wrong). The bill shows "only X in stock" as a warning, and the Stock Count
 > page fixes the numbers.
 
-### 8. Things to try in Stage 2
+### 9. Things to try in Stage 2
 
 Log in as **owner** or **manager** and click **Back Office**.
 
@@ -289,7 +322,7 @@ Royal Stallion Rice 5kg = `6150001000012`, Power Oil 1L = `6150002000011`,
 Indomie Chicken = `6150003000034`. You can type these into any barcode box and press Enter
 to act like a scanner.
 
-### 9. Things to try from Stage 1
+### 10. Things to try from Stage 1
 
 1. Log in with a wrong password: you see a clear error message.
 2. Log in as **cashier**: you only see the checkout screen. Typing
@@ -315,6 +348,8 @@ to act like a scanner.
       /checkout         the parts of the checkout screen (bill, grid, payment box, ...)
       /receipts         sale, return and end-of-day receipts; preview, PDF and WhatsApp
       /returns          the Return pop-up
+      /reports          the five reports, the report table and the date filter
+      /settings         the Telegram part of the Settings page
     /context            AuthContext (who is logged in), SettingsContext (store settings),
                         PrintContext (prints a receipt on the right paper size)
     /hooks              useBill (the current bill) and useShortcuts (F-keys)
@@ -381,6 +416,12 @@ to act like a scanner.
 | POST | `/api/telegram/test` | owner | Send a test message now |
 | GET | `/api/telegram/chats` | owner | Chats the bot has seen (to find the chat id) |
 | POST | `/api/telegram/retry` | owner | Retry failed alerts now |
+| GET | `/api/reports/dashboard` | owner, manager | Dashboard numbers (today, yesterday, this month, stock alerts) |
+| GET | `/api/reports/daily-sales?from=&to=` | owner, manager | Daily sales report |
+| GET | `/api/reports/cashiers?from=&to=` | owner, manager | Sales by cashier |
+| GET | `/api/reports/best-sellers?from=&to=&category=` | owner, manager | Best-selling products |
+| GET | `/api/reports/profit?from=&to=` | owner, manager | Profit by category and top products |
+| GET | `/api/reports/stock-levels?from=&to=` | owner, manager | Stock levels, stock value and days left |
 
 ## Common problems
 
