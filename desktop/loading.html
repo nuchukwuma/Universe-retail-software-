@@ -6,22 +6,24 @@
   <style>
     body {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      align-items: flex-end;
       height: 100vh;
       margin: 0;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #eef3f9;
-      color: #1d2733;
+      padding: 48px;
+      box-sizing: border-box;
+      background: #00665e;
+      color: #ffffff;
+      font-family: 'Arial Narrow', Arial, sans-serif;
     }
-    img { width: 140px; height: 140px; border-radius: 50%; }
-    p { font-size: 18px; }
+    h1 { margin: 0; font-size: 56px; line-height: 1; }
+    p { margin: 16px 0 0; font-size: 21px; }
   </style>
 </head>
 <body>
   <!-- Shown while the app connects to the database (a few seconds). -->
-  <img src="build/icon.png" alt="" />
-  <p>Starting Universe POS...</p>
+  <div>
+    <h1>Universe POS</h1>
+    <p>Starting the till...</p>
+  </div>
 </body>
 </html>

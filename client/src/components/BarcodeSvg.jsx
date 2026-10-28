@@ -9,7 +9,8 @@ function isEan13(code) {
   return (10 - (sum % 10)) % 10 === digits[12];
 }
 
-// Draws a barcode as a picture. EAN-13 codes are drawn as EAN-13;
+// Draws the stripes of a barcode for labels and receipts, so a scanner can
+// read it. EAN-13 codes are drawn as EAN-13;
 // anything else uses CODE128, which can hold any letters or numbers.
 function BarcodeSvg({ value, height = 40, width = 1.6, fontSize = 12 }) {
   const svgRef = useRef(null);

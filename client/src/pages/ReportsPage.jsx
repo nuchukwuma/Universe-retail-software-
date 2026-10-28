@@ -3,22 +3,23 @@ import DateRangeFilter from '../components/reports/DateRangeFilter';
 import DailySalesReport from '../components/reports/DailySalesReport';
 import CashierReport from '../components/reports/CashierReport';
 import BestSellersReport from '../components/reports/BestSellersReport';
-import ProfitReport from '../components/reports/ProfitReport';
+import WeeklySalesReport from '../components/reports/WeeklySalesReport';
+import PageHeader from '../components/PageHeader';
 import StockLevelsReport from '../components/reports/StockLevelsReport';
 import { shiftDate, todayDateValue } from '../utils/dates';
 
 // The reports, one tab each.
 const REPORTS = [
-  { id: 'daily', label: '📅 Daily sales', Component: DailySalesReport },
-  { id: 'cashiers', label: '🧑‍💼 By cashier', Component: CashierReport },
-  { id: 'best-sellers', label: '🏆 Best sellers', Component: BestSellersReport },
-  { id: 'profit', label: '💰 Profit', Component: ProfitReport },
-  { id: 'stock', label: '📦 Stock levels', Component: StockLevelsReport },
+  { id: 'daily', label: 'Daily sales', Component: DailySalesReport },
+  { id: 'weekly', label: 'Weekly sales', Component: WeeklySalesReport },
+  { id: 'cashiers', label: 'By cashier', Component: CashierReport },
+  { id: 'best-sellers', label: 'Best sellers', Component: BestSellersReport },
+  { id: 'stock', label: 'Stock levels', Component: StockLevelsReport },
 ];
 
 // Reports page (managers and owners). The chosen report and dates are kept
-// in the address, e.g. /reports?report=profit&from=2026-10-01&to=2026-10-27,
-// so a report can be bookmarked or opened from the dashboard.
+// in the address, e.g. /reports?report=weekly&from=2026-10-01&to=2026-10-27,
+// so a report can be bookmarked or opened from the Today page.
 function ReportsPage() {
   const [params, setParams] = useSearchParams();
   const today = todayDateValue();
@@ -35,17 +36,17 @@ function ReportsPage() {
   const { Component } = current;
 
   return (
-    <div>
-      <h1 className="page-title">Reports</h1>
+    <div className="page">
+      <PageHeader title="Reports" lead="Sales and stock for any dates. Every table can be saved as an Excel file." />
 
-      <div className="report-tabs" role="tablist">
+      <div className="tabs" role="tablist" aria-label="Reports">
         {REPORTS.map((report) => (
           <button
             key={report.id}
             type="button"
             role="tab"
             aria-selected={report.id === current.id}
-            className={report.id === current.id ? 'report-tab active' : 'report-tab'}
+            className="tab"
             onClick={() => update({ report: report.id })}
           >
             {report.label}

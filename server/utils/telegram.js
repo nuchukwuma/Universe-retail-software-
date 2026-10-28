@@ -7,7 +7,6 @@ const { formatNaira } = require('./money');
 const { postJson } = require('./postJson');
 const { getSettings } = require('./settings');
 
-const PAYMENT_LABELS = { cash: 'Cash', transfer: 'Bank Transfer', card: 'Card (POS)', split: 'Split' };
 const MAX_ITEMS_IN_MESSAGE = 40; // Telegram messages must stay under 4096 characters
 
 // Returns { botToken, chatId } from Settings (or .env if Settings has none).
@@ -45,7 +44,7 @@ class TelegramError extends Error {
 // Throws a TelegramError with a readable message if anything goes wrong.
 async function callTelegram(botToken, method, body) {
   if (!botToken) {
-    throw new TelegramError('The Telegram bot token has not been entered yet (Settings → Telegram).');
+    throw new TelegramError('The Telegram bot token has not been entered yet (Settings, Telegram sales alerts).');
   }
 
   let reply;
@@ -67,7 +66,7 @@ async function callTelegram(botToken, method, body) {
 async function sendTelegramMessage(text) {
   const { botToken, chatId } = await getTelegramConfig();
   if (!chatId) {
-    throw new TelegramError('The Telegram chat id has not been entered yet (Settings → Telegram).');
+    throw new TelegramError('The Telegram chat id has not been entered yet (Settings, Telegram sales alerts).');
   }
   return callTelegram(botToken, 'sendMessage', {
     chat_id: chatId,
@@ -108,54 +107,38 @@ function lagosTime(date) {
   });
 }
 
-// Describes how the customer paid, e.g. "Cash (paid ₦30,000, change ₦3,775)"
-// or "Split: Cash ₦10,000 + Bank Transfer ₦16,225".
-function describePayment(sale) {
-  if (sale.paymentMethod === 'split') {
-    const parts = sale.payments.map((p) => `${PAYMENT_LABELS[p.method]} ${formatNaira(p.method === 'cash' ? p.amount + sale.change : p.amount)}`);
-    return `Split: ${parts.join(' + ')}${sale.change > 0 ? ` (change ${formatNaira(sale.change)})` : ''}`;
-  }
-  const label = PAYMENT_LABELS[sale.paymentMethod];
-  if (sale.paymentMethod === 'cash' && sale.change > 0) {
-    return `${label} (paid ${formatNaira(sale.amountTendered)}, change ${formatNaira(sale.change)})`;
-  }
-  return label;
-}
-
 // Writes the Telegram message for a completed sale.
 function saleAlertText(sale, storeName) {
   const lines = [
-    `🧾 <b>New sale</b> · ${escapeHtml(storeName)}`,
+    `<b>New sale</b> at ${escapeHtml(storeName)}`,
     `Receipt: <b>${escapeHtml(sale.receiptNumber)}</b>`,
     `Time: ${lagosTime(sale.createdAt || new Date())}`,
     `Cashier: ${escapeHtml(sale.cashierName)}`,
   ];
   if (sale.customerName) lines.push(`Customer: ${escapeHtml(sale.customerName)}`);
-  if (sale.priceType === 'wholesale') lines.push('Price type: Wholesale');
   lines.push('');
 
   sale.items.slice(0, MAX_ITEMS_IN_MESSAGE).forEach((item) => {
-    const discount = item.discount > 0 ? ` (−${formatNaira(item.discount)})` : '';
-    lines.push(`• ${escapeHtml(item.name)} × ${item.quantity} @ ${formatNaira(item.unitPrice)} = ${formatNaira(item.lineTotal)}${discount}`);
+    const discount = item.discount > 0 ? ` (discount ${formatNaira(item.discount)})` : '';
+    lines.push(`${escapeHtml(item.name)}: ${item.quantity} at ${formatNaira(item.unitPrice)} = ${formatNaira(item.lineTotal)}${discount}`);
   });
   if (sale.items.length > MAX_ITEMS_IN_MESSAGE) {
-    lines.push(`… and ${sale.items.length - MAX_ITEMS_IN_MESSAGE} more item(s)`);
+    lines.push(`...and ${sale.items.length - MAX_ITEMS_IN_MESSAGE} more item(s)`);
   }
 
   lines.push('');
   lines.push(`Subtotal: ${formatNaira(sale.subtotal)}`);
   if (sale.discountTotal > 0) {
     const approved = sale.discountApprovedBy ? ` (approved by ${escapeHtml(sale.discountApprovedBy)})` : '';
-    lines.push(`Discount: −${formatNaira(sale.discountTotal)}${approved}`);
+    lines.push(`Discount: ${formatNaira(sale.discountTotal)}${approved}`);
   }
   lines.push(`<b>Total: ${formatNaira(sale.total)}</b>`);
-  lines.push(`Payment: ${describePayment(sale)}`);
   return lines.join('\n');
 }
 
 // Writes the message sent by the "Send test message" button.
 function testMessageText(storeName, userName) {
-  return `✅ <b>Test message</b> from ${escapeHtml(storeName)}\nSent by ${escapeHtml(userName)} at ${lagosTime(new Date())}.\nSales alerts will arrive in this chat.`;
+  return `<b>Test message</b> from ${escapeHtml(storeName)}\nSent by ${escapeHtml(userName)} at ${lagosTime(new Date())}.\nSales alerts will arrive in this chat.`;
 }
 
 module.exports = {

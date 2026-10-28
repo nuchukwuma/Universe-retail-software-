@@ -22,7 +22,6 @@ const returnSchema = new mongoose.Schema(
     customerName: { type: String, default: '' },
     items: [returnItemSchema],
     refundTotal: { type: Number, required: true },
-    refundMethod: { type: String, enum: ['cash', 'transfer', 'card'], required: true },
     reason: { type: String, required: true, trim: true },
     processedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     processedByName: { type: String, default: '' },

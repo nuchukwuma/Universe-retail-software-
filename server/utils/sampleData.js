@@ -6,7 +6,6 @@
 const User = require('../models/User');
 const Category = require('../models/Category');
 const Product = require('../models/Product');
-const Supplier = require('../models/Supplier');
 const Customer = require('../models/Customer');
 const sample = require('../seedData');
 
@@ -42,40 +41,19 @@ async function seedCategories(log) {
 }
 
 // Creates each sample product if a product with that name does not exist.
-// Returns an object that maps product name -> product id.
 async function seedProducts(categoryIdByName, log) {
-  const idByName = {};
   let created = 0;
 
   for (const item of sample.products) {
-    let product = await Product.findOne({ name: item.name });
-    if (!product) {
-      const { expiryDays, category, ...fields } = item;
-      product = await Product.create({
-        ...fields,
-        category: categoryIdByName[category],
-        expiryDate: expiryDays === undefined ? null : sample.daysFromNow(expiryDays),
-      });
+    const exists = await Product.findOne({ name: item.name });
+    if (!exists) {
+      const { category, ...fields } = item;
+      await Product.create({ ...fields, category: categoryIdByName[category] });
       created += 1;
     }
-    idByName[item.name] = product._id;
   }
 
   log(`+ Created ${created} product(s), ${sample.products.length - created} already existed`);
-  return idByName;
-}
-
-// Creates each sample supplier if it does not exist yet.
-async function seedSuppliers(productIdByName, log) {
-  for (const item of sample.suppliers) {
-    const exists = await Supplier.findOne({ name: item.name });
-    if (exists) continue;
-    await Supplier.create({
-      ...item,
-      products: item.products.map((name) => productIdByName[name]).filter(Boolean),
-    });
-    log(`+ Created supplier "${item.name}"`);
-  }
 }
 
 // Creates each sample customer if their phone number is not used yet.
@@ -88,12 +66,11 @@ async function seedCustomers(log) {
   }
 }
 
-// Adds the sample categories, products, suppliers and customers
+// Adds the sample categories, products and customers
 // (but NOT the sample staff accounts).
 async function loadSampleCatalogue(log = console.log) {
   const categoryIds = await seedCategories(log);
-  const productIds = await seedProducts(categoryIds, log);
-  await seedSuppliers(productIds, log);
+  await seedProducts(categoryIds, log);
   await seedCustomers(log);
 }
 

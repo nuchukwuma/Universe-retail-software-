@@ -1,17 +1,6 @@
 import BarcodeSvg from '../BarcodeSvg';
 import { ReceiptFrame, Divider, Row, money } from './ReceiptParts';
-import { PAYMENT_LABELS } from '../../utils/billMath';
 import { formatDateTime } from '../../utils/dates';
-
-// Shows each payment part. For cash, the amount the customer HANDED OVER
-// is shown (the sale stores the cash kept, so we add the change back).
-function paymentLines(sale) {
-  return sale.payments.map((p) => ({
-    label: PAYMENT_LABELS[p.method],
-    amount: p.method === 'cash' ? p.amount + sale.change : p.amount,
-    reference: p.reference,
-  }));
-}
 
 // The printed receipt for a sale. Works for 58mm, 80mm and A4 paper.
 function SaleReceipt({ sale, settings, paper, duplicate = false }) {
@@ -21,7 +10,6 @@ function SaleReceipt({ sale, settings, paper, duplicate = false }) {
       <Row left="Date:" right={formatDateTime(sale.createdAt)} />
       <Row left="Cashier:" right={sale.cashierName} />
       {sale.customerName && <Row left="Customer:" right={sale.customerName} />}
-      {sale.priceType === 'wholesale' && <Row left="Price type:" right="Wholesale" />}
       <Divider />
 
       {sale.items.map((item, index) => (
@@ -50,17 +38,12 @@ function SaleReceipt({ sale, settings, paper, duplicate = false }) {
       <Row strong left="TOTAL" right={money(sale.total)} />
       <Divider />
 
-      <Row left="Payment:" right={PAYMENT_LABELS[sale.paymentMethod]} />
-      {/* List each part for split payments, or show a transfer/POS reference */}
-      {paymentLines(sale)
-        .filter((p) => sale.paymentMethod === 'split' || p.reference)
-        .map((p) => (
-          <Row key={p.label} indent left={p.reference ? `${p.label} (${p.reference})` : p.label} right={money(p.amount)} />
-        ))}
-      <Row left="Amount paid" right={money(sale.amountTendered)} />
-      <Row left="Change" right={money(sale.change)} />
-      {sale.refundedTotal > 0 && <Row left="Refunded later" right={`-${money(sale.refundedTotal)}`} />}
-      <Divider />
+      {sale.refundedTotal > 0 && (
+        <>
+          <Row left="Refunded later" right={`-${money(sale.refundedTotal)}`} />
+          <Divider />
+        </>
+      )}
 
       <div className="receipt-barcode">
         <BarcodeSvg value={sale.receiptNumber} height={40} width={1.3} fontSize={11} />

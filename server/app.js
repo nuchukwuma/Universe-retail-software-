@@ -6,18 +6,16 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
-const { uploadsDir } = require('./utils/paths');
 const { startTelegramWorker } = require('./utils/telegramQueue');
 const { startBackupSchedule } = require('./utils/backup');
+const { runMigrations } = require('./utils/migrations');
 
 const authRoutes = require('./routes/authRoutes');
 const setupRoutes = require('./routes/setupRoutes');
 const userRoutes = require('./routes/userRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
-const supplierRoutes = require('./routes/supplierRoutes');
 const stockRoutes = require('./routes/stockRoutes');
-const uploadRoutes = require('./routes/uploadRoutes');
 const saleRoutes = require('./routes/saleRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const returnRoutes = require('./routes/returnRoutes');
@@ -40,9 +38,6 @@ function createApp({ clientDir } = {}) {
   if (!clientDir) app.use(cors());
   app.use(express.json({ limit: '5mb' }));
 
-  // Uploaded product, category and logo pictures
-  app.use('/uploads', express.static(uploadsDir()));
-
   // A quick way to check that the server is running.
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
@@ -54,9 +49,7 @@ function createApp({ clientDir } = {}) {
   app.use('/api/users', userRoutes);
   app.use('/api/categories', categoryRoutes);
   app.use('/api/products', productRoutes);
-  app.use('/api/suppliers', supplierRoutes);
   app.use('/api/stock', stockRoutes);
-  app.use('/api/uploads', uploadRoutes);
   app.use('/api/sales', saleRoutes);
   app.use('/api/customers', customerRoutes);
   app.use('/api/returns', returnRoutes);
@@ -64,7 +57,7 @@ function createApp({ clientDir } = {}) {
   app.use('/api/settings', settingsRoutes);
   app.use('/api/feedback', feedbackRoutes);
   app.use('/api/reports', reportRoutes); // end-of-day (everyone)
-  app.use('/api/reports', managerReportRoutes); // sales, profit and stock reports (managers/owners)
+  app.use('/api/reports', managerReportRoutes); // Today page, sales and stock reports (managers/owners)
   app.use('/api/telegram', telegramRoutes);
   app.use('/api/backups', backupRoutes);
 
@@ -92,6 +85,7 @@ async function startServer({ port = 5000, host, clientDir } = {}) {
   }
 
   await connectDB();
+  await runMigrations(); // tidy data saved by older versions of the app
 
   startTelegramWorker(); // retries Telegram alerts that could not be sent yet
   startBackupSchedule(); // makes the automatic daily backup

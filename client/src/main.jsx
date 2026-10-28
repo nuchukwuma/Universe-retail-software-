@@ -5,7 +5,11 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { PrintProvider } from './context/PrintContext';
-import './index.css';
+import '@fontsource-variable/archivo/wdth.css'; // bundled: the shop laptop is offline
+import './styles/tokens.css';
+import './styles/base.css';
+import './styles/components.css';
+import './styles/layout.css';
 import './styles/receipt.css';
 
 // Starts the React app inside the <div id="root"> in index.html.

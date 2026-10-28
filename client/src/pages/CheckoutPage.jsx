@@ -1,61 +1,53 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import TopBar from '../components/TopBar';
 import Toast, { useToast } from '../components/Toast';
 import LoadingScreen from '../components/LoadingScreen';
-import ScannerInput from '../components/checkout/ScannerInput';
-import BillPanel from '../components/checkout/BillPanel';
-import ProductGrid from '../components/checkout/ProductGrid';
-import CategoryList from '../components/checkout/CategoryList';
-import ActionBar from '../components/checkout/ActionBar';
+import ScanBox from '../components/checkout/ScanBox';
+import BillTable from '../components/checkout/BillTable';
+import PriceTicket from '../components/checkout/PriceTicket';
+import TillActions from '../components/checkout/TillActions';
 import CheckoutModals from '../components/checkout/CheckoutModals';
 import { useReceiptPrinting } from '../components/receipts/useReceiptPrinting';
 import { useBill } from '../hooks/useBill';
 import { useShortcuts } from '../hooks/useShortcuts';
+import { useGlobalScanner } from '../hooks/useScanner';
+import { canUseBackOffice } from '../utils/roles';
 import { formatNaira } from '../utils/formatNaira';
-import '../styles/checkout.css';
+import '../styles/pos.css';
 
-// Returns the products to show in the grid: search results (from all
-// categories) when there is search text, otherwise the chosen category.
-function filterProducts(products, categoryId, search) {
-  const query = search.trim().toLowerCase();
-  if (query) {
-    return products.filter((p) => p.name.toLowerCase().includes(query) || (p.barcode || '').startsWith(query));
-  }
-  if (categoryId === 'all') return products;
-  return products.filter((p) => p.category?._id === categoryId);
-}
+// A receipt number like 261027-0001 (or a return, R261027-0001).
+const RECEIPT_PATTERN = /^R?\d{6}-\d{4}$/i;
 
-// The checkout screen: the first page a cashier sees after login.
+// The sales screen (the till): the first page a cashier sees after login.
 function CheckoutPage() {
   const { user } = useAuth();
   const { settings } = useSettings();
+  const navigate = useNavigate();
   const billState = useBill();
-  const {
-    bill, totals, addProduct, clearBill, setCustomer, loadBill, setItemDiscount, setBillDiscount, setApproval, updatePrices,
-  } = billState;
+  const { bill, totals, addProduct, clearBill, setCustomer, setCustomerName, loadBill, setItemDiscount, setBillDiscount, setApproval, updatePrices } = billState;
   const { toast, showToast } = useToast();
   const { printSale } = useReceiptPrinting();
+  const scanRef = useRef(null);
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
-  const [categoryId, setCategoryId] = useState('all');
-  const [search, setSearch] = useState('');
   const [lastAddedId, setLastAddedId] = useState(null);
-  // Which pop-up is open, e.g. 'payment', 'discount', { type: 'receipt', sale } or null.
+  // What the last scan did: { kind: 'added' | 'notFound' | 'info', text, code }
+  const [scanResult, setScanResult] = useState(null);
+  // Which dialog is open, e.g. 'complete', 'discount', { type: 'receipt', sale } or null.
   const [modal, setModal] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [payError, setPayError] = useState('');
+  const [saleError, setSaleError] = useState('');
   const [holdError, setHoldError] = useState('');
-  const [pendingPayments, setPendingPayments] = useState(null); // kept while a manager approves
-  const [mobileView, setMobileView] = useState('products'); // phones show products OR the bill
-  const searchRef = useRef(null);
 
   const isCashier = user.role === 'cashier';
+  const modalType = typeof modal === 'string' ? modal : modal?.type;
 
   // Load all products and categories, so adding items is instant.
   // Refresh them every 5 minutes so price changes reach the till.
@@ -65,8 +57,7 @@ function CheckoutPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetches products and categories from the server, and puts the
-  // latest prices on the bill.
+  // Fetches products and categories, and puts the latest prices on the bill.
   async function loadProducts() {
     try {
       const [productList, categoryList] = await Promise.all([api.get('/products'), api.get('/categories')]);
@@ -87,87 +78,83 @@ function CheckoutPage() {
     products.forEach((p) => p.barcode && map.set(p.barcode, p));
     return map;
   }, [products]);
-
   const productsById = useMemo(() => Object.fromEntries(products.map((p) => [p._id, p])), [products]);
 
-  const visibleProducts = useMemo(
-    () => filterProducts(products, categoryId, search),
-    [products, categoryId, search]
-  );
-
-  // Closes whatever pop-up is open.
+  // Closes whatever dialog is open (the scan box takes the focus back).
   function closeModal() {
     setModal(null);
   }
 
-  // Adds one of a product to the bill and highlights it.
+  // Adds one of a product to the bill and highlights its line.
   function addToBill(product) {
     addProduct(product);
     setLastAddedId(product._id);
+    setScanResult({ kind: 'added', text: `Added ${product.name}, ${formatNaira(product.sellingPrice)}` });
   }
 
-  // Runs for every barcode from the USB scanner or the camera.
-  function handleScan(code, fromCamera = false) {
+  // Runs for every code from the scan box: look it up and add it.
+  // "source" is 'scanner' or 'keyboard' (a person typed it).
+  function handleCode(code, source) {
     const product = productsByBarcode.get(code);
     if (product) {
       addToBill(product);
-      showToast(`Added: ${product.name}`, 'success');
-    } else if (fromCamera) {
-      showToast(`No product has the barcode ${code}`, 'error');
-    } else if (/^R?\d{6}-\d{4}$/i.test(code)) {
-      // A receipt barcode was scanned: open the Return box for it.
-      showToast('That is a receipt barcode. Use Return to refund items.', 'info');
+    } else if (RECEIPT_PATTERN.test(code)) {
+      setScanResult({ kind: 'info', text: `${code} is a receipt. To refund items from it, press Return.` });
+    } else if (source === 'keyboard' && /[a-z]/i.test(code)) {
+      // A person typed a word, not a barcode: search by name instead.
+      setScanResult(null);
+      setModal({ type: 'find', text: code });
     } else {
-      setModal({ type: 'notFound', code });
+      setScanResult({ kind: 'notFound', code });
     }
   }
 
-  // Enter in the search box: add the product if the text is a known
-  // barcode or matches exactly one product.
-  function handleSearchKeyDown(event) {
-    if (event.key !== 'Enter') return;
-    event.preventDefault();
-    const text = search.trim();
-    if (!text) return;
-
-    const byBarcode = productsByBarcode.get(text);
-    if (byBarcode) {
-      addToBill(byBarcode);
-      setSearch('');
-    } else if (visibleProducts.length === 1) {
-      addToBill(visibleProducts[0]);
-      setSearch('');
-    } else if (/^\d{6,}$/.test(text)) {
-      setModal({ type: 'notFound', code: text });
-      setSearch('');
+  // A scan that arrived while the focus was somewhere else on the page.
+  function handleScanElsewhere(code) {
+    if (modal === null) {
+      handleCode(code, 'scanner');
+    } else if (modalType === 'find') {
+      const product = productsByBarcode.get(code);
+      if (product) {
+        addToBill(product);
+        showToast(`Added ${product.name}`, 'success');
+      } else {
+        showToast(`Product not found: no product has the barcode ${code}.`, 'error');
+      }
+    } else {
+      // Never let a scan press a button in an open window (e.g. Complete sale).
+      showToast('Finish or close the open window, then scan again.', 'error');
     }
   }
+  useGlobalScanner(handleScanElsewhere);
 
   // Empties the bill after checking with the cashier.
   function cancelBill() {
-    if (bill.items.length > 0 && window.confirm('Cancel this bill and remove all items?')) {
+    if (bill.items.length > 0 && window.confirm('Cancel this bill and take every item off it?')) {
       clearBill();
-      showToast('Bill cancelled', 'info');
+      setLastAddedId(null);
+      setScanResult(null);
+      showToast('Bill cancelled');
     }
   }
 
-  // Opens a pop-up that needs items on the bill (Pay, Hold, Discount).
+  // Opens a dialog that needs items on the bill.
   function openForBill(name) {
     if (bill.items.length === 0) {
-      showToast('The bill is empty', 'error');
+      showToast('The bill is empty. Scan an item first.', 'error');
       return;
     }
-    setPayError('');
+    setSaleError('');
     setHoldError('');
     setModal(name);
   }
 
-  // ----- Payment -----
+  // ----- Completing the sale -----
 
-  // Sends the sale to the server. On success, clears the bill and shows the receipt.
-  async function completeSale(payments, approvalToken = bill.approval?.token) {
+  // Saves the sale. On success, empties the bill and shows the receipt.
+  async function completeSale(approvalToken = bill.approval?.token) {
     setSaving(true);
-    setPayError('');
+    setSaleError('');
     try {
       const sale = await api.post('/sales', {
         items: bill.items.map((item) => ({
@@ -176,15 +163,13 @@ function CheckoutPage() {
           discountType: item.discountType,
           discountValue: item.discountValue,
         })),
-        priceType: bill.priceType,
         billDiscount: bill.discount,
         customerId: bill.customer?._id || null,
         customerName: bill.customerName,
         approvalToken,
-        payments,
       });
 
-      // Update stock on screen straight away, then refresh quietly from the server.
+      // Show the new stock straight away, then refresh quietly from the server.
       setProducts((current) =>
         current.map((p) => {
           const sold = sale.items.find((item) => item.product === p._id);
@@ -193,59 +178,53 @@ function CheckoutPage() {
       );
       clearBill();
       setLastAddedId(null);
-      setPendingPayments(null);
+      setScanResult(null);
       loadProducts();
 
-      // Auto-print (Settings) prints straight away; otherwise show the preview.
+      // Auto-print (Settings) prints straight away; otherwise show the receipt.
       if (settings.autoPrint) {
-        const printed = await printSale(sale);
-        setModal({ type: 'complete', sale: printed });
+        setModal({ type: 'done', sale: await printSale(sale) });
       } else {
         setModal({ type: 'receipt', sale });
       }
     } catch (err) {
       if (err.code === 'APPROVAL_REQUIRED') {
-        // A large discount needs a manager: ask, then try again.
-        setPendingPayments(payments);
-        setModal('approveSale');
+        setModal('approveSale'); // a large discount needs a manager
       } else {
-        setPayError(err.message);
+        setSaleError(err.message);
       }
     } finally {
       setSaving(false);
     }
   }
 
-  // After a manager approves a large discount, saves the approval and retries the sale.
+  // After a manager approves a large discount, try the sale again.
   function approveAndRetrySale(approval) {
     setApproval(approval);
-    setModal('payment');
-    completeSale(pendingPayments, approval.token);
+    setModal('complete');
+    completeSale(approval.token);
   }
 
-  // "Reprint later" on the receipt preview: close it; it can be printed from Sales History.
-  function reprintLater() {
+  // "Print later" on the receipt: it can be printed from Sales history.
+  function printLater() {
     closeModal();
-    showToast('Saved. Print it any time from Sales History.', 'info');
+    showToast('Sale saved. Print the receipt any time from Sales history.');
   }
 
   // ----- Discount -----
 
-  // Applies (or removes, when type is '') a discount chosen in the Discount box.
+  // Applies (or removes, when type is '') a discount.
   function applyDiscount({ target, type, value, approval }) {
-    if (target === 'bill') {
-      setBillDiscount(type ? { type, value } : null);
-    } else {
-      setItemDiscount(target, type, value);
-    }
+    if (target === 'bill') setBillDiscount(type ? { type, value } : null);
+    else setItemDiscount(target, type, value);
     if (approval) setApproval(approval);
     closeModal();
     showToast(type ? 'Discount applied' : 'Discount removed', 'success');
   }
 
-  // ----- Hold and Recall -----
+  // ----- Hold and recall -----
 
-  // Saves the current bill on the server to finish later, and empties the till.
+  // Saves the bill on the server to finish later, and empties the till.
   async function holdBill(label) {
     setSaving(true);
     setHoldError('');
@@ -258,8 +237,9 @@ function CheckoutPage() {
       });
       clearBill();
       setLastAddedId(null);
+      setScanResult(null);
       closeModal();
-      showToast('Bill put on hold. Use Recall to bring it back.', 'success');
+      showToast('Bill on hold. Press F7 to recall it.', 'success');
     } catch (err) {
       setHoldError(err.message);
     } finally {
@@ -267,17 +247,16 @@ function CheckoutPage() {
     }
   }
 
-  // Opens the Recall box (only when the till is empty, so no bill is lost).
+  // Opens Recall (only when the till is empty, so no bill is lost).
   function openRecall() {
     if (bill.items.length > 0) {
-      showToast('Finish, hold or cancel the current bill first.', 'error');
+      showToast('Complete, hold or cancel this bill first.', 'error');
       return;
     }
     setModal('recall');
   }
 
-  // Brings a held bill back onto the till, then reloads products so the
-  // bill shows today's prices.
+  // Puts a held bill back on the till, with today's prices.
   async function recallBill(held) {
     try {
       await api.delete(`/held-bills/${held._id}`);
@@ -285,139 +264,155 @@ function CheckoutPage() {
       showToast(err.message, 'error');
       return;
     }
-
     // Products deleted while the bill was on hold cannot be sold.
     const items = held.bill.items.filter((item) => productsById[item.productId]);
     const removed = held.bill.items.length - items.length;
-
     loadBill({ ...held.bill, items });
     closeModal();
-    showToast(removed > 0 ? `Bill recalled. ${removed} deleted product(s) were removed.` : 'Bill recalled', 'success');
+    showToast(removed > 0 ? `Bill recalled. ${removed} deleted product(s) were taken off.` : 'Bill recalled', 'success');
     loadProducts();
   }
 
-  // ----- Other actions -----
+  // ----- Customer, feedback, returns -----
 
-  // Links the chosen customer to the bill.
+  // Links a saved customer to the bill.
   function pickCustomer(customer) {
     setCustomer(customer);
+    closeModal();
+  }
+
+  // Writes a walk-in customer's name on the bill ('' = no name).
+  function setWalkIn(name) {
+    setCustomerName(name);
     closeModal();
   }
 
   // After feedback is saved.
   function feedbackSaved() {
     closeModal();
-    showToast('Thank you! Feedback saved.', 'success');
+    showToast('Feedback saved', 'success');
   }
 
-  // After a return is saved: show the return receipt and refresh stock.
+  // After a return: show the return receipt and refresh stock.
   function returnDone(result) {
     setModal({ type: 'returnReceipt', ret: result.return });
     loadProducts();
   }
 
-  // Keyboard shortcuts (switched off while a pop-up is open).
+  // Keyboard shortcuts (off while a dialog is open; dialogs have their own keys).
   useShortcuts(
     {
       F1: () => setModal('shortcuts'),
-      F2: () => searchRef.current?.focus(),
+      F2: () => setModal({ type: 'find' }),
       F3: () => setModal('customer'),
-      F4: () => setModal('camera'),
       F6: () => openForBill('hold'),
       F7: openRecall,
       F8: () => openForBill('discount'),
       F9: cancelBill,
-      F10: () => openForBill('payment'),
+      F10: () => openForBill('complete'),
+      Escape: () => scanRef.current?.focus(),
     },
     modal === null
   );
 
   if (loading) return <LoadingScreen message="Loading products..." />;
 
-  // Everything the pop-up boxes need.
+  // Everything the dialogs need.
   const checkout = {
-    bill, totals, settings, isCashier, lastAddedId, saving, payError, holdError,
-    closeModal, completeSale, approveAndRetrySale, reprintLater, applyDiscount, holdBill, recallBill,
-    pickCustomer, feedbackSaved, returnDone, handleScan,
+    bill, totals, settings, isCashier, lastAddedId, saving, saleError, holdError, products, categories,
+    closeModal, addToBill, completeSale, approveAndRetrySale, printLater, applyDiscount, holdBill, recallBill,
+    pickCustomer, setWalkIn, feedbackSaved, returnDone,
   };
 
   return (
-    <div className="checkout-page">
-      <TopBar showBackOfficeLink />
-      <ScannerInput onScan={handleScan} paused={modal !== null} />
-      <Toast toast={toast} />
+    <div className="till">
+      <TopBar />
 
       {loadError && (
-        <div className="alert alert-error checkout-alert">
-          {loadError} <button type="button" className="btn btn-small" onClick={loadProducts}>Try again</button>
+        <div className="notice notice-error" role="alert">
+          <span className="notice-title">The product list could not be loaded.</span>
+          {loadError}
+          <div className="btn-row">
+            <button type="button" className="btn btn-small" onClick={loadProducts}>Try again</button>
+          </div>
         </div>
       )}
 
-      <div className="mobile-tabs">
-        <button type="button" className={mobileView === 'products' ? 'active' : ''} onClick={() => setMobileView('products')}>
-          Products
-        </button>
-        <button type="button" className={mobileView === 'bill' ? 'active' : ''} onClick={() => setMobileView('bill')}>
-          Bill ({totals.quantityCount}) · {formatNaira(totals.total)}
-        </button>
-      </div>
+      <main className="till-main">
+        <section className="till-bill" aria-label="Bill">
+          <ScanBox ref={scanRef} onSubmit={handleCode} paused={modal !== null}>
+            {scanResult?.kind === 'added' && <p className="scan-result success-text">{scanResult.text}</p>}
+            {scanResult?.kind === 'info' && <p className="scan-result">{scanResult.text}</p>}
+          </ScanBox>
 
-      <main className={`checkout-main show-${mobileView}`}>
-        <BillPanel
-          billState={billState}
-          productsById={productsById}
-          lastAddedId={lastAddedId}
-          onPickCustomer={() => setModal('customer')}
-        />
+          {scanResult?.kind === 'notFound' && (
+            <div className="notice notice-error" role="alert">
+              <span className="notice-title">Product not found</span>
+              No product has the barcode {scanResult.code}. Check the number and scan again
+              {canUseBackOffice(user) ? ', or add it as a new product.' : ', or ask a manager to add it.'}
+              <div className="btn-row">
+                {canUseBackOffice(user) && (
+                  <button type="button" className="btn btn-small" onClick={() => navigate(`/products/new?barcode=${encodeURIComponent(scanResult.code)}&from=checkout`)}>
+                    Add as a new product
+                  </button>
+                )}
+                <button type="button" className="btn btn-small btn-quiet" onClick={() => setScanResult(null)}>Dismiss</button>
+              </div>
+            </div>
+          )}
 
-        <section className="product-panel">
-          <div className="product-search-bar">
-            <input
-              ref={searchRef}
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              placeholder="Search products by name or barcode (F2)"
-              aria-label="Search products"
-            />
-            <button type="button" className="btn btn-icon" onClick={() => setModal('camera')} title="Scan with camera (F4)">
-              📷
-            </button>
+          <div className="bill-meta">
+            <p className="bill-customer">
+              Customer:<strong>{bill.customerName || 'Walk-in'}</strong>
+              {bill.customer?.phone && <span className="muted"> ({bill.customer.phone})</span>}
+            </p>
+            <div className="btn-row">
+              {bill.customerName && (
+                <button type="button" className="btn btn-quiet" onClick={() => setCustomer(null)}>Remove customer</button>
+              )}
+              <button type="button" className="btn btn-quiet" onClick={() => setModal('customer')}>
+                Change customer <span className="key">F3</span>
+              </button>
+            </div>
           </div>
-          <ProductGrid
-            key={`${categoryId}-${search}`}
-            products={visibleProducts}
-            priceType={bill.priceType}
-            onAdd={addToBill}
-          />
+
+          <div className="bill-lines">
+            <BillTable billState={billState} productsById={productsById} lastAddedId={lastAddedId} />
+          </div>
+
+          {totals.billDiscount > 0 && (
+            <div className="bill-discount">
+              <span>
+                Discount on the whole bill{bill.discount.type === 'percent' ? ` (${bill.discount.value}%)` : ''}: minus{' '}
+                <strong>{formatNaira(totals.billDiscount)}</strong>
+              </span>
+              <button type="button" className="btn btn-quiet btn-danger" onClick={() => setBillDiscount(null)}>Remove discount</button>
+            </div>
+          )}
         </section>
 
-        <CategoryList
-          categories={categories}
-          activeId={search ? null : categoryId}
-          onSelect={(id) => {
-            setCategoryId(id);
-            setSearch('');
-          }}
-        />
+        <aside className="till-side">
+          <PriceTicket totals={totals} onComplete={() => openForBill('complete')} />
+          <div className="till-tools">
+            <TillActions
+              hasItems={bill.items.length > 0}
+              actions={{
+                onFind: () => setModal({ type: 'find' }),
+                onCustomer: () => setModal('customer'),
+                onDiscount: () => openForBill('discount'),
+                onHold: () => openForBill('hold'),
+                onRecall: openRecall,
+                onReturn: () => setModal('return'),
+                onFeedback: () => setModal('feedback'),
+                onCancel: cancelBill,
+              }}
+            />
+            <p className="till-hint">Press F1 for all keyboard shortcuts.</p>
+          </div>
+        </aside>
       </main>
 
-      <ActionBar
-        total={totals.total}
-        hasItems={bill.items.length > 0}
-        actions={{
-          onFeedback: () => setModal('feedback'),
-          onRecall: openRecall,
-          onReturn: () => setModal('return'),
-          onCancel: cancelBill,
-          onHold: () => openForBill('hold'),
-          onDiscount: () => openForBill('discount'),
-          onPay: () => openForBill('payment'),
-        }}
-      />
-      <div className="checkout-hint">Press <kbd>F1</kbd> for shortcut list</div>
-
+      <Toast toast={toast} />
       <CheckoutModals modal={modal} c={checkout} />
     </div>
   );

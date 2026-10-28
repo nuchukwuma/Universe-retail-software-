@@ -4,31 +4,16 @@
 // year of sales is added up quickly inside the database.
 //
 // How the numbers are worked out:
-//   net sales = what customers paid after discounts (sale.total)
-//   refunds   = money given back for returns (counted on the ORIGINAL sale's day)
-//   cost      = cost price x quantity kept by the customer (returned items excluded)
-//   profit    = net sales - refunds - cost
+//   sales total = what customers paid after discounts (sale.total)
+//   refunds     = money given back for returns (counted on the ORIGINAL sale's day)
+//   takings     = sales total - refunds
 
 const Sale = require('../models/Sale');
 const { roundMoney } = require('./saleCalculations');
+const { mondayOf } = require('./dates');
 
 const TIMEZONE = 'Africa/Lagos';
-
-// "How many of this line did the customer keep?" (bought - returned)
-const KEPT_QUANTITY = { $subtract: ['$$item.quantity', { $ifNull: ['$$item.returnedQuantity', 0] }] };
-
-// Adds up the payments made with one method inside a sale.
-function paidBy(method) {
-  return {
-    $sum: {
-      $map: {
-        input: { $filter: { input: '$payments', as: 'p', cond: { $eq: ['$$p.method', method] } } },
-        as: 'p',
-        in: '$$p.amount',
-      },
-    },
-  };
-}
+const MONEY_FIELDS = ['grossSales', 'discounts', 'netSales', 'refunds'];
 
 // Step that works out the useful numbers for each single sale.
 const SALE_NUMBERS_STEP = {
@@ -41,12 +26,6 @@ const SALE_NUMBERS_STEP = {
     total: 1,
     refunds: { $ifNull: ['$refundedTotal', 0] },
     itemsSold: { $sum: '$items.quantity' },
-    cost: {
-      $sum: { $map: { input: '$items', as: 'item', in: { $multiply: ['$$item.costPrice', KEPT_QUANTITY] } } },
-    },
-    cash: paidBy('cash'),
-    transfer: paidBy('transfer'),
-    card: paidBy('card'),
   },
 };
 
@@ -58,21 +37,35 @@ const GROUP_TOTALS = {
   discounts: { $sum: '$discountTotal' },
   netSales: { $sum: '$total' },
   refunds: { $sum: '$refunds' },
-  cost: { $sum: '$cost' },
-  cash: { $sum: '$cash' },
-  transfer: { $sum: '$transfer' },
-  card: { $sum: '$card' },
 };
 
-// Rounds every money field and adds profit (and average sale).
+// Rounds every money field and adds takings and the average sale.
 function finishRow(row) {
   const rounded = { ...row };
-  ['grossSales', 'discounts', 'netSales', 'refunds', 'cost', 'cash', 'transfer', 'card'].forEach((key) => {
+  MONEY_FIELDS.forEach((key) => {
     rounded[key] = roundMoney(row[key] || 0);
   });
-  rounded.profit = roundMoney(rounded.netSales - rounded.refunds - rounded.cost);
-  rounded.averageSale = row.transactions ? Math.round(rounded.netSales / row.transactions) : 0;
+  rounded.transactions = row.transactions || 0;
+  rounded.itemsSold = row.itemsSold || 0;
+  rounded.takings = roundMoney(rounded.netSales - rounded.refunds);
+  rounded.averageSale = rounded.transactions ? Math.round(rounded.netSales / rounded.transactions) : 0;
   return rounded;
+}
+
+// Adds a list of rows together into one total row.
+function addRows(rows, extra = {}) {
+  const total = { transactions: 0, itemsSold: 0, ...extra };
+  MONEY_FIELDS.forEach((key) => {
+    total[key] = 0;
+  });
+  rows.forEach((row) => {
+    total.transactions += row.transactions;
+    total.itemsSold += row.itemsSold;
+    MONEY_FIELDS.forEach((key) => {
+      total[key] += row[key];
+    });
+  });
+  return finishRow(total);
 }
 
 // Sales totals for each day in the date filter, oldest day first.
@@ -86,6 +79,18 @@ async function dailySales(createdAt) {
   return rows.map((row) => finishRow({ day: row._id, ...row, _id: undefined }));
 }
 
+// Sales totals for each week (Monday to Sunday), oldest first.
+// Built from the daily totals, so it works on MongoDB 4.2.
+async function weeklySales(createdAt) {
+  const byWeek = new Map();
+  (await dailySales(createdAt)).forEach((day) => {
+    const weekStart = mondayOf(day.day);
+    if (!byWeek.has(weekStart)) byWeek.set(weekStart, []);
+    byWeek.get(weekStart).push(day);
+  });
+  return [...byWeek.entries()].map(([weekStart, days]) => addRows(days, { weekStart }));
+}
+
 // Sales totals for each cashier, best seller first.
 async function salesByCashier(createdAt) {
   const rows = await Sale.aggregate([
@@ -97,20 +102,22 @@ async function salesByCashier(createdAt) {
   return rows.map((row) => finishRow({ ...row, cashier: row._id, _id: undefined }));
 }
 
-// One total line for the whole date filter (used for the dashboard cards).
+// One total line for the whole date filter (used on the Today page).
 async function salesSummary(createdAt) {
   const [row] = await Sale.aggregate([
     { $match: { createdAt } },
     SALE_NUMBERS_STEP,
     { $group: { _id: null, ...GROUP_TOTALS } },
   ]);
-  return finishRow(row || { transactions: 0, itemsSold: 0 });
+  const summary = finishRow(row || {});
+  delete summary._id;
+  return summary;
 }
 
-// Quantity, revenue, cost and profit for every product sold, most sold first.
-// Revenue shares out any whole-bill discount between the lines of the sale,
-// and is rounded to whole Naira (so totals can differ from the daily
-// report by a few Naira).
+// Quantity sold and sales value for every product, most sold first.
+// Returned items are taken off. The sales value shares out any
+// whole-bill discount between the lines of the sale, rounded to whole
+// Naira (so totals can differ from the daily report by a few Naira).
 async function productSales(createdAt) {
   const rows = await Sale.aggregate([
     { $match: { createdAt } },
@@ -125,7 +132,6 @@ async function productSales(createdAt) {
         kept: { $subtract: ['$items.quantity', { $ifNull: ['$items.returnedQuantity', 0] }] },
         lineTotal: '$items.lineTotal',
         quantity: '$items.quantity',
-        costPrice: '$items.costPrice',
         paidShare: 1,
       },
     },
@@ -135,35 +141,13 @@ async function productSales(createdAt) {
         name: 1,
         kept: 1,
         revenue: { $multiply: ['$lineTotal', '$paidShare', { $divide: ['$kept', '$quantity'] }] },
-        cost: { $multiply: ['$costPrice', '$kept'] },
       },
     },
-    {
-      $group: {
-        _id: '$product',
-        name: { $last: '$name' },
-        quantity: { $sum: '$kept' },
-        revenue: { $sum: '$revenue' },
-        cost: { $sum: '$cost' },
-      },
-    },
+    { $group: { _id: '$product', name: { $last: '$name' }, quantity: { $sum: '$kept' }, revenue: { $sum: '$revenue' } } },
     { $sort: { quantity: -1, revenue: -1 } },
   ]);
 
-  return rows.map((row) => {
-    const revenue = Math.round(row.revenue);
-    const cost = Math.round(row.cost);
-    const profit = revenue - cost;
-    return {
-      product: row._id,
-      name: row.name,
-      quantity: row.quantity,
-      revenue,
-      cost,
-      profit,
-      margin: revenue > 0 ? roundMoney((profit / revenue) * 100) : 0,
-    };
-  });
+  return rows.map((row) => ({ product: row._id, name: row.name, quantity: row.quantity, revenue: Math.round(row.revenue) }));
 }
 
-module.exports = { dailySales, salesByCashier, salesSummary, productSales };
+module.exports = { dailySales, weeklySales, salesByCashier, salesSummary, productSales, addRows };

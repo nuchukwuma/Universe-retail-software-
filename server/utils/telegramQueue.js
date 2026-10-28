@@ -100,7 +100,7 @@ function startTelegramWorker() {
   }, CHECK_EVERY_MS);
 
   isTelegramConfigured()
-    .then((ready) => console.log(ready ? 'Telegram sales alerts: ready' : 'Telegram sales alerts: not set up yet (Settings → Telegram)'))
+    .then((ready) => console.log(ready ? 'Telegram sales alerts: ready' : 'Telegram sales alerts: not set up yet (Settings, Telegram sales alerts)'))
     .catch(() => {});
 }
 

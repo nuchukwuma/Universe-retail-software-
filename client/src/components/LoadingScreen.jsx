@@ -1,8 +1,7 @@
-// A full-page spinner shown while something is loading.
+// A full-page "please wait" message, in plain text.
 function LoadingScreen({ message = 'Loading...' }) {
   return (
-    <div className="loading-screen">
-      <div className="spinner" />
+    <div className="loading-screen" role="status">
       <p>{message}</p>
     </div>
   );

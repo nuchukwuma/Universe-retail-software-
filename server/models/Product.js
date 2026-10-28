@@ -8,18 +8,14 @@ const productSchema = new mongoose.Schema(
     // every barcode that IS set unique.
     barcode: { type: String, trim: true, unique: true, sparse: true },
     category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null },
-    image: { type: String, default: '' },
-    costPrice: { type: Number, default: 0, min: [0, 'Cost price cannot be negative.'] },
     sellingPrice: {
       type: Number,
       required: [true, 'Selling price is required.'],
       min: [0, 'Selling price cannot be negative.'],
     },
-    // Optional lower price for bulk buyers. 0 means "same as selling price".
-    wholesalePrice: { type: Number, default: 0, min: [0, 'Wholesale price cannot be negative.'] },
     quantity: { type: Number, default: 0 },
-    reorderLevel: { type: Number, default: 5, min: [0, 'Reorder level cannot be negative.'] },
-    expiryDate: { type: Date, default: null },
+    // When stock falls to this number, the product shows as "low".
+    reorderLevel: { type: Number, default: 5, min: [0, 'Low-stock level cannot be negative.'] },
   },
   { timestamps: true }
 );

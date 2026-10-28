@@ -5,8 +5,6 @@ export const DEFAULT_SETTINGS = {
   address: '',
   phone: '',
   footerMessage: 'Thank you for shopping with us!',
-  logo: '/logo.png',
-  showLogoOnReceipt: true,
   paperSize: '80mm',
   autoPrint: false,
   printerName: '',

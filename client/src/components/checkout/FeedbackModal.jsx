@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { api } from '../../api/api';
 import Modal from '../Modal';
 
 export const RATINGS = [
-  { value: 'happy', emoji: '😀', label: 'Happy' },
-  { value: 'neutral', emoji: '😐', label: 'Okay' },
-  { value: 'unhappy', emoji: '🙁', label: 'Unhappy' },
+  { value: 'happy', label: 'Happy' },
+  { value: 'neutral', label: 'Okay' },
+  { value: 'unhappy', label: 'Unhappy' },
 ];
 
-// Pop-up for recording what a customer said about the shop.
+// Records what a customer said about the shop.
 // Managers read these on the Feedback page.
 function FeedbackModal({ defaultCustomerName, onSaved, onClose }) {
+  const formId = useId();
   const [rating, setRating] = useState('');
   const [comment, setComment] = useState('');
   const [customerName, setCustomerName] = useState(defaultCustomerName || '');
@@ -35,34 +36,36 @@ function FeedbackModal({ defaultCustomerName, onSaved, onClose }) {
   }
 
   return (
-    <Modal title="Customer feedback" onClose={onClose}>
-      <form className="customer-form" onSubmit={handleSubmit}>
-        <div className="rating-buttons">
-          {RATINGS.map((r) => (
-            <button
-              key={r.value}
-              type="button"
-              className={rating === r.value ? 'rating-button active' : 'rating-button'}
-              onClick={() => setRating(r.value)}
-            >
-              <span>{r.emoji}</span>
-              {r.label}
-            </button>
-          ))}
-        </div>
-        <label>
-          What did the customer say?
-          <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} placeholder="e.g. Please stock more Ofada rice" />
-        </label>
-        <label>
-          Customer name (optional)
-          <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
-        </label>
-        {error && <div className="alert alert-error">{error}</div>}
-        <div className="form-actions">
-          <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save Feedback'}</button>
+    <Modal
+      title="Customer feedback"
+      onClose={onClose}
+      footer={
+        <>
           <button type="button" className="btn" onClick={onClose}>Cancel</button>
+          <button type="submit" form={formId} className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save feedback'}</button>
+        </>
+      }
+    >
+      <form id={formId} className="stack" onSubmit={handleSubmit}>
+        <div className="field">
+          <span className="field-label" id={`${formId}-rating`}>How did the customer feel?</span>
+          <div className="choices" role="group" aria-labelledby={`${formId}-rating`}>
+            {RATINGS.map((r) => (
+              <button key={r.value} type="button" className="choice" aria-pressed={rating === r.value} onClick={() => setRating(r.value)}>
+                {r.label}
+              </button>
+            ))}
+          </div>
         </div>
+        <div className="field">
+          <label className="field-label" htmlFor={`${formId}-comment`}>What did they say?</label>
+          <textarea id={`${formId}-comment`} value={comment} onChange={(e) => setComment(e.target.value)} rows={3} placeholder="e.g. Please stock more Ofada rice" />
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor={`${formId}-name`}>Customer name (optional)</label>
+          <input id={`${formId}-name`} value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+        </div>
+        {error && <div className="notice notice-error" role="alert">{error}</div>}
       </form>
     </Modal>
   );

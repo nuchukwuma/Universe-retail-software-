@@ -1,57 +1,59 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { api } from '../../api/api';
 import Modal from '../Modal';
 
-// A small form where a manager or owner types their username and password
-// on the cashier's till to approve something (large discount, return).
+// A manager or owner types their username and password on the cashier's
+// till to approve something (a large discount, a return).
 // Calls onApproved({ token, approverName }) when the password is right.
-export function ManagerApprovalForm({ reason, onApproved, onCancel }) {
+// "formId" lets a dialog footer hold the Approve button.
+export function ManagerApprovalForm({ reason, onApproved, formId }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [checking, setChecking] = useState(false);
   const [error, setError] = useState('');
 
   // Sends the manager's details to the server to check them.
   async function handleSubmit(event) {
     event.preventDefault();
-    setChecking(true);
     setError('');
     try {
       const data = await api.post('/auth/approve', { username, password });
       onApproved({ token: data.approvalToken, approverName: data.approverName });
     } catch (err) {
       setError(err.message);
-      setChecking(false);
     }
   }
 
   return (
-    <form className="approval-form" onSubmit={handleSubmit}>
-      <p className="approval-reason">🔒 {reason}</p>
-      {error && <div className="alert alert-error">{error}</div>}
-      <label>
-        Manager username
-        <input value={username} onChange={(e) => setUsername(e.target.value)} autoFocus required autoComplete="off" />
-      </label>
-      <label>
-        Manager password
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
-      </label>
-      <div className="form-actions">
-        <button type="submit" className="btn btn-primary" disabled={checking}>
-          {checking ? 'Checking...' : 'Approve'}
-        </button>
-        <button type="button" className="btn" onClick={onCancel}>Cancel</button>
+    <form id={formId} className="stack" onSubmit={handleSubmit}>
+      <p>{reason}</p>
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      <div className="field">
+        <label className="field-label" htmlFor={`${formId}-user`}>Manager's username</label>
+        <input id={`${formId}-user`} value={username} onChange={(e) => setUsername(e.target.value)} autoFocus required autoComplete="off" />
+      </div>
+      <div className="field">
+        <label className="field-label" htmlFor={`${formId}-pass`}>Manager's password</label>
+        <input id={`${formId}-pass`} type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
       </div>
     </form>
   );
 }
 
-// The same form inside its own pop-up box.
+// The approval form in its own dialog.
 export function ManagerApprovalModal({ reason, onApproved, onClose }) {
+  const formId = useId();
   return (
-    <Modal title="Manager approval needed" onClose={onClose}>
-      <ManagerApprovalForm reason={reason} onApproved={onApproved} onCancel={onClose} />
+    <Modal
+      title="A manager must approve this"
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="btn push-left" onClick={onClose}>Cancel</button>
+          <button type="submit" form={formId} className="btn btn-primary">Approve</button>
+        </>
+      }
+    >
+      <ManagerApprovalForm reason={reason} onApproved={onApproved} formId={formId} />
     </Modal>
   );
 }

@@ -1,11 +1,12 @@
-// Backups: copies ALL the shop's data (every database table plus the
-// uploaded pictures) into a dated folder, and can put it all back.
+// Backups: copies ALL the shop's data (every database table) into a
+// dated folder, and can put it all back.
 //
 // A backup folder looks like:
 //   universe-pos-backup-2026-10-27-1830/
 //     manifest.json            <- what is inside, and when it was made
 //     collections/sales.jsonl  <- one record per line (one file per table)
-//     uploads/...              <- product and logo pictures
+// (Backups from older versions also have an "uploads" folder of pictures;
+// the app no longer uses pictures, so it is ignored.)
 //
 // Records are saved as "Extended JSON" so ids and dates come back exactly.
 
@@ -15,7 +16,7 @@ const readline = require('readline');
 const { once } = require('events');
 const mongoose = require('mongoose');
 const { getSettings } = require('./settings');
-const { makeFolder, uploadsDir, defaultBackupDir } = require('./paths');
+const { makeFolder, defaultBackupDir } = require('./paths');
 
 const { EJSON } = mongoose.mongo.BSON;
 const BACKUP_PREFIX = 'universe-pos-backup-';
@@ -45,18 +46,6 @@ function freeBackupName(parent) {
     name = `${base}-${n}`;
   }
   return name;
-}
-
-// Copies a folder and everything inside it.
-function copyFolder(from, to) {
-  if (!fs.existsSync(from)) return;
-  makeFolder(to);
-  for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
-    const source = path.join(from, entry.name);
-    const target = path.join(to, entry.name);
-    if (entry.isDirectory()) copyFolder(source, target);
-    else fs.copyFileSync(source, target);
-  }
 }
 
 // Adds up the size of every file in a folder (in bytes).
@@ -106,8 +95,6 @@ async function createBackup(reason = 'manual') {
       if (collectionName.startsWith('system.')) continue;
       counts[collectionName] = await exportCollection(db, collectionName, path.join(workFolder, 'collections', `${collectionName}.jsonl`));
     }
-
-    copyFolder(uploadsDir(), path.join(workFolder, 'uploads'));
 
     const manifest = {
       app: 'Universe POS',
@@ -232,9 +219,6 @@ async function restoreBackup(name) {
   for (const collectionName of backupCollections) {
     counts[collectionName] = await importCollection(db, collectionName, path.join(folder, 'collections', `${collectionName}.jsonl`));
   }
-
-  // Put the pictures back.
-  copyFolder(path.join(folder, 'uploads'), uploadsDir());
   return { name, counts };
 }
 

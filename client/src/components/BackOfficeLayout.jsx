@@ -4,47 +4,79 @@ import { hasRole } from '../utils/roles';
 import TopBar from './TopBar';
 
 const EVERYONE = ['owner', 'manager', 'cashier'];
+const MANAGERS = ['owner', 'manager'];
+const OWNER = ['owner'];
 
-// Menu items for the back office. "roles" says who can see each link.
+// The page list, grouped by job. "roles" says who can see each page.
 const MENU = [
-  { to: '/dashboard', label: '📊 Dashboard', roles: ['owner', 'manager'] },
-  { to: '/reports', label: '📈 Reports', roles: ['owner', 'manager'] },
-  { to: '/sales-history', label: '🧾 Sales History', roles: EVERYONE },
-  { to: '/end-of-day', label: '🌙 End of Day', roles: EVERYONE },
-  { to: '/products', label: '📦 Products', roles: ['owner', 'manager'] },
-  { to: '/categories', label: '🗂️ Categories', roles: ['owner', 'manager'] },
-  { to: '/suppliers', label: '🚚 Suppliers', roles: ['owner', 'manager'] },
-  { to: '/receive-stock', label: '📥 Receive Stock', roles: ['owner', 'manager'] },
-  { to: '/stock-count', label: '🔢 Stock Count', roles: ['owner', 'manager'] },
-  { to: '/barcode-labels', label: '🏷️ Barcode Labels', roles: ['owner', 'manager'] },
-  { to: '/customers', label: '👤 Customers', roles: ['owner', 'manager'] },
-  { to: '/feedback', label: '💬 Feedback', roles: ['owner', 'manager'] },
-  { to: '/staff', label: '👥 Staff Accounts', roles: ['owner'] },
-  { to: '/settings', label: '⚙️ Settings', roles: ['owner'] },
-  { to: '/backup', label: '💾 Backup & Restore', roles: ['owner'] },
+  {
+    heading: 'Selling',
+    links: [
+      { to: '/sales-history', label: 'Sales history', roles: EVERYONE },
+      { to: '/end-of-day', label: 'End of day', roles: EVERYONE },
+    ],
+  },
+  {
+    heading: 'Reports',
+    links: [
+      { to: '/dashboard', label: 'Today', roles: MANAGERS },
+      { to: '/reports', label: 'Reports', roles: MANAGERS },
+    ],
+  },
+  {
+    heading: 'Stock',
+    links: [
+      { to: '/products', label: 'Products', roles: MANAGERS },
+      { to: '/categories', label: 'Categories', roles: MANAGERS },
+      { to: '/receive-stock', label: 'Receive stock', roles: MANAGERS },
+      { to: '/stock-count', label: 'Stock count', roles: MANAGERS },
+      { to: '/barcode-labels', label: 'Barcode labels', roles: MANAGERS },
+    ],
+  },
+  {
+    heading: 'People',
+    links: [
+      { to: '/customers', label: 'Customers', roles: MANAGERS },
+      { to: '/feedback', label: 'Feedback', roles: MANAGERS },
+      { to: '/staff', label: 'Staff', roles: OWNER },
+    ],
+  },
+  {
+    heading: 'Shop',
+    links: [
+      { to: '/settings', label: 'Settings', roles: OWNER },
+      { to: '/backup', label: 'Backup and restore', roles: OWNER },
+    ],
+  },
 ];
 
-// Page frame for back office pages: top bar, side menu and the page itself.
+// Page frame for back-office pages: top bar, page list and the page itself.
 function BackOfficeLayout() {
   const { user } = useAuth();
-  const visibleMenu = MENU.filter((item) => hasRole(user, item.roles));
+  const groups = MENU.map((group) => ({ ...group, links: group.links.filter((link) => hasRole(user, link.roles)) }))
+    .filter((group) => group.links.length > 0);
 
   return (
-    <div className="back-office">
-      <TopBar showCheckoutLink />
-      <div className="back-office-body">
-        <nav className="side-menu">
-          {visibleMenu.map((item) => (
-            <NavLink key={item.to} to={item.to} className="side-menu-link">
-              {item.label}
-            </NavLink>
+    <>
+      <TopBar />
+      <div className="office">
+        <nav className="office-nav" aria-label="Back office pages">
+          {groups.map((group) => (
+            <div key={group.heading} className="office-nav-group">
+              <div className="office-nav-heading">{group.heading}</div>
+              {group.links.map((link) => (
+                <NavLink key={link.to} to={link.to} className="office-nav-link">
+                  {link.label}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
-        <main className="back-office-content">
+        <main className="office-main">
           <Outlet />
         </main>
       </div>
-    </div>
+    </>
   );
 }
 

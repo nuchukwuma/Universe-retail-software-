@@ -25,7 +25,7 @@ function PrinterPicker({ value, onChange }) {
   }, []);
 
   if (!desktop) {
-    return <p className="muted small span-full">The printer can be chosen in the desktop app. In a web browser the print window opens each time.</p>;
+    return <p className="muted small span-all">The printer can be chosen in the desktop app. In a web browser the print window opens each time.</p>;
   }
 
   // Keep the saved printer in the list even if it is switched off right now.
@@ -33,20 +33,20 @@ function PrinterPicker({ value, onChange }) {
   const showSavedPrinter = value && !names.includes(value);
 
   return (
-    <label className="span-full">
-      Receipt printer
-      <div className="printer-row">
-        <select value={value || ''} onChange={(e) => onChange(e.target.value)} disabled={loading}>
+    <div className="field span-all">
+      <label className="field-label" htmlFor="printer-name">Receipt printer</label>
+      <div className="btn-row">
+        <select id="printer-name" className="input-auto" value={value || ''} onChange={(e) => onChange(e.target.value)} disabled={loading}>
           <option value="">Show the print window each time</option>
           {printers.map((p) => (
             <option key={p.name} value={p.name}>{p.displayName || p.name}{p.isDefault ? ' (default)' : ''}</option>
           ))}
           {showSavedPrinter && <option value={value}>{value} (not found)</option>}
         </select>
-        <button type="button" className="btn btn-small" onClick={loadPrinters}>Refresh</button>
+        <button type="button" className="btn" onClick={loadPrinters}>Look for printers again</button>
       </div>
-      <span className="muted small">Pick your receipt printer to print straight away, without the print window. Save, then print a test receipt.</span>
-    </label>
+      <span className="field-help">Choose the receipt printer to print straight away, with no print window. Save, then print a test receipt.</span>
+    </div>
   );
 }
 

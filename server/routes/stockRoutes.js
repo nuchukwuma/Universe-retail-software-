@@ -12,12 +12,11 @@ router.use(requireLogin, requireRole('owner', 'manager'));
 
 // POST /api/stock/receive
 // Adds delivered stock to a product.
-// Body: { productId, quantity, supplierId?, costPrice?, note? }
+// Body: { productId, quantity, note? }
 router.post('/receive', async (req, res) => {
   try {
-    const { productId, supplierId, note } = req.body;
+    const { productId, note } = req.body;
     const quantity = Number(req.body.quantity);
-    const costPrice = req.body.costPrice === '' || req.body.costPrice == null ? null : Number(req.body.costPrice);
 
     if (!productId) {
       return res.status(400).json({ message: 'Choose a product.' });
@@ -25,24 +24,15 @@ router.post('/receive', async (req, res) => {
     if (!Number.isInteger(quantity) || quantity <= 0) {
       return res.status(400).json({ message: 'Quantity must be a whole number above 0.' });
     }
-    if (costPrice !== null && (Number.isNaN(costPrice) || costPrice < 0)) {
-      return res.status(400).json({ message: 'Cost price must be 0 or more.' });
-    }
 
     // $inc adds to the quantity in one step, so two people receiving
     // stock at the same time cannot overwrite each other.
-    const update = { $inc: { quantity } };
-    if (costPrice !== null) update.$set = { costPrice };
-
-    const product = await Product.findByIdAndUpdate(productId, update, { new: true });
+    const product = await Product.findByIdAndUpdate(productId, { $inc: { quantity } }, { new: true });
     if (!product) {
       return res.status(404).json({ message: 'Product not found.' });
     }
 
-    await logStockMovement({
-      product, type: 'receive', change: quantity, user: req.user,
-      supplier: supplierId || null, costPrice, note,
-    });
+    await logStockMovement({ product, type: 'receive', change: quantity, user: req.user, note });
 
     res.json({ message: `Added ${quantity} to ${product.name}. New stock: ${product.quantity}.`, product });
   } catch (error) {
@@ -94,10 +84,7 @@ router.get('/movements', async (req, res) => {
     if (req.query.product) filter.product = req.query.product;
 
     const limit = Math.min(Number(req.query.limit) || 50, 500);
-    const movements = await StockMovement.find(filter)
-      .populate('supplier', 'name')
-      .sort({ createdAt: -1 })
-      .limit(limit);
+    const movements = await StockMovement.find(filter).sort({ createdAt: -1 }).limit(limit);
 
     res.json(movements);
   } catch (error) {

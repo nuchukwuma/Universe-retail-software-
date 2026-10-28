@@ -3,35 +3,39 @@ import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { usePrinter } from '../context/PrintContext';
+import PageHeader from '../components/PageHeader';
 import EndOfDayReceipt from '../components/receipts/EndOfDayReceipt';
 import { downloadReceiptPdf } from '../components/receipts/receiptActions';
 import { formatNaira } from '../utils/formatNaira';
 import { todayDateValue } from '../utils/dates';
-import { PAYMENT_LABELS } from '../utils/billMath';
 import { canUseBackOffice } from '../utils/roles';
+import DateInput from '../components/DateInput';
 
-// End-of-day page: totals by payment method so the cashier can count the
-// till and see if it balances. Cashiers see their own sales only.
+// The day's totals for one cashier (or everyone), with a slip to print
+// and sign at closing time. Cashiers see their own sales only.
 function EndOfDayPage() {
   const { user } = useAuth();
   const { settings } = useSettings();
   const { printDocument } = usePrinter();
   const [date, setDate] = useState(todayDateValue());
   const [cashier, setCashier] = useState(canUseBackOffice(user) ? 'all' : user._id);
-  const [countedCash, setCountedCash] = useState('');
   const [paper, setPaper] = useState(settings.paperSize);
   const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const slipRef = useRef(null);
 
   // Load the report whenever the date or cashier changes.
   useEffect(() => {
     async function loadReport() {
+      setLoading(true);
       try {
         setReport(await api.get(`/reports/end-of-day?date=${date}&cashier=${cashier}`));
         setError('');
       } catch (err) {
         setError(err.message);
+      } finally {
+        setLoading(false);
       }
     }
     loadReport();
@@ -42,95 +46,68 @@ function EndOfDayPage() {
     setPaper(settings.paperSize);
   }, [settings.paperSize]);
 
-  const slip = report && <EndOfDayReceipt report={report} settings={settings} paper={paper} countedCash={countedCash} />;
-  const difference = countedCash === '' || !report ? null : Number(countedCash) - report.expectedCash;
+  const slip = report && <EndOfDayReceipt report={report} settings={settings} paper={paper} />;
 
   return (
-    <div>
-      <h1 className="page-title">End of Day</h1>
-      {error && <div className="alert alert-error">{error}</div>}
+    <div className="page">
+      <PageHeader title="End of day" lead="The day's sales and refunds. Print the slip at closing time for the cashier and a manager to sign." />
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
 
-      <div className="card filter-bar">
-        <label className="date-filter">
-          Day
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </label>
+      <div className="panel toolbar">
+        <div className="field">
+          <label className="field-label" htmlFor="eod-date">Day</label>
+          <DateInput id="eod-date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </div>
         {canUseBackOffice(user) && (
-          <label className="date-filter">
-            Cashier
-            <select value={cashier} onChange={(e) => setCashier(e.target.value)}>
+          <div className="field">
+            <label className="field-label" htmlFor="eod-cashier">Cashier</label>
+            <select id="eod-cashier" value={cashier} onChange={(e) => setCashier(e.target.value)}>
               <option value="all">All cashiers</option>
               {report?.cashiers.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
             </select>
-          </label>
+          </div>
         )}
-        <label className="date-filter">
-          Cash counted in till (₦)
-          <input type="number" min="0" step="any" value={countedCash} onChange={(e) => setCountedCash(e.target.value)} placeholder="Count the cash" />
-        </label>
       </div>
 
+      {loading && !report && <p className="loading">Loading the day's totals...</p>}
+
       {report && (
-        <div className="eod-layout">
-          <div>
-            <div className="stat-cards">
-              <div className="stat-card">
-                <span>Sales</span>
-                <strong>{report.salesCount}</strong>
-                <small>{report.itemsSold} items sold</small>
+        <div className="columns">
+          <section className="panel" aria-label="Totals">
+            <div className="panel-head"><h2>{report.cashierName}</h2></div>
+            <dl className="figures">
+              <div className="figure">
+                <dt>Takings</dt>
+                <dd>{formatNaira(report.takings)}<span className="figure-note muted">sales minus refunds</span></dd>
               </div>
-              <div className="stat-card">
-                <span>Net sales</span>
-                <strong>{formatNaira(report.netSales)}</strong>
-                <small>after {formatNaira(report.discounts)} discounts</small>
+              <div className="figure">
+                <dt>Sales</dt>
+                <dd>{report.salesCount}<span className="figure-note muted">{report.itemsSold} items sold</span></dd>
               </div>
-              <div className="stat-card stat-card-red">
-                <span>Refunds</span>
-                <strong>{formatNaira(report.refunds)}</strong>
-                <small>{report.returnsCount} return(s)</small>
+              <div className="figure">
+                <dt>Refunds</dt>
+                <dd>{formatNaira(report.refunds)}<span className="figure-note muted">{report.returnsCount} return{report.returnsCount === 1 ? '' : 's'}</span></dd>
               </div>
-            </div>
+            </dl>
+            <table className="table">
+              <tbody>
+                <tr><td>Sales before discount</td><td className="num">{formatNaira(report.grossSales)}</td></tr>
+                <tr><td>Discounts given</td><td className="num">{report.discounts > 0 ? `minus ${formatNaira(report.discounts)}` : formatNaira(0)}</td></tr>
+                <tr><td>Sales</td><td className="num">{formatNaira(report.netSales)}</td></tr>
+                <tr><td>Refunds</td><td className="num">{report.refunds > 0 ? `minus ${formatNaira(report.refunds)}` : formatNaira(0)}</td></tr>
+              </tbody>
+              <tfoot>
+                <tr><td>Takings</td><td className="num">{formatNaira(report.takings)}</td></tr>
+              </tfoot>
+            </table>
+            {report.salesCount === 0 && <p className="muted">No sales on this day{cashier !== 'all' ? ' for this cashier' : ''}.</p>}
+            {report.firstReceipt && <p className="muted small">Receipts {report.firstReceipt} to {report.lastReceipt}.</p>}
+          </section>
 
-            <div className="card">
-              <h2>By payment method</h2>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Method</th>
-                    <th className="number">Sales</th>
-                    <th className="number">Refunds</th>
-                    <th className="number">Net</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {['cash', 'transfer', 'card'].map((m) => (
-                    <tr key={m}>
-                      <td>{PAYMENT_LABELS[m]}</td>
-                      <td className="number">{formatNaira(report.salesByMethod[m])}</td>
-                      <td className="number">
-                        {report.refundsByMethod[m] > 0 ? `-${formatNaira(report.refundsByMethod[m])}` : formatNaira(0)}
-                      </td>
-                      <td className="number"><strong>{formatNaira(report.netByMethod[m])}</strong></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className={`card till-check ${difference === null ? '' : difference === 0 ? 'till-ok' : 'till-off'}`}>
-              <div>Cash that should be in the till: <strong>{formatNaira(report.expectedCash)}</strong></div>
-              {difference === null && <div className="muted small">Enter the cash you counted above to check the till.</div>}
-              {difference === 0 && <div>✅ The till balances.</div>}
-              {difference !== null && difference !== 0 && (
-                <div>⚠️ The till is <strong>{difference > 0 ? 'OVER' : 'SHORT'}</strong> by {formatNaira(Math.abs(difference))}.</div>
-              )}
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="page-header">
-              <h2>Printable summary</h2>
-              <select value={paper} onChange={(e) => setPaper(e.target.value)} aria-label="Paper size">
+          <section className="panel stack" aria-label="Slip to print">
+            <div className="panel-head">
+              <h2>Slip to print</h2>
+              <select value={paper} onChange={(e) => setPaper(e.target.value)} aria-label="Paper size" className="input-auto">
                 <option value="58mm">58mm receipt</option>
                 <option value="80mm">80mm receipt</option>
                 <option value="A4">A4 page</option>
@@ -139,17 +116,13 @@ function EndOfDayPage() {
             <div className="receipt-preview">
               <div ref={slipRef} className="receipt-preview-paper">{slip}</div>
             </div>
-            <div className="receipt-buttons">
-              <button type="button" className="btn btn-primary" onClick={() => printDocument(slip, paper)}>🖨️ Print</button>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => downloadReceiptPdf(slipRef.current, `end-of-day-${report.date}.pdf`, paper)}
-              >
-                ⬇️ Download PDF
+            <div className="btn-row">
+              <button type="button" className="btn btn-primary" onClick={() => printDocument(slip, paper)}>Print slip</button>
+              <button type="button" className="btn" onClick={() => downloadReceiptPdf(slipRef.current, `end-of-day-${report.date}.pdf`, paper)}>
+                Save as PDF
               </button>
             </div>
-          </div>
+          </section>
         </div>
       )}
     </div>

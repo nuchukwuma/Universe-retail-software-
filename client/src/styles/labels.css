@@ -6,12 +6,6 @@
   overflow-y: auto;
 }
 
-.copies-input {
-  width: 70px;
-  padding: 6px;
-  text-align: center;
-}
-
 .label-sheet {
   display: flex;
   flex-wrap: wrap;
@@ -47,10 +41,10 @@
   padding: 2mm;
   overflow: hidden;
   text-align: center;
-  background: #fff;
+  background: #fff; /* labels are printed on white stickers */
   color: #000;
-  border: 1px dashed #bbb;
-  font-family: Arial, sans-serif;
+  border: 1px dashed var(--color-control-border);
+  font-family: var(--font-family);
   break-inside: avoid;
 }
 

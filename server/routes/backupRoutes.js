@@ -7,6 +7,7 @@ const { defaultBackupDir } = require('../utils/paths');
 const {
   createBackup, listBackups, restoreBackup, checkFolderWritable, backupFolderFrom,
 } = require('../utils/backup');
+const { runMigrations } = require('../utils/migrations');
 
 const router = express.Router();
 
@@ -78,6 +79,7 @@ router.post('/restore', async (req, res) => {
       return res.status(400).json({ message: 'Type RESTORE to confirm.' });
     }
     const result = await restoreBackup(String(req.body.name || ''));
+    await runMigrations(); // an old backup may hold data from an older version
     res.json({ message: 'Backup restored. Everyone must log in again.', ...result });
   } catch (error) {
     res.status(400).json({ message: `Restore failed: ${error.message}` });

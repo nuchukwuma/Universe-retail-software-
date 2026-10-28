@@ -4,10 +4,10 @@ import { useSettings } from '../../context/SettingsContext';
 import { formatDateTime } from '../../utils/dates';
 
 const STATUS_LABELS = {
-  sent: { text: 'Sent', className: 'badge badge-green' },
-  pending: { text: 'Waiting to retry', className: 'badge badge-orange' },
-  sending: { text: 'Sending', className: 'badge badge-orange' },
-  failed: { text: 'Failed', className: 'badge badge-red' },
+  sent: { text: 'Sent', className: 'status status-ok' },
+  pending: { text: 'Waiting to retry', className: 'status status-low' },
+  sending: { text: 'Sending', className: 'status status-low' },
+  failed: { text: 'Failed', className: 'status status-bad' },
 };
 
 // The Telegram part of the Settings page: enter the bot token and chat id,
@@ -89,46 +89,18 @@ function TelegramSettings() {
     });
   }
 
-  if (!status) return <div className="card"><p className="muted">Loading Telegram settings...</p></div>;
+  if (!status) return <section className="panel"><p className="loading">Loading the Telegram settings...</p></section>;
 
   return (
-    <div className="card telegram-card">
-      <h2>📨 Telegram sales alerts</h2>
-      {error && <div className="alert alert-error">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
+    <section className="panel stack" aria-labelledby="telegram-heading">
+      <div>
+        <h2 id="telegram-heading">Telegram sales alerts</h2>
+        <p className="muted">A message to your Telegram group after every sale. This is the only thing the app sends over the internet.</p>
+      </div>
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      {message && <div className="notice notice-success" role="status">{message}</div>}
 
-      <form className="telegram-setup form-grid" onSubmit={saveConfig}>
-        <label className="span-2">
-          Bot token {status.botTokenSet ? '✅ saved' : '❌ not set'}
-          <input
-            type="password"
-            value={botToken}
-            onChange={(e) => setBotToken(e.target.value)}
-            placeholder={status.botTokenSet ? 'Saved (hidden). Paste a new token to change it.' : 'Paste the token from @BotFather, e.g. 7123456789:AAH...'}
-            autoComplete="off"
-          />
-        </label>
-        <label>
-          Chat id {status.chatIdSet ? '✅' : '❌ not set'}
-          <input value={chatId} onChange={(e) => setChatId(e.target.value)} placeholder="e.g. -1001234567890" />
-        </label>
-        <div className="form-actions span-full">
-          <button type="submit" className="btn btn-primary" disabled={Boolean(working)}>
-            {working === 'config' ? 'Saving...' : 'Save Telegram details'}
-          </button>
-          {(status.botTokenSet || status.chatIdSet) && (
-            <button type="button" className="btn btn-danger" disabled={Boolean(working)} onClick={forgetConfig}>
-              Remove details
-            </button>
-          )}
-        </div>
-        <p className="muted small span-full">
-          The token is stored only on this laptop and is never shown again. See the README for how to create a bot with
-          @BotFather.
-        </p>
-      </form>
-
-      <label className="checkbox-row">
+      <label className="check">
         <input
           type="checkbox"
           checked={settings.telegramAlertsEnabled}
@@ -138,73 +110,94 @@ function TelegramSettings() {
         Send a Telegram message after every sale
       </label>
 
-      <div className="form-actions">
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={!status.configured || Boolean(working)}
-          onClick={() => run('test', async () => setMessage((await api.post('/telegram/test')).message))}
-        >
-          {working === 'test' ? 'Sending...' : 'Send test message'}
-        </button>
-        <button
-          type="button"
-          className="btn"
-          disabled={!status.botTokenSet || Boolean(working)}
-          onClick={() => run('chats', async () => setChats(await api.get('/telegram/chats')))}
-        >
-          {working === 'chats' ? 'Looking...' : 'Find my chat ID'}
-        </button>
-        {status.failed > 0 && (
+      <form className="form-grid" onSubmit={saveConfig}>
+        <div className="field">
+          <label className="field-label" htmlFor="telegram-token">Bot token: {status.botTokenSet ? 'saved' : 'not set'}</label>
+          <input
+            id="telegram-token"
+            type="password"
+            value={botToken}
+            onChange={(e) => setBotToken(e.target.value)}
+            placeholder={status.botTokenSet ? 'Saved and hidden. Paste a new one to change it.' : 'From @BotFather, e.g. 7123456789:AAH...'}
+            autoComplete="off"
+          />
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="telegram-chat">Chat id: {status.chatIdSet ? 'saved' : 'not set'}</label>
+          <input id="telegram-chat" value={chatId} onChange={(e) => setChatId(e.target.value)} placeholder="e.g. -1001234567890" />
+        </div>
+        <div className="span-all btn-row">
+          <button type="submit" className="btn btn-primary" disabled={Boolean(working)}>
+            {working === 'config' ? 'Saving...' : 'Save Telegram details'}
+          </button>
           <button
             type="button"
             className="btn"
-            disabled={Boolean(working)}
-            onClick={() => run('retry', async () => setMessage((await api.post('/telegram/retry')).message))}
+            disabled={!status.botTokenSet || Boolean(working)}
+            onClick={() => run('chats', async () => setChats(await api.get('/telegram/chats')))}
           >
-            Retry failed alerts
+            {working === 'chats' ? 'Looking...' : 'Find my chat id'}
           </button>
-        )}
-      </div>
-
-      {chats && (
-        <div className="telegram-chats">
-          {chats.length === 0 ? (
-            <p className="muted small">
-              No chats found yet. Add the bot to your group, send <code>/start</code> in the group, then try again.
-            </p>
-          ) : (
-            <>
-              <p className="small">Click your shop's group to use its chat id, then press "Save Telegram details":</p>
-              <ul>
-                {chats.map((chat) => (
-                  <li key={chat.id}>
-                    <button type="button" className="link-button" onClick={() => setChatId(chat.id)}>
-                      <code>{chat.id}</code> · {chat.name || 'No name'}
-                    </button>{' '}
-                    <span className="muted">({chat.type})</span>
-                  </li>
-                ))}
-              </ul>
-            </>
+          <button
+            type="button"
+            className="btn"
+            disabled={!status.configured || Boolean(working)}
+            onClick={() => run('test', async () => setMessage((await api.post('/telegram/test')).message))}
+          >
+            {working === 'test' ? 'Sending...' : 'Send a test message'}
+          </button>
+          {(status.botTokenSet || status.chatIdSet) && (
+            <button type="button" className="btn btn-danger" disabled={Boolean(working)} onClick={forgetConfig}>
+              Remove details
+            </button>
           )}
         </div>
+      </form>
+
+      {chats && (
+        chats.length === 0 ? (
+          <p className="notice">No chats found yet. Add the bot to your group, send /start in the group, then press "Find my chat id" again.</p>
+        ) : (
+          <div className="stack">
+            <p>Choose your shop's group, then press "Save Telegram details".</p>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Chat</th>
+                  <th>Kind</th>
+                  <th>Chat id</th>
+                  <th><span className="visually-hidden">Use</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {chats.map((chat) => (
+                  <tr key={chat.id}>
+                    <td className="cell-main">{chat.name || 'No name'}</td>
+                    <td>{chat.type}</td>
+                    <td>{chat.id}</td>
+                    <td className="actions">
+                      <button type="button" className="btn btn-small" onClick={() => setChatId(chat.id)}>Use this chat</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
       )}
 
-      <div className="stat-cards telegram-stats">
-        <div className="stat-card">
-          <span>Sent today</span>
-          <strong>{status.sentToday}</strong>
+      <dl className="figures">
+        <div className="figure"><dt>Sent today</dt><dd>{status.sentToday}</dd></div>
+        <div className="figure"><dt>Waiting to retry</dt><dd>{status.pending}</dd></div>
+        <div className="figure"><dt>Failed</dt><dd className={status.failed > 0 ? 'danger-text' : undefined}>{status.failed}</dd></div>
+      </dl>
+      {status.failed > 0 && (
+        <div className="btn-row">
+          <button type="button" className="btn" disabled={Boolean(working)} onClick={() => run('retry', async () => setMessage((await api.post('/telegram/retry')).message))}>
+            Retry failed alerts
+          </button>
         </div>
-        <div className="stat-card stat-card-orange">
-          <span>Waiting to retry</span>
-          <strong>{status.pending}</strong>
-        </div>
-        <div className="stat-card stat-card-red">
-          <span>Failed</span>
-          <strong>{status.failed}</strong>
-        </div>
-      </div>
+      )}
 
       {status.recent.length > 0 && (
         <div className="table-wrap">
@@ -214,18 +207,18 @@ function TelegramSettings() {
                 <th>Receipt</th>
                 <th>Time</th>
                 <th>Status</th>
-                <th className="number">Tries</th>
+                <th className="num">Tries</th>
                 <th>Last problem</th>
               </tr>
             </thead>
             <tbody>
               {status.recent.map((m) => (
                 <tr key={m._id}>
-                  <td>{m.receiptNumber}</td>
+                  <td className="cell-main">{m.receiptNumber}</td>
                   <td>{formatDateTime(m.createdAt)}</td>
                   <td><span className={STATUS_LABELS[m.status].className}>{STATUS_LABELS[m.status].text}</span></td>
-                  <td className="number">{m.attempts}</td>
-                  <td className="muted small wrap">{m.status === 'sent' ? '' : m.lastError}</td>
+                  <td className="num">{m.attempts}</td>
+                  <td className="muted small">{m.status === 'sent' ? '' : m.lastError}</td>
                 </tr>
               ))}
             </tbody>
@@ -233,10 +226,9 @@ function TelegramSettings() {
         </div>
       )}
       <p className="muted small">
-        If Telegram or the internet is down, sales still complete. Alerts wait here and are retried automatically
-        (after 1, 2, 5, 10 and 30 minutes, then every hour).
+        If the internet is down, sales still complete. Alerts wait and are sent again by themselves after 1, 2, 5, 10 and 30 minutes, then every hour.
       </p>
-    </div>
+    </section>
   );
 }
 

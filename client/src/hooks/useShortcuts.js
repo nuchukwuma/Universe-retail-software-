@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 // Runs a function when a keyboard key is pressed anywhere on the page.
-// "shortcuts" looks like { F1: openHelp, F10: openPayment }.
+// "shortcuts" looks like { F1: openHelp, F10: completeSale }.
 // Set "enabled" to false to switch the shortcuts off (e.g. while a box is open).
 export function useShortcuts(shortcuts, enabled = true) {
   // Keep the latest functions without re-adding the listener each render.

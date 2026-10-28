@@ -12,18 +12,9 @@ const router = express.Router();
 // Every route in this file needs a logged-in user.
 router.use(requireLogin);
 
-// Adds up amounts per payment method, e.g. { cash: 5000, transfer: 2000, card: 0 }.
-function totalsByMethod(entries) {
-  const totals = { cash: 0, transfer: 0, card: 0 };
-  entries.forEach(({ method, amount }) => {
-    totals[method] = roundMoney(totals[method] + amount);
-  });
-  return totals;
-}
-
 // GET /api/reports/end-of-day?date=YYYY-MM-DD&cashier=<id or "all">
-// Summary of one day's sales and refunds by payment method, so the
-// cashier can balance the till. Cashiers always see only their own.
+// Summary of one day's sales and refunds, printed and signed at closing
+// time. Cashiers always see only their own.
 router.get('/end-of-day', async (req, res) => {
   try {
     const date = req.query.date || todayInLagos();
@@ -43,13 +34,6 @@ router.get('/end-of-day', async (req, res) => {
     const when = { createdAt: { $gte: range.start, $lt: range.end } };
     const sales = await Sale.find(cashierId ? { ...when, cashier: cashierId } : when).sort({ createdAt: 1 });
     const returns = await Return.find(cashierId ? { ...when, processedBy: cashierId } : when);
-
-    const salesByMethod = totalsByMethod(sales.flatMap((s) => s.payments));
-    const refundsByMethod = totalsByMethod(returns.map((r) => ({ method: r.refundMethod, amount: r.refundTotal })));
-    const netByMethod = {};
-    Object.keys(salesByMethod).forEach((method) => {
-      netByMethod[method] = roundMoney(salesByMethod[method] - refundsByMethod[method]);
-    });
 
     const sum = (list, field) => roundMoney(list.reduce((total, item) => total + item[field], 0));
 
@@ -71,10 +55,7 @@ router.get('/end-of-day', async (req, res) => {
       netSales: sum(sales, 'total'),
       returnsCount: returns.length,
       refunds: sum(returns, 'refundTotal'),
-      salesByMethod,
-      refundsByMethod,
-      netByMethod,
-      expectedCash: netByMethod.cash,
+      takings: roundMoney(sum(sales, 'total') - sum(returns, 'refundTotal')),
       firstReceipt: sales[0]?.receiptNumber || '',
       lastReceipt: sales[sales.length - 1]?.receiptNumber || '',
       generatedAt: new Date(),

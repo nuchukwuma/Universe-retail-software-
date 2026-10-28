@@ -3,10 +3,10 @@
 export async function downloadReceiptPdf(element, fileName, paper) {
   const [{ jsPDF }, { default: html2canvas }] = await Promise.all([import('jspdf'), import('html2canvas')]);
 
-  // 1. Take a sharp "photo" of the receipt.
+  // 1. Copy the receipt on screen at high resolution.
   const canvas = await html2canvas(element, { scale: 3, backgroundColor: '#ffffff' });
 
-  // 2. Put the photo on a page the same width as the receipt paper.
+  // 2. Put that copy on a PDF page the same width as the receipt paper.
   const pageWidth = paper === 'A4' ? 210 : paper === '58mm' ? 58 : 80;
   const imageWidth = paper === 'A4' ? 150 : pageWidth;
   const imageHeight = (canvas.height * imageWidth) / canvas.width;

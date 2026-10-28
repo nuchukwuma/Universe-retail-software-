@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { api } from '../../api/api';
 import Modal from '../Modal';
 import CustomerForm from '../CustomerForm';
 
-// Pop-up for choosing a saved customer (search by name or phone)
-// or adding a new one. Calls onSelect(customer) or onSelect(null) for walk-in.
-function CustomerPickerModal({ onSelect, onClose }) {
+// Choose a saved customer (search by name or phone), add a new one, or
+// just write a walk-in customer's name on the bill.
+// Calls onSelect(customer) for a saved customer, onWalkIn(name) otherwise.
+function CustomerPickerModal({ onSelect, onWalkIn, onClose }) {
+  const formId = useId();
   const [search, setSearch] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,54 +36,77 @@ function CustomerPickerModal({ onSelect, onClose }) {
     setSaving(true);
     setError('');
     try {
-      const customer = await api.post('/customers', details);
-      onSelect(customer);
+      onSelect(await api.post('/customers', details));
     } catch (err) {
       setError(err.message);
       setSaving(false);
     }
   }
 
-  return (
-    <Modal title={adding ? 'Add new customer' : 'Choose customer'} onClose={onClose}>
-      {error && <div className="alert alert-error">{error}</div>}
+  const typedName = /\d/.test(search) ? '' : search.trim();
 
-      {adding ? (
-        <CustomerForm
-          initial={{ name: /\d/.test(search) ? '' : search, phone: /\d/.test(search) ? search : '' }}
-          saving={saving}
-          submitLabel="Add & Use Customer"
-          onSave={handleAdd}
-          onCancel={() => setAdding(false)}
-        />
-      ) : (
+  if (adding) {
+    return (
+      <Modal
+        title="Add a customer"
+        onClose={onClose}
+        footer={
+          <>
+            <button type="button" className="btn push-left" onClick={() => setAdding(false)}>Back to search</button>
+            <button type="submit" form={formId} className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Add and use customer'}</button>
+          </>
+        }
+      >
+        {error && <div className="notice notice-error" role="alert">{error}</div>}
+        <CustomerForm formId={formId} initial={{ name: typedName, phone: /\d/.test(search) ? search : '' }} onSave={handleAdd} />
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal
+      title="Customer"
+      onClose={onClose}
+      wide
+      footer={
         <>
-          <input
-            type="search"
-            placeholder="Search by name or phone"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            autoFocus
-            className="full-width"
-          />
-          <ul className="picker-list">
-            {loading && <li className="muted">Searching...</li>}
-            {!loading && results.length === 0 && <li className="muted">No customer found.</li>}
-            {!loading &&
-              results.map((customer) => (
-                <li key={customer._id}>
-                  <button type="button" onClick={() => onSelect(customer)}>
-                    <strong>{customer.name}</strong>
-                    <span className="muted">{customer.phone || 'No phone'}</span>
-                  </button>
-                </li>
-              ))}
-          </ul>
-          <div className="form-actions">
-            <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>+ Add New Customer</button>
-            <button type="button" className="btn" onClick={() => onSelect(null)}>Walk-in (no customer)</button>
-          </div>
+          <button type="button" className="btn push-left" onClick={() => onWalkIn(typedName)}>
+            {typedName ? `Use "${typedName}" as a walk-in name` : 'Walk-in customer'}
+          </button>
+          <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>Add a new customer</button>
         </>
+      }
+    >
+      <div className="field">
+        <label className="field-label" htmlFor={`${formId}-search`}>Search by name or phone</label>
+        <input id={`${formId}-search`} type="search" value={search} onChange={(e) => setSearch(e.target.value)} autoFocus autoComplete="off" />
+      </div>
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      {loading && <p className="loading">Searching customers...</p>}
+      {!loading && results.length === 0 && <p>No saved customer matches. Add them as a new customer, or use the name for this bill only.</p>}
+      {!loading && results.length > 0 && (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th><span className="visually-hidden">Choose</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map((customer) => (
+              <tr key={customer._id}>
+                <td className="cell-main">{customer.name}</td>
+                <td>{customer.phone || 'No phone'}</td>
+                <td className="actions">
+                  <button type="button" className="btn btn-small" onClick={() => onSelect(customer)}>
+                    Use<span className="visually-hidden"> {customer.name}</span>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </Modal>
   );

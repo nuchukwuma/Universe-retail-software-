@@ -29,12 +29,11 @@ export function money(amount) {
   return formatNaira(amount);
 }
 
-// The top and bottom of every slip: logo, store details and footer.
+// The top and bottom of every slip: store details and footer (text only).
 // "title" (e.g. RETURN RECEIPT) and "duplicate" are shown under the header.
 export function ReceiptFrame({ settings, paper, title, duplicate, footer, children }) {
   return (
     <div className={`receipt ${paperClass(paper || settings.paperSize)}`}>
-      {settings.showLogoOnReceipt && settings.logo && <img src={settings.logo} alt="" className="receipt-logo" />}
       <div className="receipt-store">{settings.storeName}</div>
       {settings.address && <div className="receipt-center">{settings.address}</div>}
       {settings.phone && <div className="receipt-center">Tel: {settings.phone}</div>}

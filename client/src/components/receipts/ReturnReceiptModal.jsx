@@ -23,7 +23,7 @@ function ReturnReceiptModal({ ret: startingReturn, banner, onClose }) {
       paper={settings.paperSize}
       onPrint={handlePrint}
       pdfFileName={`return-${ret.returnNumber}.pdf`}
-      extraButtons={<button type="button" className="btn" onClick={onClose}>Done</button>}
+      extraButtons={<button type="button" className="btn" onClick={onClose}>Done, no print</button>}
       onClose={onClose}
     />
   );

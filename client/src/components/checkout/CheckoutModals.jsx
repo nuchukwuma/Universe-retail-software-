@@ -1,61 +1,43 @@
-import { lazy, Suspense } from 'react';
-import PaymentModal from './PaymentModal';
+import CompleteSaleModal from './CompleteSaleModal';
 import SaleCompleteModal from './SaleCompleteModal';
 import CustomerPickerModal from './CustomerPickerModal';
 import ShortcutsModal from './ShortcutsModal';
-import BarcodeNotFoundModal from './BarcodeNotFoundModal';
 import DiscountModal from './DiscountModal';
 import HoldBillModal from './HoldBillModal';
 import RecallModal from './RecallModal';
 import FeedbackModal from './FeedbackModal';
+import FindProductModal from './FindProductModal';
 import { ManagerApprovalModal } from './ManagerApprovalForm';
 import ReturnModal from '../returns/ReturnModal';
 import SaleReceiptModal from '../receipts/SaleReceiptModal';
 import ReturnReceiptModal from '../receipts/ReturnReceiptModal';
 import { formatNaira } from '../../utils/formatNaira';
 
-// The camera library is big, so load it only when first used.
-const CameraScanner = lazy(() => import('../CameraScanner'));
-
-// The green "Give change" box shown above the receipt after a sale.
-function ChangeBanner({ sale }) {
-  return (
-    <div className={sale.change > 0 ? 'change-due' : 'change-due change-none'}>
-      <span>{sale.change > 0 ? 'Give change' : 'No change due'}</span>
-      <strong>{formatNaira(sale.change)}</strong>
-    </div>
-  );
-}
-
-// Shows whichever pop-up box the checkout currently has open.
+// Shows whichever dialog the sales screen has open.
 // "modal" says which one; "c" (the checkout) holds the data and actions.
 function CheckoutModals({ modal, c }) {
   const close = c.closeModal;
   const type = typeof modal === 'string' ? modal : modal?.type;
 
   switch (type) {
-    case 'payment':
-      return <PaymentModal total={c.totals.total} saving={c.saving} error={c.payError} onConfirm={c.completeSale} onClose={close} />;
+    case 'complete':
+      return (
+        <CompleteSaleModal bill={c.bill} totals={c.totals} saving={c.saving} error={c.saleError} onConfirm={() => c.completeSale()} onClose={close} />
+      );
     case 'approveSale':
       return (
         <ManagerApprovalModal
-          reason={`The discount on this bill is ${c.totals.discountPercent.toFixed(1)}%, above the ${c.settings.maxCashierDiscountPercent}% cashiers can give.`}
+          reason={`The discount on this bill is ${c.totals.discountPercent.toFixed(1)}%, more than the ${c.settings.maxCashierDiscountPercent}% cashiers can give on their own.`}
           onApproved={c.approveAndRetrySale}
           onClose={close}
         />
       );
+    case 'find':
+      return <FindProductModal products={c.products} categories={c.categories} startText={modal.text || ''} onAdd={c.addToBill} onClose={close} />;
     case 'customer':
-      return <CustomerPickerModal onSelect={c.pickCustomer} onClose={close} />;
+      return <CustomerPickerModal onSelect={c.pickCustomer} onWalkIn={c.setWalkIn} onClose={close} />;
     case 'shortcuts':
       return <ShortcutsModal onClose={close} />;
-    case 'camera':
-      return (
-        <Suspense fallback={null}>
-          <CameraScanner continuous onScan={(code) => c.handleScan(code, true)} onClose={close} />
-        </Suspense>
-      );
-    case 'notFound':
-      return <BarcodeNotFoundModal code={modal.code} onClose={close} />;
     case 'discount':
       return (
         <DiscountModal
@@ -68,15 +50,7 @@ function CheckoutModals({ modal, c }) {
         />
       );
     case 'hold':
-      return (
-        <HoldBillModal
-          defaultLabel={c.bill.customerName}
-          saving={c.saving}
-          error={c.holdError}
-          onHold={c.holdBill}
-          onClose={close}
-        />
-      );
+      return <HoldBillModal defaultLabel={c.bill.customerName} saving={c.saving} error={c.holdError} onHold={c.holdBill} onClose={close} />;
     case 'recall':
       return <RecallModal onRecall={c.recallBill} onClose={close} />;
     case 'feedback':
@@ -87,7 +61,7 @@ function CheckoutModals({ modal, c }) {
       return (
         <ReturnReceiptModal
           ret={modal.ret}
-          banner={<div className="change-due"><span>Refund to customer</span><strong>{formatNaira(modal.ret.refundTotal)}</strong></div>}
+          banner={<div className="notice notice-success"><span className="notice-title">Refund the customer {formatNaira(modal.ret.refundTotal)}</span>The items are back in stock.</div>}
           onClose={close}
         />
       );
@@ -95,17 +69,13 @@ function CheckoutModals({ modal, c }) {
       return (
         <SaleReceiptModal
           sale={modal.sale}
-          banner={<ChangeBanner sale={modal.sale} />}
+          banner={<div className="notice notice-success"><span className="notice-title">Sale completed: {formatNaira(modal.sale.total)}</span>Receipt {modal.sale.receiptNumber}</div>}
           onClose={close}
-          extraButtons={
-            <>
-              <button type="button" className="btn" onClick={c.reprintLater}>Reprint later</button>
-              <button type="button" className="btn" onClick={close}>Skip</button>
-            </>
-          }
+          onPrinted={close}
+          extraButtons={<button type="button" className="btn" onClick={c.printLater}>Print later</button>}
         />
       );
-    case 'complete':
+    case 'done':
       return <SaleCompleteModal sale={modal.sale} onClose={close} />;
     default:
       return null;

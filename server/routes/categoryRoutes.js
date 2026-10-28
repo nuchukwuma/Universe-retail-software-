@@ -32,8 +32,7 @@ router.get('/', async (req, res) => {
 // Creates a new category (owner/manager).
 router.post('/', canManage, async (req, res) => {
   try {
-    const { name, icon, image } = req.body;
-    const category = await Category.create({ name, icon, image });
+    const category = await Category.create({ name: req.body.name });
     res.status(201).json(category);
   } catch (error) {
     handleError(res, error, 'Could not create category.');
@@ -41,7 +40,7 @@ router.post('/', canManage, async (req, res) => {
 });
 
 // PUT /api/categories/:id
-// Renames a category or changes its icon/image (owner/manager).
+// Renames a category (owner/manager).
 router.put('/:id', canManage, async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
@@ -49,10 +48,7 @@ router.put('/:id', canManage, async (req, res) => {
       return res.status(404).json({ message: 'Category not found.' });
     }
 
-    const { name, icon, image } = req.body;
-    if (name !== undefined) category.name = name;
-    if (icon !== undefined) category.icon = icon;
-    if (image !== undefined) category.image = image;
+    if (req.body.name !== undefined) category.name = req.body.name;
 
     await category.save();
     res.json(category);

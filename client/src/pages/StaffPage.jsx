@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import PageHeader from '../components/PageHeader';
 import { ROLE_LABELS } from '../utils/roles';
 
 const EMPTY_FORM = { name: '', username: '', password: '', role: 'cashier' };
 
-// Owner-only page for adding staff, changing roles, resetting
-// passwords and disabling or deleting accounts.
+// Owner only: add staff, change roles, reset passwords, and switch
+// accounts off or delete them.
 function StaffPage() {
   const { user: currentUser } = useAuth();
-
   const [staff, setStaff] = useState([]);
   const [form, setForm] = useState(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
@@ -26,8 +26,7 @@ function StaffPage() {
   async function loadStaff() {
     setLoading(true);
     try {
-      const data = await api.get('/users');
-      setStaff(data);
+      setStaff(await api.get('/users'));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -62,7 +61,7 @@ function StaffPage() {
     }
   }
 
-  // Saves a change (role, active status or password) for one staff member.
+  // Saves a change (role, active or password) for one staff member.
   async function updateStaff(member, changes, successText) {
     try {
       const updated = await api.put(`/users/${member._id}`, changes);
@@ -76,9 +75,7 @@ function StaffPage() {
   // Asks for a new password and saves it.
   function handleResetPassword(member) {
     const newPassword = window.prompt(`New password for ${member.name} (at least 6 characters):`);
-    if (newPassword) {
-      updateStaff(member, { password: newPassword }, `Password changed for ${member.name}.`);
-    }
+    if (newPassword) updateStaff(member, { password: newPassword }, `Password changed for ${member.name}.`);
   }
 
   // Deletes a staff account after confirming.
@@ -94,50 +91,15 @@ function StaffPage() {
   }
 
   return (
-    <div>
-      <h1 className="page-title">Staff Accounts</h1>
+    <div className="page">
+      <PageHeader title="Staff" lead="Everyone who can sign in to the till, and what they are allowed to do." />
 
-      {error && <div className="alert alert-error">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      {message && <div className="notice notice-success" role="status">{message}</div>}
 
-      <form className="card form-grid" onSubmit={handleAddStaff}>
-        <h2 className="form-grid-title">Add a staff member</h2>
-        <label>
-          Full name
-          <input name="name" value={form.name} onChange={handleFormChange} required />
-        </label>
-        <label>
-          Username
-          <input name="username" value={form.username} onChange={handleFormChange} required />
-        </label>
-        <label>
-          Password
-          <input
-            name="password"
-            type="password"
-            minLength={6}
-            value={form.password}
-            onChange={handleFormChange}
-            required
-          />
-        </label>
-        <label>
-          Role
-          <select name="role" value={form.role} onChange={handleFormChange}>
-            <option value="cashier">Cashier</option>
-            <option value="manager">Manager</option>
-            <option value="owner">Owner</option>
-          </select>
-        </label>
-        <button type="submit" className="btn btn-primary" disabled={saving}>
-          {saving ? 'Saving...' : 'Add Staff'}
-        </button>
-      </form>
-
-      <div className="card">
-        {loading ? (
-          <p className="muted">Loading staff...</p>
-        ) : (
+      <section className="panel panel-flush" aria-label="Staff accounts">
+        {loading && <p className="loading">Loading staff...</p>}
+        {!loading && staff.length > 0 && (
           <div className="table-wrap">
             <table className="table">
               <thead>
@@ -145,8 +107,8 @@ function StaffPage() {
                   <th>Name</th>
                   <th>Username</th>
                   <th>Role</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>Account</th>
+                  <th><span className="visually-hidden">Actions</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -154,52 +116,38 @@ function StaffPage() {
                   const isMe = member._id === currentUser._id;
                   return (
                     <tr key={member._id}>
-                      <td>{member.name}{isMe && <span className="muted"> (you)</span>}</td>
+                      <td className="cell-main">{member.name}{isMe && <span className="muted"> (you)</span>}</td>
                       <td>{member.username}</td>
                       <td>
                         <select
+                          className="input-auto"
                           value={member.role}
                           disabled={isMe}
-                          onChange={(e) =>
-                            updateStaff(member, { role: e.target.value }, `${member.name} is now ${ROLE_LABELS[e.target.value]}.`)
-                          }
+                          aria-label={`Role of ${member.name}`}
+                          onChange={(e) => updateStaff(member, { role: e.target.value }, `${member.name} is now a ${ROLE_LABELS[e.target.value].toLowerCase()}.`)}
                         >
                           <option value="cashier">Cashier</option>
                           <option value="manager">Manager</option>
                           <option value="owner">Owner</option>
                         </select>
                       </td>
-                      <td>
-                        <span className={member.isActive ? 'badge badge-green' : 'badge badge-grey'}>
-                          {member.isActive ? 'Active' : 'Disabled'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="actions">
-                          <button type="button" className="btn btn-small" onClick={() => handleResetPassword(member)}>
-                            Reset password
-                          </button>
-                          {!isMe && (
-                            <>
-                              <button
-                                type="button"
-                                className="btn btn-small"
-                                onClick={() =>
-                                  updateStaff(
-                                    member,
-                                    { isActive: !member.isActive },
-                                    `${member.name} was ${member.isActive ? 'disabled' : 'enabled'}.`
-                                  )
-                                }
-                              >
-                                {member.isActive ? 'Disable' : 'Enable'}
-                              </button>
-                              <button type="button" className="btn btn-small btn-danger" onClick={() => handleDelete(member)}>
-                                Delete
-                              </button>
-                            </>
-                          )}
-                        </div>
+                      <td><span className={member.isActive ? 'status status-ok' : 'status status-quiet'}>{member.isActive ? 'Can sign in' : 'Switched off'}</span></td>
+                      <td className="actions">
+                        <button type="button" className="btn btn-quiet" onClick={() => handleResetPassword(member)}>Reset password</button>
+                        {!isMe && (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn-quiet"
+                              onClick={() => updateStaff(member, { isActive: !member.isActive }, `${member.name} ${member.isActive ? 'can no longer sign in' : 'can sign in again'}.`)}
+                            >
+                              {member.isActive ? 'Switch off' : 'Switch on'}
+                            </button>
+                            <button type="button" className="btn btn-quiet btn-danger" onClick={() => handleDelete(member)}>
+                              Delete<span className="visually-hidden"> {member.name}</span>
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   );
@@ -208,7 +156,35 @@ function StaffPage() {
             </table>
           </div>
         )}
-      </div>
+      </section>
+
+      <form className="panel form-grid" onSubmit={handleAddStaff}>
+        <h2 className="form-section">Add a staff member</h2>
+        <div className="field">
+          <label className="field-label" htmlFor="staff-name">Full name</label>
+          <input id="staff-name" name="name" value={form.name} onChange={handleFormChange} required />
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="staff-username">Username</label>
+          <input id="staff-username" name="username" value={form.username} onChange={handleFormChange} required autoComplete="off" />
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="staff-password">Password</label>
+          <input id="staff-password" name="password" type="password" minLength={6} value={form.password} onChange={handleFormChange} required autoComplete="new-password" />
+          <span className="field-help">At least 6 characters.</span>
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="staff-role">Role</label>
+          <select id="staff-role" name="role" value={form.role} onChange={handleFormChange}>
+            <option value="cashier">Cashier: sells, sees their own sales</option>
+            <option value="manager">Manager: also stock, reports, returns, any discount</option>
+            <option value="owner">Owner: everything, including staff and settings</option>
+          </select>
+        </div>
+        <div className="span-all btn-row">
+          <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Add staff member'}</button>
+        </div>
+      </form>
     </div>
   );
 }
