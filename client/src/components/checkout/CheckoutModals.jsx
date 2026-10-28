@@ -95,7 +95,6 @@ function CheckoutModals({ modal, c }) {
       return (
         <SaleReceiptModal
           sale={modal.sale}
-          customerPhone={modal.customerPhone}
           banner={<ChangeBanner sale={modal.sale} />}
           onClose={close}
           extraButtons={

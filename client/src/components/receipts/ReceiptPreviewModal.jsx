@@ -1,12 +1,11 @@
 import { useRef, useState } from 'react';
 import Modal from '../Modal';
 import { downloadReceiptPdf } from './receiptActions';
-import { whatsAppLink } from '../../utils/phone';
 
 // A pop-up that shows a receipt exactly as it will print, with buttons
-// to Print, Download as PDF and Share via WhatsApp.
+// to Print and Save as PDF.
 // "extraButtons" lets the caller add more (e.g. "Reprint later", "Skip").
-function ReceiptPreviewModal({ title, banner, receipt, paper, onPrint, pdfFileName, whatsApp, extraButtons, onClose }) {
+function ReceiptPreviewModal({ title, banner, receipt, paper, onPrint, pdfFileName, extraButtons, onClose }) {
   const receiptRef = useRef(null);
   const [making, setMaking] = useState(false);
   const [error, setError] = useState('');
@@ -40,13 +39,8 @@ function ReceiptPreviewModal({ title, banner, receipt, paper, onPrint, pdfFileNa
           🖨️ Print
         </button>
         <button type="button" className="btn" onClick={handlePdf} disabled={making}>
-          {making ? 'Making PDF...' : '⬇️ Download PDF'}
+          {making ? 'Making PDF...' : '⬇️ Save as PDF'}
         </button>
-        {whatsApp && (
-          <a className="btn btn-whatsapp" href={whatsAppLink(whatsApp.phone, whatsApp.text)} target="_blank" rel="noreferrer">
-            💬 Share via WhatsApp
-          </a>
-        )}
         {extraButtons}
       </div>
     </Modal>

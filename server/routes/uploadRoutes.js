@@ -1,19 +1,16 @@
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
 const { requireLogin, requireRole } = require('../middleware/auth');
+const { uploadsDir } = require('../utils/paths');
 
 const router = express.Router();
 
-// Uploaded images are saved in server/uploads and served at /uploads/...
-const UPLOAD_FOLDER = path.join(__dirname, '..', 'uploads');
-fs.mkdirSync(UPLOAD_FOLDER, { recursive: true });
-
+// Uploaded images are saved in the "uploads" data folder and served at /uploads/...
 // Tells multer where to save files and how to name them
 // (time + random number, so names never clash).
 const storage = multer.diskStorage({
-  destination: UPLOAD_FOLDER,
+  destination: (req, file, callback) => callback(null, uploadsDir()),
   filename: (req, file, callback) => {
     const extension = path.extname(file.originalname).toLowerCase() || '.jpg';
     const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e6)}${extension}`;

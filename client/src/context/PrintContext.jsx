@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useSettings } from './SettingsContext';
+import { desktop } from '../utils/desktop';
 
 // Lets any page print a receipt with: const { printDocument } = usePrinter();
 //   printDocument(<SaleReceipt ... />, '80mm');
@@ -28,10 +30,16 @@ function waitForImages(element) {
   );
 }
 
-// Holds the document being printed and runs the browser's print dialog.
+// Holds the document being printed and sends it to the printer.
+// - Desktop app: prints straight to the printer chosen in Settings.
+// - Web browser (development): opens the browser's print window.
 export function PrintProvider({ children }) {
+  const { settings } = useSettings();
   const [job, setJob] = useState(null); // { content, paper }
   const areaRef = useRef(null);
+  const printerNameRef = useRef(settings.printerName);
+
+  printerNameRef.current = settings.printerName;
 
   // Starts printing "content" (a React element) on the given paper size.
   const printDocument = useCallback((content, paper = '80mm') => {
@@ -60,8 +68,25 @@ export function PrintProvider({ children }) {
       document.head.appendChild(style);
       document.body.classList.add('printing');
 
-      window.addEventListener('afterprint', cleanUp, { once: true });
-      window.print();
+      if (desktop) {
+        await printWithDesktopApp(heightMm);
+        cleanUp();
+      } else {
+        window.addEventListener('afterprint', cleanUp, { once: true });
+        window.print();
+      }
+    }
+
+    // Asks the desktop app to print, and tells the user if it failed.
+    async function printWithDesktopApp(heightMm) {
+      try {
+        const result = await desktop.print({ paper: job.paper, heightMm, printerName: printerNameRef.current || '' });
+        if (!result.ok && result.reason !== 'cancelled') {
+          window.alert(`The receipt could not be printed: ${result.reason}\nCheck that the printer is on and has paper.`);
+        }
+      } catch (error) {
+        window.alert(`The receipt could not be printed: ${error.message}`);
+      }
     }
 
     run();

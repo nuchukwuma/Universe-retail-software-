@@ -21,6 +21,7 @@ const MENU = [
   { to: '/feedback', label: '💬 Feedback', roles: ['owner', 'manager'] },
   { to: '/staff', label: '👥 Staff Accounts', roles: ['owner'] },
   { to: '/settings', label: '⚙️ Settings', roles: ['owner'] },
+  { to: '/backup', label: '💾 Backup & Restore', roles: ['owner'] },
 ];
 
 // Page frame for back office pages: top bar, side menu and the page itself.

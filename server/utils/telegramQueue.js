@@ -53,7 +53,7 @@ async function deliver(messageId) {
 // Does nothing if alerts are switched off or Telegram is not set up.
 async function queueSaleAlert(sale) {
   const settings = await getSettings();
-  if (!settings.telegramAlertsEnabled || !isTelegramConfigured()) return null;
+  if (!settings.telegramAlertsEnabled || !(await isTelegramConfigured())) return null;
 
   const message = await TelegramMessage.create({
     kind: 'sale',
@@ -66,7 +66,7 @@ async function queueSaleAlert(sale) {
 
 // Sends every outbox message that is due for another try.
 async function processQueue() {
-  if (!isTelegramConfigured()) return;
+  if (!(await isTelegramConfigured())) return;
 
   // A message stuck in "sending" (e.g. the server stopped mid-send) goes back to the queue.
   await TelegramMessage.updateMany(
@@ -99,11 +99,9 @@ function startTelegramWorker() {
     }
   }, CHECK_EVERY_MS);
 
-  console.log(
-    isTelegramConfigured()
-      ? 'Telegram sales alerts: ready'
-      : 'Telegram sales alerts: not set up (add TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to .env)'
-  );
+  isTelegramConfigured()
+    .then((ready) => console.log(ready ? 'Telegram sales alerts: ready' : 'Telegram sales alerts: not set up yet (Settings → Telegram)'))
+    .catch(() => {});
 }
 
 module.exports = { queueSaleAlert, processQueue, startTelegramWorker, MAX_ATTEMPTS };

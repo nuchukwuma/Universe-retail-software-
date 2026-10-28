@@ -1,0 +1,60 @@
+{
+  "name": "universe-pos",
+  "productName": "Universe POS",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Universe Cosmetics & Beauty - shop till and back office (desktop app for Windows)",
+  "author": "Universe Cosmetics & Beauty",
+  "main": "main.js",
+  "scripts": {
+    "copy-app": "node scripts/copy-app.js",
+    "build-client": "npm --prefix ../client install && npm --prefix ../client run build",
+    "start": "npm run copy-app && electron .",
+    "dist": "npm run build-client && npm run copy-app && electron-builder --win nsis --x64"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^7.8.13",
+    "multer": "^2.5.0"
+  },
+  "devDependencies": {
+    "electron": "22.3.27",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "ng.universe.pos",
+    "productName": "Universe POS",
+    "copyright": "Universe Cosmetics & Beauty",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "error.html",
+      "loading.html",
+      "electron/**/*",
+      "app/**/*",
+      "build/icon.png",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Universe POS",
+      "artifactName": "Universe-POS-Setup-${version}.exe"
+    }
+  }
+}

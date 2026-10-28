@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS = {
   showLogoOnReceipt: true,
   paperSize: '80mm',
   autoPrint: false,
+  printerName: '',
   maxCashierDiscountPercent: 10,
   telegramAlertsEnabled: true,
 };

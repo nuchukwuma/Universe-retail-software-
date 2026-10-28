@@ -145,17 +145,6 @@
   margin-top: 14px;
 }
 
-.btn-whatsapp {
-  background: #25d366;
-  border-color: #25d366;
-  color: #fff;
-  font-weight: 600;
-}
-
-.btn-whatsapp:hover {
-  background: #1ebe5b;
-}
-
 /* ===== Printing a receipt =====
    While printing, only the receipt (.print-root) is shown. Everything else
    - menus, buttons, the checkout - is hidden. */

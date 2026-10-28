@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { useSettings } from '../../context/SettingsContext';
 import ReceiptPreviewModal from './ReceiptPreviewModal';
 import ReturnReceipt from './ReturnReceipt';
-import { returnAsText } from './receiptActions';
 import { useReceiptPrinting } from './useReceiptPrinting';
 
-// Receipt preview for a return / refund, with Print, PDF and WhatsApp.
+// Receipt preview for a return / refund, with Print and Save as PDF.
 function ReturnReceiptModal({ ret: startingReturn, banner, onClose }) {
   const { settings } = useSettings();
   const { printReturn } = useReceiptPrinting();
@@ -24,7 +23,6 @@ function ReturnReceiptModal({ ret: startingReturn, banner, onClose }) {
       paper={settings.paperSize}
       onPrint={handlePrint}
       pdfFileName={`return-${ret.returnNumber}.pdf`}
-      whatsApp={{ phone: '', text: returnAsText(ret, settings) }}
       extraButtons={<button type="button" className="btn" onClick={onClose}>Done</button>}
       onClose={onClose}
     />

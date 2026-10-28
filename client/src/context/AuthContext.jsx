@@ -37,16 +37,19 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('pos-session-expired', clearSession);
   }, []);
 
-  // Sends the username and password to the server and saves the result.
-  async function login(username, password) {
-    const data = await api.post('/auth/login', { username, password });
+  // Saves a token and user from the server (after login or first-time setup).
+  function startSession(data) {
     const now = new Date().toISOString();
-
     setToken(data.token);
     localStorage.setItem(LOGIN_TIME_KEY, now);
     setLoginTime(now);
     setUser(data.user);
     return data.user;
+  }
+
+  // Sends the username and password to the server and saves the result.
+  async function login(username, password) {
+    return startSession(await api.post('/auth/login', { username, password }));
   }
 
   // Removes the saved token and user from the browser.
@@ -57,7 +60,7 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
-  const value = { user, loginTime, checkingSession, login, logout: clearSession };
+  const value = { user, loginTime, checkingSession, login, startSession, logout: clearSession };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

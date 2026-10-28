@@ -1,20 +1,22 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import basicSsl from '@vitejs/plugin-basic-ssl';
 
-// Vite settings. The "proxy" sends every /api and /uploads request from
-// the React app (port 5173) to the Express server (port 5000).
-//
-// "npm run dev:phone" starts in "phone" mode, which turns on HTTPS.
-// Phone browsers only allow the camera (for barcode scanning) on HTTPS.
-export default defineConfig(({ mode }) => ({
-  plugins: mode === 'phone' ? [react(), basicSsl()] : [react()],
+// Vite settings.
+// - In development, the "proxy" sends every /api and /uploads request from
+//   the React app (port 5173) to the Express server (port 5000).
+// - "npm run build" makes the finished app in client/dist, which the
+//   desktop app shows.
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    // The desktop app for Windows 8 uses Chromium 108, so build for it.
+    target: 'chrome108',
+  },
   server: {
     port: 5173,
-    host: true,
     proxy: {
       '/api': 'http://localhost:5000',
       '/uploads': 'http://localhost:5000',
     },
   },
-}));
+});

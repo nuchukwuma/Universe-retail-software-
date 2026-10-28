@@ -1,18 +1,30 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import SetupForm from '../components/SetupForm';
 
 // The login screen. Every staff member logs in here first.
+// On a brand-new install (no staff accounts yet) it shows the
+// first-time setup form instead.
 function LoginPage() {
   const { user, login } = useAuth();
   const { settings } = useSettings();
   const navigate = useNavigate();
 
+  const [needsSetup, setNeedsSetup] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Ask the server if this is the first start.
+  useEffect(() => {
+    api.get('/setup/status')
+      .then((data) => setNeedsSetup(data.needsSetup))
+      .catch(() => setNeedsSetup(false));
+  }, []);
 
   // Already logged in? Go straight to the checkout.
   if (user) {
@@ -33,6 +45,14 @@ function LoginPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (needsSetup) {
+    return (
+      <div className="login-page">
+        <SetupForm onDone={() => navigate('/dashboard')} />
+      </div>
+    );
   }
 
   return (

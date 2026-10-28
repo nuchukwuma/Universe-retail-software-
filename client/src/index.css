@@ -192,6 +192,30 @@ textarea:focus {
   padding-left: 20px;
 }
 
+.link-button {
+  border: none;
+  background: none;
+  padding: 2px 0;
+  color: var(--blue);
+  text-decoration: underline;
+  font: inherit;
+  cursor: pointer;
+}
+
+.setup-card {
+  max-width: 440px;
+}
+
+.setup-card .setup-sample {
+  font-weight: 400;
+  text-align: left;
+}
+
+.backup-warning a {
+  color: var(--red);
+  font-weight: 700;
+}
+
 .telegram-stats {
   margin-bottom: 0;
 }
@@ -1176,4 +1200,15 @@ kbd {
     padding: 6px 10px;
     font-size: 13px;
   }
+}
+
+/* Printer list with a "Refresh" button next to it */
+.printer-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.printer-row select {
+  flex: 1;
 }

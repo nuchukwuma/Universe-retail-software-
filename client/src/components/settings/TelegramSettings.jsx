@@ -10,11 +10,14 @@ const STATUS_LABELS = {
   failed: { text: 'Failed', className: 'badge badge-red' },
 };
 
-// The Telegram part of the Settings page: switch alerts on/off, send a
-// test message, find the chat id and see which alerts were sent.
+// The Telegram part of the Settings page: enter the bot token and chat id,
+// switch alerts on/off, send a test message, find the chat id and see
+// which alerts were sent.
 function TelegramSettings() {
   const { settings, setSettings } = useSettings();
   const [status, setStatus] = useState(null);
+  const [botToken, setBotToken] = useState('');
+  const [chatId, setChatId] = useState('');
   const [chats, setChats] = useState(null);
   const [working, setWorking] = useState('');
   const [error, setError] = useState('');
@@ -22,16 +25,38 @@ function TelegramSettings() {
 
   // Load the status when the page opens.
   useEffect(() => {
-    loadStatus();
+    loadStatus(true);
   }, []);
 
   // Fetches whether Telegram is set up and how the outbox is doing.
-  async function loadStatus() {
+  // "fillForm" puts the saved chat id into its box (first load only).
+  async function loadStatus(fillForm = false) {
     try {
-      setStatus(await api.get('/telegram/status'));
+      const data = await api.get('/telegram/status');
+      setStatus(data);
+      if (fillForm) setChatId(data.chatId || '');
     } catch (err) {
       setError(err.message);
     }
+  }
+
+  // Saves the bot token (if typed) and the chat id.
+  function saveConfig(event) {
+    event.preventDefault();
+    run('config', async () => {
+      const data = await api.put('/telegram/config', { botToken, chatId });
+      setBotToken('');
+      setMessage(data.message);
+    });
+  }
+
+  // Forgets the saved token and chat id.
+  function forgetConfig() {
+    if (!window.confirm('Remove the saved Telegram bot token and chat id?')) return;
+    run('config', async () => {
+      setMessage((await api.delete('/telegram/config')).message);
+      setChatId('');
+    });
   }
 
   // Runs one of the buttons' actions and shows the result.
@@ -72,18 +97,36 @@ function TelegramSettings() {
       {error && <div className="alert alert-error">{error}</div>}
       {message && <div className="alert alert-success">{message}</div>}
 
-      <div className="telegram-setup">
-        <div>{status.botTokenSet ? '✅' : '❌'} Bot token {status.botTokenSet ? 'is set' : 'is missing'} (TELEGRAM_BOT_TOKEN)</div>
-        <div>
-          {status.chatIdSet ? '✅' : '❌'} Chat id {status.chatIdSet ? `is set (${status.chatId})` : 'is missing'} (TELEGRAM_CHAT_ID)
+      <form className="telegram-setup form-grid" onSubmit={saveConfig}>
+        <label className="span-2">
+          Bot token {status.botTokenSet ? '✅ saved' : '❌ not set'}
+          <input
+            type="password"
+            value={botToken}
+            onChange={(e) => setBotToken(e.target.value)}
+            placeholder={status.botTokenSet ? 'Saved (hidden). Paste a new token to change it.' : 'Paste the token from @BotFather, e.g. 7123456789:AAH...'}
+            autoComplete="off"
+          />
+        </label>
+        <label>
+          Chat id {status.chatIdSet ? '✅' : '❌ not set'}
+          <input value={chatId} onChange={(e) => setChatId(e.target.value)} placeholder="e.g. -1001234567890" />
+        </label>
+        <div className="form-actions span-full">
+          <button type="submit" className="btn btn-primary" disabled={Boolean(working)}>
+            {working === 'config' ? 'Saving...' : 'Save Telegram details'}
+          </button>
+          {(status.botTokenSet || status.chatIdSet) && (
+            <button type="button" className="btn btn-danger" disabled={Boolean(working)} onClick={forgetConfig}>
+              Remove details
+            </button>
+          )}
         </div>
-        {!status.configured && (
-          <p className="muted small">
-            Add these to the <code>server/.env</code> file and restart the server. The README explains how to
-            create a bot with @BotFather.
-          </p>
-        )}
-      </div>
+        <p className="muted small span-full">
+          The token is stored only on this laptop and is never shown again. See the README for how to create a bot with
+          @BotFather.
+        </p>
+      </form>
 
       <label className="checkbox-row">
         <input
@@ -132,11 +175,14 @@ function TelegramSettings() {
             </p>
           ) : (
             <>
-              <p className="small">Copy the id of your shop's group into <code>TELEGRAM_CHAT_ID</code> in <code>server/.env</code>:</p>
+              <p className="small">Click your shop's group to use its chat id, then press "Save Telegram details":</p>
               <ul>
                 {chats.map((chat) => (
                   <li key={chat.id}>
-                    <code>{chat.id}</code> · {chat.name || 'No name'} <span className="muted">({chat.type})</span>
+                    <button type="button" className="link-button" onClick={() => setChatId(chat.id)}>
+                      <code>{chat.id}</code> · {chat.name || 'No name'}
+                    </button>{' '}
+                    <span className="muted">({chat.type})</span>
                   </li>
                 ))}
               </ul>
