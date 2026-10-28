@@ -417,6 +417,16 @@ something to sell.
   running. Wait a minute after switching the laptop on, then **Try again**. Otherwise open
   `services.msc`, right-click **MongoDB Server** → **Start**. If it is not in the list,
   install MongoDB (Step 1).
+- **"querySrv ECONNREFUSED" (or ETIMEOUT) with MongoDB Atlas** (development): your
+  router or network refused the special DNS lookup that `mongodb+srv://` addresses need. The
+  server tries again by itself through public DNS (1.1.1.1 and 8.8.8.8). If it still fails:
+  1. In Atlas, **Network Access** → **Add IP Address** → **Add Current IP Address**.
+  2. Change your computer's DNS to `1.1.1.1` and `8.8.8.8` (Windows: Control Panel →
+     Network and Sharing Center → your connection → Properties → Internet Protocol
+     Version 4 → "Use the following DNS server addresses").
+  3. Or use Atlas's older-style address, which needs no special lookup: in Atlas click
+     **Connect → Drivers**, choose **Node.js version 2.2.12 or later**, and copy the
+     `mongodb://...:27017,...` address into `MONGO_URI`.
 - **Receipts do not print**: check the printer is on and has paper, and that Settings →
   **Receipt printer** shows the right printer (it says *(not found)* if Windows cannot see it).
   Install the printer's Windows driver from its CD or the maker's website first.
