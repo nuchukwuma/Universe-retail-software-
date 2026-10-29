@@ -7,43 +7,34 @@ const EVERYONE = ['owner', 'manager', 'cashier'];
 const MANAGERS = ['owner', 'manager'];
 const OWNER = ['owner'];
 
-// The page list, grouped by job. "roles" says who can see each page.
+// The page list, in the order it is used most. "roles" says who can see
+// each page. A group with no heading is shown on its own at the top.
 const MENU = [
+  {
+    heading: '',
+    links: [{ to: '/dashboard', label: 'Today', roles: MANAGERS }],
+  },
   {
     heading: 'Selling',
     links: [
       { to: '/sales-history', label: 'Sales history', roles: EVERYONE },
       { to: '/end-of-day', label: 'End of day', roles: EVERYONE },
-    ],
-  },
-  {
-    heading: 'Reports',
-    links: [
-      { to: '/dashboard', label: 'Today', roles: MANAGERS },
       { to: '/reports', label: 'Reports', roles: MANAGERS },
     ],
   },
   {
     heading: 'Stock',
     links: [
+      { to: '/add-stock', label: 'Add stock', roles: MANAGERS },
       { to: '/products', label: 'Products', roles: MANAGERS },
-      { to: '/categories', label: 'Categories', roles: MANAGERS },
-      { to: '/receive-stock', label: 'Receive stock', roles: MANAGERS },
       { to: '/stock-count', label: 'Stock count', roles: MANAGERS },
-      { to: '/barcode-labels', label: 'Barcode labels', roles: MANAGERS },
-    ],
-  },
-  {
-    heading: 'People',
-    links: [
-      { to: '/customers', label: 'Customers', roles: MANAGERS },
-      { to: '/feedback', label: 'Feedback', roles: MANAGERS },
-      { to: '/staff', label: 'Staff', roles: OWNER },
+      { to: '/categories', label: 'Categories', roles: MANAGERS },
     ],
   },
   {
     heading: 'Shop',
     links: [
+      { to: '/staff', label: 'Staff', roles: OWNER },
       { to: '/settings', label: 'Settings', roles: OWNER },
       { to: '/backup', label: 'Backup and restore', roles: OWNER },
     ],
@@ -62,8 +53,8 @@ function BackOfficeLayout() {
       <div className="office">
         <nav className="office-nav" aria-label="Back office pages">
           {groups.map((group) => (
-            <div key={group.heading} className="office-nav-group">
-              <div className="office-nav-heading">{group.heading}</div>
+            <div key={group.heading || 'top'} className="office-nav-group">
+              {group.heading && <div className="office-nav-heading">{group.heading}</div>}
               {group.links.map((link) => (
                 <NavLink key={link.to} to={link.to} className="office-nav-link">
                   {link.label}

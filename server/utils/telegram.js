@@ -115,7 +115,6 @@ function saleAlertText(sale, storeName) {
     `Time: ${lagosTime(sale.createdAt || new Date())}`,
     `Cashier: ${escapeHtml(sale.cashierName)}`,
   ];
-  if (sale.customerName) lines.push(`Customer: ${escapeHtml(sale.customerName)}`);
   lines.push('');
 
   sale.items.slice(0, MAX_ITEMS_IN_MESSAGE).forEach((item) => {

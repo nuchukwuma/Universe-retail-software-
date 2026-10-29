@@ -1,8 +1,8 @@
 # Universe POS
 
-A point-of-sale and shop management app for **Universe Cosmetics & Beauty**, made to be
+A point-of-sale and shop management app for **Universe Cosmetics & Beauty Skincare**, made to be
 installed on **one Windows laptop** next to a USB or Bluetooth barcode scanner.
-Everything (sales, products, staff, customers, backups) is saved **on that laptop only**.
+Everything (sales, products, staff, backups) is saved **on that laptop only**.
 Nothing is stored online.
 
 The screens are text, tables and colour only: no icons, pictures or logos. The design
@@ -28,10 +28,18 @@ owner can switch it off.
 | 6 | Reports and Excel export | ✅ Done |
 | 7 | Desktop app for Windows 8: installer, first-run setup, backups, direct printing | ✅ Done |
 | 8 | Redesign: new look, keyboard-wedge scanner, simpler products and sales | ✅ Done |
+| 9 | Add stock by scanning (new products too), new typefaces, tidier menu | ✅ Done |
 
 Removed along the way: the public website (the app is offline), WhatsApp sharing, the
 camera scanner, pictures and logos, expiry dates, suppliers, cost prices and profit,
-wholesale prices, and payment methods (a sale is just a sale).
+wholesale prices, payment methods (a sale is just a sale), customers and customer
+feedback, staff names on receipts, end-of-day printing and barcode label printing.
+The only thing the app prints is the customer's receipt (and the return slip, which is
+the customer's refund receipt).
+
+When the updated app first starts on a computer that has data from an older version, it
+makes a **safety backup** (reason "before-update") and then removes the old fields and
+tables (customers, feedback, suppliers, ...). No sale, total or stock figure is lost.
 
 ---
 
@@ -112,9 +120,8 @@ All of these are in **Back Office** (button at the top), logged in as the owner:
      **Print test receipt**.
    - **Print the receipt as soon as a sale is completed:** skips the receipt preview.
 3. **Backup and restore:** see below. Do this on day one.
-4. **Products / Categories / Receive stock:** enter your stock. On the Products page, scan
-   a new product's barcode and the Add product form opens with the barcode filled in.
-   Products without a barcode can get one from **Barcode labels**.
+4. **Categories, then Add stock:** enter your stock with the scanner (see
+   *Adding stock with the scanner* below).
 
 ### Backups (important!)
 
@@ -149,7 +156,7 @@ Because the data is only on this laptop, a broken or stolen laptop would lose ev
 After every sale, the app can send a message like this to a Telegram group:
 
 ```
-New sale at Universe Cosmetics & Beauty
+New sale at Universe Cosmetics & Beauty Skincare
 Receipt: 261027-0001
 Time: 27 Oct 2026, 9:13
 Cashier: Amaka Cashier
@@ -190,11 +197,25 @@ on nearly every scanner.
   milliseconds. So a scan still works when the cursor is in another box (for example a
   quantity), and the code is never left behind in that box.
 - **Other pages that take scans:** Products (opens the product, or starts a new one with
-  that barcode), Add/Edit product (fills in the barcode), Receive stock (chooses the
-  product), Stock count (adds 1 to the count), Sales history (scan a receipt to find it),
+  that barcode), Add/Edit product (fills in the barcode), Add stock (adds 1, or starts a
+  new product), Stock count (adds 1 to the count), Sales history (scan a receipt to find it),
   and Return (scan the receipt).
 - If the line says **Scanner paused**, click anywhere in the app window (another program
   had the keyboard) or press **Esc** on the till.
+
+### Adding stock with the scanner
+
+Back office → **Stock → Add stock**. No need to click anything first: just scan.
+
+- **A product the shop already has:** it appears with **How many arrived: 1**. Scan it
+  again for each extra one, or type the number, then press **Enter** (Add to stock).
+- **A barcode the shop does not have yet:** a **New product** form opens with the barcode
+  filled in. Type the name and selling price (category and low-stock level are optional),
+  scan the same item again for each extra one or type how many arrived, then press
+  **Enter** (Save product and add to stock). Next time it is scanned, at the till or here,
+  the app knows it.
+- **No barcode on the item:** use **No barcode? Find it by name**.
+- **Recently added** at the bottom shows the last deliveries and who added them.
 
 **Testing a scanner:** open Notepad, scan a barcode. The digits should appear and the
 cursor should jump to a new line. If no new line appears, scan the "Enter suffix" or
@@ -202,7 +223,7 @@ cursor should jump to a new line. If no new line appears, scan the "Enter suffix
 
 ### Keyboard shortcuts
 
-On the till: **F1** shows the list (F2 find product, F3 customer, F6 hold, F7 recall,
+On the till: **F1** shows the list (F2 find product, F6 hold, F7 recall,
 F8 discount, F9 cancel bill, F10 complete sale, then Enter to confirm). **Esc** closes a
 window, or puts the cursor back in the barcode box.
 
@@ -321,26 +342,23 @@ something to sell.
 2. **Find product (F2):** for items without a barcode. Type part of the name, choose with
    the arrow keys, Enter adds it. Category buttons narrow the list.
 3. **Change the bill** with **-** and **+**, type a quantity, or **Remove** a line.
-4. **Customer (F3):** search saved customers, add a new one, or write a walk-in name.
-5. **Complete sale (F10, then Enter):** the sale is saved and the receipt is shown (or
+4. **Complete sale (F10, then Enter):** the sale is saved and the receipt is shown (or
    printed straight away if Settings says so). The first print is the original; later
    prints from Sales history say **\*\*\* DUPLICATE COPY \*\*\***.
-6. **Discount (F8):** up to 10% (changeable in Settings) a cashier can give alone. Above
+5. **Discount (F8):** up to 10% (changeable in Settings) a cashier can give alone. Above
    that, a manager types their username and password on the till.
-7. **Hold (F6) / Recall (F7):** park a bill with a name, serve the next customer, bring it back later.
-8. **Return:** scan the barcode at the bottom of a receipt, choose the items and the
+6. **Hold (F6) / Recall (F7):** park a bill (with a note if you like), serve the next customer, bring it back later.
+7. **Return:** scan the barcode at the bottom of a receipt, choose the items and the
    reason, and a manager approves. A return slip prints and the items go back into stock.
-9. **Sales history** and **End of day** (the day's sales, refunds and takings, printed to sign).
+8. **Sales history** and **End of day** (the day's sales, refunds and takings, on screen).
 
 ### Stock (manager / owner)
 
 - **Products:** search and filter (low stock, out of stock, no barcode). Scan any product to
   open it; scan an unknown barcode to add it as a new product.
-- **Receive stock:** scan, type how many arrived, **Add to stock**.
+- **Add stock:** scan what arrived; a new barcode becomes a new product (see above).
 - **Stock count:** scan everything on the shelf (each scan adds 1), then
   **Set stock to my count**.
-- **Barcode labels:** create barcodes for products without one and print sticker sheets or label rolls.
-- **Customers** (with each customer's purchase history) and **Feedback**.
 
 ### Today and reports (manager / owner)
 
@@ -358,7 +376,7 @@ something to sell.
 | Role | Can do |
 |------|--------|
 | Owner | Everything, including Staff, Settings, Telegram and Backup and restore |
-| Manager | The till, products, stock, customers, returns, any discount, Today and reports |
+| Manager | The till, products, stock, returns, any discount, Today and reports |
 | Cashier | The till, Sales history, End of day. Returns and big discounts need a manager's password |
 
 ---
@@ -386,7 +404,7 @@ something to sell.
                         useScanner (tells a barcode scanner from typing)
     /pages              one file per screen (Products, Backup, Settings, ...)
     /styles             tokens.css (all colours, type and spacing), base, components,
-                        layout, pos (the till), receipt and labels
+                        layout, pos (the till) and receipt
     /utils              small helpers (Naira, dates, desktop app check, ...)
 /server                 Express API
   app.js                builds the app and starts it (used by the desktop app and server.js)
@@ -417,17 +435,13 @@ something to sell.
 | GET | `/api/products` | logged in | Products: name, barcode, category, selling price, stock, low-stock level |
 | GET | `/api/products/barcode/:code` | logged in | Find a product by barcode |
 | POST / PUT / DELETE | `/api/products(/:id)` | owner, manager | Manage products |
-| POST | `/api/products/generate-barcodes` | owner, manager | Give in-store barcodes to products without one |
-| POST | `/api/stock/receive`, `/api/stock/count` | owner, manager | Receive stock, save a stock count |
+| POST | `/api/stock/receive`, `/api/stock/count` | owner, manager | Add stock that arrived, save a stock count |
 | GET | `/api/stock/movements` | owner, manager | Stock history |
 | POST | `/api/sales` | logged in | Complete a sale (prices come from the database) |
 | GET | `/api/sales?search=&from=&to=`, `/api/sales/:id`, `/api/sales/by-receipt/:number` | logged in | Find sales |
 | POST | `/api/sales/:id/printed` | logged in | Count a print (later prints say DUPLICATE COPY) |
 | GET / POST | `/api/returns` | logged in (manager approval needed to POST) | Returns |
 | GET / POST / DELETE | `/api/held-bills(/:id)` | logged in | Hold and recall bills |
-| GET / POST / PUT / DELETE | `/api/customers(/:id)` | logged in (edit/delete: owner, manager) | Customers |
-| GET | `/api/customers/:id/sales` | owner, manager | A customer's purchases |
-| GET / POST | `/api/feedback` | POST: logged in, GET: owner, manager | Customer feedback |
 | GET | `/api/settings` | anyone | Store settings (never includes the Telegram details) |
 | PUT | `/api/settings` | owner | Change store settings and the receipt printer |
 | GET | `/api/reports/end-of-day?date=&cashier=` | logged in (cashiers: their own) | End-of-day totals |

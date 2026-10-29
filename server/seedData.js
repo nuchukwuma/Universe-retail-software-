@@ -50,10 +50,4 @@ const products = [
   { name: 'Vaseline Petroleum Jelly 250ml', category: 'Skincare', barcode: makeEan13('615000700003'), sellingPrice: 2500, quantity: 30, reorderLevel: 8 },
 ];
 
-const customers = [
-  { name: 'Adaeze Okafor', phone: '08034445566' },
-  { name: 'Tunde Bakare', phone: '08127778899' },
-  { name: 'Mama Nkechi Provisions', phone: '07061234500' },
-];
-
-module.exports = { users, categories, products, customers };
+module.exports = { users, categories, products };

@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 // removed whenever the settings are sent to the app (see toJSON below).
 const settingsSchema = new mongoose.Schema(
   {
-    storeName: { type: String, default: 'Universe Cosmetics & Beauty', trim: true },
+    storeName: { type: String, default: 'Universe Cosmetics & Beauty Skincare', trim: true },
     address: { type: String, default: '', trim: true },
     phone: { type: String, default: '', trim: true },
     footerMessage: { type: String, default: 'Thank you for shopping with us!', trim: true },

@@ -8,11 +8,4 @@ function makeEan13(twelveDigits) {
   return twelveDigits + checkDigit;
 }
 
-// Makes an in-store barcode from a running number, e.g. 7 -> 2000000000077.
-// Codes starting with "2" are reserved for shops' own use, so they will
-// never clash with a manufacturer's barcode.
-function makeStoreBarcode(runningNumber) {
-  return makeEan13('200' + String(runningNumber).padStart(9, '0'));
-}
-
-module.exports = { makeEan13, makeStoreBarcode };
+module.exports = { makeEan13 };

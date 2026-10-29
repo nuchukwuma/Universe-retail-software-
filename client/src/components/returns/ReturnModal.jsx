@@ -154,8 +154,7 @@ function ReturnModal({ initialSale = null, onDone, onClose }) {
       }
     >
       <p className="muted">
-        Sold on {formatDateTime(sale.createdAt)} by {sale.cashierName}
-        {sale.customerName ? ` to ${sale.customerName}` : ''}. Total paid {formatNaira(sale.total)}.
+        Sold on {formatDateTime(sale.createdAt)} by {sale.cashierName}. Total paid {formatNaira(sale.total)}.
       </p>
 
       {nothingLeft ? (

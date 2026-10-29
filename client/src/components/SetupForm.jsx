@@ -9,7 +9,7 @@ function SetupForm({ onDone }) {
   const { startSession } = useAuth();
   const { reloadSettings } = useSettings();
   const [form, setForm] = useState({
-    storeName: 'Universe Cosmetics & Beauty',
+    storeName: 'Universe Cosmetics & Beauty Skincare',
     ownerName: '',
     username: '',
     password: '',

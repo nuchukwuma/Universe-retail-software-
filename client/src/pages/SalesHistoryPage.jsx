@@ -28,7 +28,7 @@ function SaleReturnsButtons({ saleId, onOpen }) {
   ));
 }
 
-// Find past sales by receipt number, customer or date, print a copy of a
+// Find past sales by receipt number or date, print a copy of a
 // receipt (marked DUPLICATE COPY) and start a return.
 function SalesHistoryPage() {
   const [search, setSearch] = useState('');
@@ -85,8 +85,8 @@ function SalesHistoryPage() {
 
       <div className="panel toolbar">
         <div className="field">
-          <label className="field-label" htmlFor="history-search">Receipt number or customer</label>
-          <input id="history-search" type="search" placeholder="e.g. 261027-0004 or Ada" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <label className="field-label" htmlFor="history-search">Receipt number</label>
+          <input id="history-search" type="search" placeholder="e.g. 261027-0004" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <div className="field">
           <label className="field-label" htmlFor="history-from">From</label>
@@ -113,7 +113,6 @@ function SalesHistoryPage() {
                 <tr>
                   <th>Receipt</th>
                   <th>Date</th>
-                  <th>Customer</th>
                   <th>Cashier</th>
                   <th className="num">Items</th>
                   <th className="num">Total</th>
@@ -128,7 +127,6 @@ function SalesHistoryPage() {
                       {STATUS_LABELS[sale.status] && <span className="cell-sub status status-low">{STATUS_LABELS[sale.status]}</span>}
                     </td>
                     <td>{formatDateTime(sale.createdAt)}</td>
-                    <td>{sale.customerName || <span className="muted">Walk-in</span>}</td>
                     <td>{sale.cashierName}</td>
                     <td className="num">{sale.items.reduce((n, item) => n + item.quantity, 0)}</td>
                     <td className="num strong">{formatNaira(sale.total)}</td>

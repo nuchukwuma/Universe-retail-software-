@@ -87,20 +87,6 @@
 
 /* ---------- Bill ---------- */
 
-.bill-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3) var(--space-5);
-  padding: var(--space-3) var(--panel-padding);
-  border-bottom: var(--line-thin) solid var(--color-rule);
-}
-
-.bill-customer strong {
-  margin-left: var(--space-2);
-}
-
 .bill-lines {
   flex: 1;
   min-height: 0;
@@ -134,7 +120,6 @@
 
 .bill-item-name {
   font-weight: 700;
-  font-stretch: var(--width-normal);
 }
 
 .bill-item-note {
@@ -157,7 +142,6 @@
 .bill-amount {
   font-weight: 750;
   font-size: var(--text-heading);
-  font-stretch: var(--width-narrow);
 }
 
 .bill-empty {
@@ -204,11 +188,12 @@
 }
 
 /* --chars is set by PriceTicket.jsx: the number of characters in the total.
-   Each character of the wide, heavy figures is about 0.78em wide. */
+   Each figure of the display serif is at most about 0.56em wide. */
 .ticket-total {
-  font-size: min(var(--ticket-font-size), calc(100cqi / (var(--chars, 8) * 0.78)));
-  font-stretch: var(--width-widest);
-  font-weight: 800;
+  font-size: min(var(--ticket-font-size), calc(100cqi / (var(--chars, 8) * 0.56)));
+  font-family: var(--font-display);
+  font-variant-numeric: lining-nums tabular-nums;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: -0.01em;
   white-space: nowrap;
@@ -303,8 +288,9 @@
 
 .confirm-total {
   font-size: var(--font-size-8);
-  font-stretch: var(--width-widest);
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-variant-numeric: lining-nums tabular-nums;
+  font-weight: 700;
   line-height: 1;
 }
 

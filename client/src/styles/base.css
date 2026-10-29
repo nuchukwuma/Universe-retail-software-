@@ -16,9 +16,8 @@ body {
   margin: 0;
   background: var(--color-floor);
   color: var(--color-text);
-  font-family: var(--font-family);
+  font-family: var(--font-text);
   font-size: var(--text-body);
-  font-stretch: var(--width-normal);
   line-height: var(--leading-body);
   /* Every number lines up in columns: prices, quantities, totals. */
   font-variant-numeric: tabular-nums;
@@ -33,9 +32,10 @@ p {
 }
 
 h1 {
+  font-family: var(--font-display);
   font-size: var(--text-title);
-  font-stretch: var(--width-wide);
-  font-weight: 750;
+  font-weight: 600;
+  font-variant-numeric: lining-nums;
   line-height: var(--leading-tight);
 }
 

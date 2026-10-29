@@ -17,11 +17,9 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
 const stockRoutes = require('./routes/stockRoutes');
 const saleRoutes = require('./routes/saleRoutes');
-const customerRoutes = require('./routes/customerRoutes');
 const returnRoutes = require('./routes/returnRoutes');
 const heldBillRoutes = require('./routes/heldBillRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
-const feedbackRoutes = require('./routes/feedbackRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const managerReportRoutes = require('./routes/managerReportRoutes');
 const telegramRoutes = require('./routes/telegramRoutes');
@@ -51,11 +49,9 @@ function createApp({ clientDir } = {}) {
   app.use('/api/products', productRoutes);
   app.use('/api/stock', stockRoutes);
   app.use('/api/sales', saleRoutes);
-  app.use('/api/customers', customerRoutes);
   app.use('/api/returns', returnRoutes);
   app.use('/api/held-bills', heldBillRoutes);
   app.use('/api/settings', settingsRoutes);
-  app.use('/api/feedback', feedbackRoutes);
   app.use('/api/reports', reportRoutes); // end-of-day (everyone)
   app.use('/api/reports', managerReportRoutes); // Today page, sales and stock reports (managers/owners)
   app.use('/api/telegram', telegramRoutes);

@@ -83,7 +83,6 @@ function ProductsPage() {
   return (
     <div className="page">
       <PageHeader title="Products" lead="Everything the shop sells, with its price and how many are in stock.">
-        <Link to="/barcode-labels" className="btn">Print barcode labels</Link>
         <Link to="/products/new" className="btn btn-primary">Add product</Link>
       </PageHeader>
 

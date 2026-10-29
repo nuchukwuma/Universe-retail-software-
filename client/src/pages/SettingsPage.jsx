@@ -11,8 +11,6 @@ import PrinterPicker from '../components/settings/PrinterPicker';
 const TEST_SALE = {
   receiptNumber: 'TEST-0001',
   createdAt: new Date().toISOString(),
-  cashierName: 'Test Cashier',
-  customerName: 'Test Customer',
   items: [
     { name: 'Royal Stallion Rice 5kg', quantity: 1, unitPrice: 12500, discount: 0, lineTotal: 12500 },
     { name: 'Peak Milk Powder 400g', quantity: 2, unitPrice: 4200, discount: 420, discountType: 'percent', discountValue: 5, lineTotal: 7980 },

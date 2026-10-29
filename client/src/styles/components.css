@@ -108,7 +108,6 @@
 .key {
   font-size: var(--text-small);
   font-weight: 500;
-  font-stretch: var(--width-narrow);
   opacity: 0.8;
 }
 
@@ -288,7 +287,6 @@ input[type='date'] {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--text-table);
-  font-stretch: var(--width-narrow);
 }
 
 .table th {
@@ -448,8 +446,9 @@ input[type='date'] {
   margin: var(--space-1) 0 0;
   /* Big on a desktop, smaller on a tablet, so long Naira amounts still fit. */
   font-size: clamp(var(--font-size-5), 2.8vw, var(--text-figure));
-  font-stretch: var(--width-wide);
-  font-weight: 750;
+  font-family: var(--font-display);
+  font-variant-numeric: lining-nums tabular-nums;
+  font-weight: 700;
   line-height: var(--leading-tight);
 }
 
@@ -457,7 +456,7 @@ input[type='date'] {
   display: block;
   margin-top: var(--space-2);
   font-size: var(--text-small);
-  font-stretch: var(--width-normal);
+  font-family: var(--font-text);
   font-weight: 500;
 }
 
@@ -671,7 +670,6 @@ a.figure-link:hover dd {
   border: none;
   border-bottom: var(--line-thin) solid var(--color-rule);
   background: transparent;
-  font-stretch: var(--width-narrow);
   text-align: left;
   cursor: pointer;
 }

@@ -23,8 +23,6 @@ const saleSchema = new mongoose.Schema(
   {
     receiptNumber: { type: String, required: true, unique: true },
     items: [saleItemSchema],
-    customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', default: null },
-    customerName: { type: String, default: '' },
     subtotal: { type: Number, required: true }, // before any discount
     billDiscountType: { type: String, default: '' }, // discount on the whole bill
     billDiscountValue: { type: Number, default: 0 },
@@ -42,6 +40,5 @@ const saleSchema = new mongoose.Schema(
 );
 
 saleSchema.index({ createdAt: -1 });
-saleSchema.index({ customer: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Sale', saleSchema);

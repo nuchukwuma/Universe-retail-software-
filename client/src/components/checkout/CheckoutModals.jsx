@@ -1,11 +1,9 @@
 import CompleteSaleModal from './CompleteSaleModal';
 import SaleCompleteModal from './SaleCompleteModal';
-import CustomerPickerModal from './CustomerPickerModal';
 import ShortcutsModal from './ShortcutsModal';
 import DiscountModal from './DiscountModal';
 import HoldBillModal from './HoldBillModal';
 import RecallModal from './RecallModal';
-import FeedbackModal from './FeedbackModal';
 import FindProductModal from './FindProductModal';
 import { ManagerApprovalModal } from './ManagerApprovalForm';
 import ReturnModal from '../returns/ReturnModal';
@@ -22,7 +20,7 @@ function CheckoutModals({ modal, c }) {
   switch (type) {
     case 'complete':
       return (
-        <CompleteSaleModal bill={c.bill} totals={c.totals} saving={c.saving} error={c.saleError} onConfirm={() => c.completeSale()} onClose={close} />
+        <CompleteSaleModal totals={c.totals} saving={c.saving} error={c.saleError} onConfirm={() => c.completeSale()} onClose={close} />
       );
     case 'approveSale':
       return (
@@ -34,8 +32,6 @@ function CheckoutModals({ modal, c }) {
       );
     case 'find':
       return <FindProductModal products={c.products} categories={c.categories} startText={modal.text || ''} onAdd={c.addToBill} onClose={close} />;
-    case 'customer':
-      return <CustomerPickerModal onSelect={c.pickCustomer} onWalkIn={c.setWalkIn} onClose={close} />;
     case 'shortcuts':
       return <ShortcutsModal onClose={close} />;
     case 'discount':
@@ -50,11 +46,9 @@ function CheckoutModals({ modal, c }) {
         />
       );
     case 'hold':
-      return <HoldBillModal defaultLabel={c.bill.customerName} saving={c.saving} error={c.holdError} onHold={c.holdBill} onClose={close} />;
+      return <HoldBillModal saving={c.saving} error={c.holdError} onHold={c.holdBill} onClose={close} />;
     case 'recall':
       return <RecallModal onRecall={c.recallBill} onClose={close} />;
-    case 'feedback':
-      return <FeedbackModal defaultCustomerName={c.bill.customerName} onSaved={c.feedbackSaved} onClose={close} />;
     case 'return':
       return <ReturnModal onDone={c.returnDone} onClose={close} />;
     case 'returnReceipt':

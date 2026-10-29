@@ -6,7 +6,6 @@
 const User = require('../models/User');
 const Category = require('../models/Category');
 const Product = require('../models/Product');
-const Customer = require('../models/Customer');
 const sample = require('../seedData');
 
 // Creates each sample staff account if that username does not exist yet.
@@ -56,22 +55,11 @@ async function seedProducts(categoryIdByName, log) {
   log(`+ Created ${created} product(s), ${sample.products.length - created} already existed`);
 }
 
-// Creates each sample customer if their phone number is not used yet.
-async function seedCustomers(log) {
-  for (const item of sample.customers) {
-    const exists = await Customer.findOne({ phone: item.phone });
-    if (exists) continue;
-    await Customer.create(item);
-    log(`+ Created customer "${item.name}"`);
-  }
-}
-
-// Adds the sample categories, products and customers
+// Adds the sample categories and products
 // (but NOT the sample staff accounts).
 async function loadSampleCatalogue(log = console.log) {
   const categoryIds = await seedCategories(log);
   await seedProducts(categoryIds, log);
-  await seedCustomers(log);
 }
 
 module.exports = { seedSampleUsers, loadSampleCatalogue };
