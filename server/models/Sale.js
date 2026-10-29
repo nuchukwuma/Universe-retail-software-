@@ -8,7 +8,6 @@ const saleItemSchema = new mongoose.Schema(
     name: { type: String, required: true },
     barcode: { type: String, default: '' },
     unitPrice: { type: Number, required: true },
-    costPrice: { type: Number, default: 0 },
     quantity: { type: Number, required: true },
     discountType: { type: String, default: '' }, // 'percent', 'amount' or '' for none
     discountValue: { type: Number, default: 0 }, // e.g. 10 (%) or 500 (Naira)
@@ -19,23 +18,11 @@ const saleItemSchema = new mongoose.Schema(
   { _id: false }
 );
 
-// One way the customer paid. A split payment has several of these.
-// "amount" is what was applied to the bill (cash change already removed).
-const paymentSchema = new mongoose.Schema(
-  {
-    method: { type: String, enum: ['cash', 'transfer', 'card'], required: true },
-    amount: { type: Number, required: true },
-    reference: { type: String, default: '' },
-  },
-  { _id: false }
-);
-
 // A completed sale (one receipt).
 const saleSchema = new mongoose.Schema(
   {
     receiptNumber: { type: String, required: true, unique: true },
     items: [saleItemSchema],
-    priceType: { type: String, enum: ['standard', 'wholesale'], default: 'standard' },
     customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', default: null },
     customerName: { type: String, default: '' },
     subtotal: { type: Number, required: true }, // before any discount
@@ -45,10 +32,6 @@ const saleSchema = new mongoose.Schema(
     discountTotal: { type: Number, default: 0 }, // line discounts + bill discount
     discountApprovedBy: { type: String, default: '' }, // manager who approved a large discount
     total: { type: Number, required: true },
-    payments: [paymentSchema],
-    paymentMethod: { type: String, enum: ['cash', 'transfer', 'card', 'split'], required: true },
-    amountTendered: { type: Number, default: 0 }, // everything the customer handed over
-    change: { type: Number, default: 0 },
     cashier: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     cashierName: { type: String, default: '' },
     status: { type: String, enum: ['completed', 'partly_returned', 'returned'], default: 'completed' },

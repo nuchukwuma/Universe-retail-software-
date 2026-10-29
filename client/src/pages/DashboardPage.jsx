@@ -3,152 +3,200 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
-import ProductImage from '../components/ProductImage';
-import { ROLE_LABELS } from '../utils/roles';
-import { formatDate, todayDateValue } from '../utils/dates';
+import PageHeader from '../components/PageHeader';
+import { formatDate, shiftDate, todayDateValue } from '../utils/dates';
 import { formatNaira } from '../utils/formatNaira';
-import { expiryLabel, expiryStatus } from '../utils/stockAlerts';
+import { stockStatus } from '../utils/stock';
 
-// Compares today with yesterday, e.g. "▲ 12% vs yesterday (₦40,000)".
+// Says how today compares with yesterday, in words.
 function compareWithYesterday(today, yesterday) {
-  if (!yesterday) return `Yesterday: ${formatNaira(0)}`;
+  if (!yesterday) return `Nothing taken yesterday.`;
   const change = Math.round(((today - yesterday) / yesterday) * 100);
-  const arrow = change >= 0 ? '▲' : '▼';
-  return `${arrow} ${Math.abs(change)}% vs yesterday (${formatNaira(yesterday)})`;
+  if (change === 0) return `Same as yesterday (${formatNaira(yesterday)}).`;
+  return `${Math.abs(change)}% ${change > 0 ? 'more' : 'less'} than yesterday (${formatNaira(yesterday)}).`;
 }
 
-// Back office home page for managers and owners: today's sales cards,
-// this month so far, and stock alerts.
+// The back-office home page for managers and owners: today's takings,
+// this week and month, what is running low, and what sold best today.
 function DashboardPage() {
   const { user } = useAuth();
   const { settings, reloadSettings } = useSettings();
   const [stats, setStats] = useState(null);
-  const [alerts, setAlerts] = useState({ lowStock: [], expiring: [] });
+  const [bestSellers, setBestSellers] = useState([]);
+  const [lastWeek, setLastWeek] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const today = todayDateValue();
+  const weekAgo = shiftDate(today, -6);
 
-  // Load the sales numbers and the stock alerts when the page opens.
+  // Load the numbers when the page opens.
   useEffect(() => {
-    async function loadDashboard() {
+    async function loadToday() {
       try {
-        const [dashboard, stockAlerts] = await Promise.all([api.get('/reports/dashboard'), api.get('/products/alerts')]);
+        const [dashboard, best, daily] = await Promise.all([
+          api.get('/reports/dashboard'),
+          api.get(`/reports/best-sellers?from=${today}&to=${today}`),
+          api.get(`/reports/daily-sales?from=${weekAgo}&to=${today}`),
+        ]);
         setStats(dashboard);
-        setAlerts(stockAlerts);
+        setBestSellers(best.rows.slice(0, 5));
+        setLastWeek(daily.rows);
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     }
-    loadDashboard();
-  }, []);
+    loadToday();
+  }, [today, weekAgo]);
 
   // Re-read the settings so the backup warning below is up to date.
   useEffect(() => {
     reloadSettings();
   }, [reloadSettings]);
 
-  const expiredCount = alerts.expiring.filter((p) => expiryStatus(p) === 'expired').length;
   const daysSinceBackup = settings.lastBackupAt ? (Date.now() - new Date(settings.lastBackupAt)) / 86400000 : null;
-  const backupWarning =
-    user.role === 'owner' && (settings.lastBackupError || daysSinceBackup === null || daysSinceBackup > 2);
-  const today = todayDateValue();
-  const show = (value) => (loading || !stats ? '…' : value);
+  const backupWarning = user.role === 'owner' && (settings.lastBackupError || daysSinceBackup === null || daysSinceBackup > 2);
 
   return (
-    <div>
-      <h1 className="page-title">Dashboard</h1>
-      <p className="muted">Welcome, {user.name} ({ROLE_LABELS[user.role]}). Here is how the shop is doing today.</p>
+    <div className="page">
+      <PageHeader title="Today" lead={`How the shop is doing on ${formatDate(today)}.`}>
+        <Link to="/reports" className="btn">All reports</Link>
+      </PageHeader>
 
-      {error && <div className="alert alert-error">{error}</div>}
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
       {backupWarning && (
-        <div className="alert alert-error backup-warning">
-          💾 {settings.lastBackupError
-            ? `The last backup failed: ${settings.lastBackupError}`
-            : daysSinceBackup === null
-              ? 'No backup has been made yet.'
-              : `The last backup was ${Math.floor(daysSinceBackup)} days ago.`}{' '}
-          <Link to="/backup">Open Backup &amp; Restore</Link>
+        <div className="notice notice-warning">
+          <span className="notice-title">
+            {settings.lastBackupError ? 'The last backup failed.' : daysSinceBackup === null ? 'No backup has been made yet.' : `The last backup was ${Math.floor(daysSinceBackup)} days ago.`}
+          </span>
+          {settings.lastBackupError || 'All the shop\'s data is only on this laptop. Make a backup to a USB drive.'}
+          <div className="btn-row"><Link to="/backup" className="btn btn-small">Open Backup and restore</Link></div>
         </div>
       )}
 
-      <div className="stat-cards">
-        <Link to={`/reports?report=daily&from=${today}&to=${today}`} className="stat-card">
-          <span>Today's sales</span>
-          <strong>{show(formatNaira(stats?.today.netSales))}</strong>
-          <small>{stats && compareWithYesterday(stats.today.netSales, stats.yesterday.netSales)}</small>
-        </Link>
-        <Link to={`/reports?report=cashiers&from=${today}&to=${today}`} className="stat-card">
-          <span>Transactions today</span>
-          <strong>{show(stats?.today.transactions)}</strong>
-          <small>{stats && `${stats.today.itemsSold} items · average ${formatNaira(stats.today.averageSale)}`}</small>
-        </Link>
-        <Link to={`/reports?report=profit&from=${today}&to=${today}`} className="stat-card stat-card-green">
-          <span>Profit today</span>
-          <strong>{show(formatNaira(stats?.today.profit))}</strong>
-          <small>after discounts, refunds and cost of goods</small>
-        </Link>
-        <Link to="/products?filter=low" className="stat-card stat-card-red">
-          <span>Low stock</span>
-          <strong>{show(stats?.lowStock)}</strong>
-          <small>products at or below reorder level</small>
-        </Link>
-      </div>
+      {loading && <p className="loading">Loading today's figures...</p>}
 
-      <div className="stat-cards">
-        <Link to={`/reports?report=daily&from=${today.slice(0, 8)}01&to=${today}`} className="stat-card">
-          <span>This month so far</span>
-          <strong>{show(formatNaira(stats?.month.netSales))}</strong>
-          <small>{stats && `${stats.month.transactions} sales · profit ${formatNaira(stats.month.profit)}`}</small>
-        </Link>
-        <Link to="/products?filter=expiring" className="stat-card stat-card-orange">
-          <span>Expiring soon</span>
-          <strong>{show(stats?.expiring)}</strong>
-          <small>{expiredCount > 0 ? `${expiredCount} already expired` : 'within the next 30 days'}</small>
-        </Link>
-        <Link to="/reports" className="stat-card stat-card-link">
-          <span>All reports</span>
-          <strong>📈</strong>
-          <small>daily sales, cashiers, best sellers, profit, stock - with Excel export</small>
-        </Link>
-      </div>
+      {stats && (
+        <dl className="figures">
+          <Link to={`/reports?report=daily&from=${today}&to=${today}`} className="figure figure-link">
+            <dt>Takings today</dt>
+            <dd>{formatNaira(stats.today.takings)}<span className="figure-note muted">{compareWithYesterday(stats.today.takings, stats.yesterday.takings)}</span></dd>
+          </Link>
+          <Link to={`/reports?report=cashiers&from=${today}&to=${today}`} className="figure figure-link">
+            <dt>Sales today</dt>
+            <dd>{stats.today.transactions}<span className="figure-note muted">{stats.today.itemsSold} items, average {formatNaira(stats.today.averageSale)}</span></dd>
+          </Link>
+          <Link to={`/reports?report=daily&from=${stats.weekStart}&to=${today}`} className="figure figure-link">
+            <dt>This week</dt>
+            <dd>{formatNaira(stats.week.takings)}<span className="figure-note muted">since Monday, {stats.week.transactions} sales</span></dd>
+          </Link>
+          <Link to={`/reports?report=weekly&from=${today.slice(0, 8)}01&to=${today}`} className="figure figure-link">
+            <dt>This month</dt>
+            <dd>{formatNaira(stats.month.takings)}<span className="figure-note muted">{stats.month.transactions} sales so far</span></dd>
+          </Link>
+        </dl>
+      )}
 
-      <div className="two-columns">
-        <div className="card">
-          <h2>⚠️ Low stock</h2>
-          {!loading && alerts.lowStock.length === 0 && <p className="muted">All products are well stocked.</p>}
-          <ul className="alert-list">
-            {alerts.lowStock.map((p) => (
-              <li key={p._id}>
-                <ProductImage product={p} size={36} />
-                <span className="alert-list-name">{p.name}</span>
-                <span className="badge badge-red">{p.quantity} left</span>
-                <small className="muted">reorder at {p.reorderLevel}</small>
-              </li>
-            ))}
-          </ul>
-          {alerts.lowStock.length > 0 && <Link to="/receive-stock" className="btn btn-small">Receive stock →</Link>}
+      {stats && (
+        <div className="columns-even columns">
+          <section className="panel panel-flush" aria-labelledby="low-heading">
+            <div className="panel-head">
+              <h2 id="low-heading">Running low</h2>
+              <Link to="/products?filter=low" className="btn btn-quiet">See all {stats.lowStock}</Link>
+            </div>
+            {stats.lowStockProducts.length === 0 ? (
+              <p className="empty muted">Every product is above its low-stock level.</p>
+            ) : (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th className="num">In stock</th>
+                    <th className="num">Low at</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.lowStockProducts.map((p) => {
+                    const status = stockStatus(p);
+                    return (
+                      <tr key={p._id}>
+                        <td className="cell-main">{p.name}</td>
+                        <td className="num strong">{p.quantity}</td>
+                        <td className="num muted">{p.reorderLevel}</td>
+                        <td><span className={`status status-${status.key}`}>{status.label}</span></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </section>
+
+          <section className="panel panel-flush" aria-labelledby="best-heading">
+            <div className="panel-head">
+              <h2 id="best-heading">Best sellers today</h2>
+              <Link to={`/reports?report=best-sellers&from=${today}&to=${today}`} className="btn btn-quiet">Full list</Link>
+            </div>
+            {bestSellers.length === 0 ? (
+              <p className="empty muted">Nothing sold yet today.</p>
+            ) : (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th className="num">Sold</th>
+                    <th className="num">Sales value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bestSellers.map((row) => (
+                    <tr key={row.product}>
+                      <td className="cell-main">{row.name}</td>
+                      <td className="num">{row.quantity}</td>
+                      <td className="num">{formatNaira(row.revenue)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
         </div>
+      )}
 
-        <div className="card">
-          <h2>⏰ Expiring within 30 days</h2>
-          {!loading && alerts.expiring.length === 0 && <p className="muted">No products are close to expiry.</p>}
-          <ul className="alert-list">
-            {alerts.expiring.map((p) => (
-              <li key={p._id}>
-                <ProductImage product={p} size={36} />
-                <span className="alert-list-name">
-                  {p.name}
-                  <small className="muted"> · {formatDate(p.expiryDate)}</small>
-                </span>
-                <span className={expiryStatus(p) === 'expired' ? 'badge badge-red' : 'badge badge-orange'}>
-                  {expiryLabel(p)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      {stats && (
+        <section className="panel panel-flush" aria-labelledby="week-heading">
+          <div className="panel-head">
+            <h2 id="week-heading">Last 7 days</h2>
+            <Link to={`/reports?report=daily&from=${weekAgo}&to=${today}`} className="btn btn-quiet">Daily sales report</Link>
+          </div>
+          {lastWeek.length === 0 ? (
+            <p className="empty muted">No sales in the last 7 days.</p>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th className="num">Sales</th>
+                  <th className="num">Items sold</th>
+                  <th className="num">Takings</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...lastWeek].reverse().map((row) => (
+                  <tr key={row.day} className={row.day === today ? 'is-highlighted' : undefined}>
+                    <td className="cell-main">{row.day === today ? 'Today' : formatDate(row.day)}</td>
+                    <td className="num">{row.transactions}</td>
+                    <td className="num">{row.itemsSold}</td>
+                    <td className="num strong">{formatNaira(row.takings)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      )}
     </div>
   );
 }

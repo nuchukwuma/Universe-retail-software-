@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api/api';
+import PageHeader from '../components/PageHeader';
 import BarcodeInput from '../components/BarcodeInput';
 import ProductSearch from '../components/ProductSearch';
+import ScannerStatus from '../components/ScannerStatus';
+import { useGlobalScanner } from '../hooks/useScanner';
 
 // The count is saved in the browser so a page refresh does not lose it.
 const SAVED_COUNT_KEY = 'pos_stock_count';
@@ -15,14 +18,14 @@ function loadSavedCount() {
   }
 }
 
-// Page for counting what is really on the shelves. Scan each item
-// (every scan adds 1), then compare with what the system thinks.
+// Count what is really on the shelves. Every scan adds 1 to that
+// product's count; then compare with the stock the system has.
 function StockCountPage() {
   const [products, setProducts] = useState([]);
-  // counts looks like { productId: numberCounted }
-  const [counts, setCounts] = useState(loadSavedCount);
+  const [counts, setCounts] = useState(loadSavedCount); // { productId: numberCounted }
   const [barcode, setBarcode] = useState('');
   const [onlyDifferences, setOnlyDifferences] = useState(false);
+  const [lastCountedId, setLastCountedId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -53,29 +56,31 @@ function StockCountPage() {
   // Adds "amount" to the counted number for one product.
   function addToCount(productId, amount) {
     setCounts((current) => ({ ...current, [productId]: Math.max(0, (current[productId] || 0) + amount) }));
+    setLastCountedId(productId);
   }
 
   // Sets the counted number for one product (typed in by hand).
   function setCount(productId, value) {
-    setCounts((current) => ({ ...current, [productId]: Math.max(0, Number(value) || 0) }));
+    setCounts((current) => ({ ...current, [productId]: Math.max(0, Math.floor(Number(value)) || 0) }));
   }
 
-  // Runs on every scan: finds the product and adds 1 to its count.
+  // Every scan: find the product and add 1 to its count.
   function handleScan(code) {
     setBarcode('');
     const product = products.find((p) => p.barcode === code);
     if (product) {
       addToCount(product._id, 1);
-      setMessage(`Counted: ${product.name}`);
+      setMessage(`Counted ${product.name}: ${(counts[product._id] || 0) + 1}`);
       setError('');
     } else {
-      setError(`No product has the barcode ${code}.`);
+      setError(`Product not found: no product has the barcode ${code}.`);
       setMessage('');
     }
     scanBoxRef.current?.focus();
   }
+  useGlobalScanner(handleScan, !loading);
 
-  // Removes one product from the count.
+  // Takes one product out of the count.
   function removeFromCount(productId) {
     setCounts((current) => {
       const copy = { ...current };
@@ -95,8 +100,7 @@ function StockCountPage() {
   // Sends the counted numbers to the server, which corrects the stock.
   async function saveCount() {
     const entries = Object.entries(counts);
-    if (!window.confirm(`Update the stock of ${entries.length} counted product(s) to match your count?`)) return;
-
+    if (!window.confirm(`Set the stock of ${entries.length} counted product(s) to your count?`)) return;
     setSaving(true);
     setError('');
     try {
@@ -117,84 +121,71 @@ function StockCountPage() {
     .filter((p) => counts[p._id] !== undefined)
     .map((p) => ({ product: p, counted: counts[p._id], difference: counts[p._id] - p.quantity }))
     .filter((row) => !onlyDifferences || row.difference !== 0);
-
+  const countedTotal = Object.keys(counts).length;
   const differenceCount = products.filter((p) => counts[p._id] !== undefined && counts[p._id] !== p.quantity).length;
 
   return (
-    <div>
-      <h1 className="page-title">Stock Count</h1>
+    <div className="page">
+      <PageHeader title="Stock count" lead="Scan every item on a shelf. Each scan adds 1. Then set the stock to what you counted." />
 
-      {error && <div className="alert alert-error">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      {message && <div className="notice notice-success" role="status">{message}</div>}
 
-      <div className="card form-grid">
-        <div>
-          <span className="field-label">Scan an item (each scan adds 1)</span>
-          <BarcodeInput
-            value={barcode}
-            onChange={setBarcode}
-            onEnter={handleScan}
-            inputRef={scanBoxRef}
-            autoFocus
-          />
+      <div className="panel form-grid">
+        <div className="field">
+          <label className="field-label" htmlFor="count-barcode">Scan an item</label>
+          <BarcodeInput id="count-barcode" value={barcode} onChange={setBarcode} onEnter={handleScan} inputRef={scanBoxRef} autoFocus />
+          <ScannerStatus readyText="Scanner ready: each scan adds 1 to the count." />
         </div>
-        <div className="span-2">
-          <span className="field-label">Item has no barcode? Find it here</span>
-          <ProductSearch products={products} onSelect={(p) => addToCount(p._id, 1)} />
+        <div className="field">
+          <label className="field-label" htmlFor="count-search">No barcode? Find it by name</label>
+          <ProductSearch id="count-search" products={products} onSelect={(p) => addToCount(p._id, 1)} />
         </div>
       </div>
 
-      <div className="card">
-        <div className="page-header">
-          <h2>
-            Counted items: {Object.keys(counts).length}
-            {differenceCount > 0 && <span className="badge badge-orange">{differenceCount} different</span>}
-          </h2>
-          <label className="checkbox-row">
+      <section className="panel panel-flush" aria-label="Counted items">
+        <div className="panel-head">
+          <h2>{countedTotal} product{countedTotal === 1 ? '' : 's'} counted{differenceCount > 0 ? `, ${differenceCount} different from the system` : ''}</h2>
+          <label className="check">
             <input type="checkbox" checked={onlyDifferences} onChange={(e) => setOnlyDifferences(e.target.checked)} />
             Show differences only
           </label>
         </div>
 
-        {loading ? (
-          <p className="muted">Loading products...</p>
-        ) : (
+        {loading && <p className="loading">Loading products...</p>}
+        {!loading && countedRows.length === 0 && (
+          <p className="empty muted">{countedTotal === 0 ? 'Nothing counted yet. Scan the first item.' : 'Every counted product matches the system.'}</p>
+        )}
+        {countedRows.length > 0 && (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
                   <th>Product</th>
-                  <th className="number">System qty</th>
-                  <th className="number">Counted</th>
-                  <th className="number">Difference</th>
-                  <th />
+                  <th className="num">System</th>
+                  <th className="num">Counted</th>
+                  <th className="num">Difference</th>
+                  <th><span className="visually-hidden">Remove</span></th>
                 </tr>
               </thead>
               <tbody>
                 {countedRows.map(({ product, counted, difference }) => (
-                  <tr key={product._id}>
-                    <td>{product.name}</td>
-                    <td className="number">{product.quantity}</td>
-                    <td className="number">
-                      <div className="qty-control">
-                        <button type="button" className="btn btn-small" onClick={() => addToCount(product._id, -1)}>−</button>
-                        <input
-                          type="number"
-                          min="0"
-                          value={counted}
-                          onChange={(e) => setCount(product._id, e.target.value)}
-                        />
-                        <button type="button" className="btn btn-small" onClick={() => addToCount(product._id, 1)}>+</button>
+                  <tr key={product._id} className={product._id === lastCountedId ? 'is-highlighted' : undefined}>
+                    <td className="cell-main">{product.name}</td>
+                    <td className="num">{product.quantity}</td>
+                    <td className="num">
+                      <div className="qty">
+                        <button type="button" className="btn" onClick={() => addToCount(product._id, -1)} aria-label={`One less ${product.name}`}>-</button>
+                        <input type="number" min="0" value={counted} onChange={(e) => setCount(product._id, e.target.value)} aria-label={`Counted ${product.name}`} />
+                        <button type="button" className="btn" onClick={() => addToCount(product._id, 1)} aria-label={`One more ${product.name}`}>+</button>
                       </div>
                     </td>
-                    <td className="number">
-                      <span className={difference === 0 ? 'badge badge-green' : 'badge badge-red'}>
-                        {difference > 0 ? `+${difference}` : difference}
-                      </span>
+                    <td className={difference === 0 ? 'num status status-ok' : 'num status status-bad'}>
+                      {difference === 0 ? 'Matches' : difference > 0 ? `${difference} more` : `${-difference} fewer`}
                     </td>
-                    <td>
-                      <button type="button" className="btn btn-small btn-danger" onClick={() => removeFromCount(product._id)}>
-                        Remove
+                    <td className="actions">
+                      <button type="button" className="btn btn-quiet btn-danger" onClick={() => removeFromCount(product._id)}>
+                        Remove<span className="visually-hidden"> {product.name}</span>
                       </button>
                     </td>
                   </tr>
@@ -203,20 +194,15 @@ function StockCountPage() {
             </table>
           </div>
         )}
-        {!loading && countedRows.length === 0 && <p className="muted">Nothing counted yet. Start scanning!</p>}
 
-        <div className="form-actions">
-          <button type="button" className="btn btn-primary" onClick={saveCount} disabled={saving || Object.keys(counts).length === 0}>
-            {saving ? 'Saving...' : 'Update Stock to Match Count'}
+        <div className="panel-foot btn-row">
+          <button type="button" className="btn btn-primary" onClick={saveCount} disabled={saving || countedTotal === 0}>
+            {saving ? 'Saving...' : 'Set stock to my count'}
           </button>
-          <button type="button" className="btn" onClick={clearCount} disabled={Object.keys(counts).length === 0}>
-            Clear Count
-          </button>
+          <button type="button" className="btn" onClick={clearCount} disabled={countedTotal === 0}>Clear the count</button>
+          <span className="muted small">Only the products you counted are changed.</span>
         </div>
-        <p className="muted small">
-          Only the products you counted are changed. Count a full shelf before saving so the numbers are right.
-        </p>
-      </div>
+      </section>
     </div>
   );
 }

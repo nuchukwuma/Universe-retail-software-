@@ -11,9 +11,7 @@ const { getSettings } = require('../utils/settings');
 const { findApprover } = require('../utils/approval');
 const { createdAtFilter } = require('../utils/dates');
 const { queueSaleAlert } = require('../utils/telegramQueue');
-const {
-  SaleError, buildSaleItems, calculateTotals, discountPercent, checkPayments,
-} = require('../utils/saleCalculations');
+const { SaleError, buildSaleItems, calculateTotals, discountPercent } = require('../utils/saleCalculations');
 
 const router = express.Router();
 
@@ -74,12 +72,11 @@ router.get('/by-receipt/:receiptNumber', async (req, res) => {
 
 // POST /api/sales
 // Completes a sale. Body:
-// { items: [{ productId, quantity, discountType?, discountValue? }], priceType,
-//   billDiscount?: { type, value }, customerId?, customerName?, approvalToken?,
-//   payments: [{ method: 'cash'|'transfer'|'card', amount, reference? }] }
+// { items: [{ productId, quantity, discountType?, discountValue? }],
+//   billDiscount?: { type, value }, customerId?, customerName?, approvalToken? }
 router.post('/', async (req, res) => {
   try {
-    const { items, priceType = 'standard', billDiscount, customerId, customerName, payments } = req.body;
+    const { items, billDiscount, customerId, customerName } = req.body;
 
     // 1. Look up every product on the bill (badly formed ids are skipped,
     //    so they show up as "no longer exists" instead of a database error).
@@ -90,10 +87,9 @@ router.post('/', async (req, res) => {
       productsById[String(p._id)] = p;
     });
 
-    // 2. Work out prices, discounts, totals and change.
-    const saleItems = buildSaleItems(items, productsById, priceType);
+    // 2. Work out prices, discounts and totals.
+    const saleItems = buildSaleItems(items, productsById);
     const totals = calculateTotals(saleItems, billDiscount);
-    const payment = checkPayments(payments, totals.total);
 
     // 3. Large discounts need a manager or owner.
     let discountApprovedBy = '';
@@ -116,12 +112,10 @@ router.post('/', async (req, res) => {
     const sale = await Sale.create({
       receiptNumber: await nextReceiptNumber(),
       items: saleItems,
-      priceType: priceType === 'wholesale' ? 'wholesale' : 'standard',
       customer: customer ? customer._id : null,
       customerName: customer ? customer.name : String(customerName || '').trim(),
       ...totals,
       discountApprovedBy,
-      ...payment,
       cashier: req.user._id,
       cashierName: req.user.name,
     });

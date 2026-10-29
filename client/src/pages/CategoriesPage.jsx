@@ -1,16 +1,11 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/api';
-import ImagePicker from '../components/ImagePicker';
+import PageHeader from '../components/PageHeader';
 
-const EMPTY_FORM = { name: '', icon: '🛒', image: '' };
-
-// Some ready-made icons to pick from (you can also type any emoji).
-const ICON_CHOICES = ['🍚', '🫒', '🥫', '🌶️', '🧽', '🥤', '🧴', '🍞', '🥩', '🐟', '🥚', '🧃', '🍫', '🧼', '👶', '💄', '🛒'];
-
-// Page for adding, renaming and deleting product categories.
+// Add, rename and delete product categories (e.g. Rice, Hair care).
 function CategoriesPage() {
   const [categories, setCategories] = useState([]);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [name, setName] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,33 +28,33 @@ function CategoriesPage() {
     }
   }
 
-  // Fills the form with a category so it can be changed.
+  // Puts a category in the form so it can be renamed.
   function startEditing(category) {
     setEditingId(category._id);
-    setForm({ name: category.name, icon: category.icon || '🛒', image: category.image || '' });
+    setName(category.name);
     setError('');
     setMessage('');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById('category-name')?.focus();
   }
 
   // Empties the form and leaves edit mode.
   function resetForm() {
     setEditingId(null);
-    setForm(EMPTY_FORM);
+    setName('');
   }
 
-  // Saves a new category, or the changes to the one being edited.
+  // Saves a new category, or the new name of the one being edited.
   async function handleSubmit(event) {
     event.preventDefault();
     setSaving(true);
     setError('');
     try {
       if (editingId) {
-        await api.put(`/categories/${editingId}`, form);
-        setMessage(`Category "${form.name}" updated.`);
+        await api.put(`/categories/${editingId}`, { name });
+        setMessage(`Category renamed to "${name}".`);
       } else {
-        await api.post('/categories', form);
-        setMessage(`Category "${form.name}" added.`);
+        await api.post('/categories', { name });
+        setMessage(`Category "${name}" added.`);
       }
       resetForm();
       await loadCategories();
@@ -85,68 +80,65 @@ function CategoriesPage() {
   }
 
   return (
-    <div>
-      <h1 className="page-title">Categories</h1>
+    <div className="page">
+      <PageHeader title="Categories" lead="Groups of products. Cashiers use them to find items without a barcode." />
 
-      {error && <div className="alert alert-error">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      {message && <div className="notice notice-success" role="status">{message}</div>}
 
-      <form className="card form-grid" onSubmit={handleSubmit}>
-        <h2 className="form-grid-title">{editingId ? 'Edit category' : 'Add a category'}</h2>
-        <label>
-          Name
-          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-        </label>
-        <label>
-          Icon (used if no picture)
-          <input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} maxLength={4} />
-        </label>
-        <div className="span-full icon-choices">
-          {ICON_CHOICES.map((icon) => (
-            <button
-              key={icon}
-              type="button"
-              className={form.icon === icon ? 'icon-choice selected' : 'icon-choice'}
-              onClick={() => setForm({ ...form, icon })}
-            >
-              {icon}
-            </button>
-          ))}
-        </div>
-        <div className="span-full">
-          <span className="field-label">Picture (optional)</span>
-          <ImagePicker value={form.image} onChange={(url) => setForm({ ...form, image: url })} placeholder={form.icon} />
-        </div>
-        <div className="span-full form-actions">
-          <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? 'Saving...' : editingId ? 'Save Changes' : 'Add Category'}
-          </button>
-          {editingId && (
-            <button type="button" className="btn" onClick={resetForm}>Cancel</button>
-          )}
-        </div>
-      </form>
-
-      {loading ? (
-        <p className="muted">Loading categories...</p>
-      ) : (
-        <div className="category-grid">
-          {categories.map((category) => (
-            <div key={category._id} className="card category-card">
-              <div className="category-card-image">
-                {category.image ? <img src={category.image} alt="" /> : <span>{category.icon}</span>}
-              </div>
-              <strong>{category.name}</strong>
-              <span className="muted small">{category.productCount} product(s)</span>
-              <div className="actions">
-                <button type="button" className="btn btn-small" onClick={() => startEditing(category)}>Edit</button>
-                <button type="button" className="btn btn-small btn-danger" onClick={() => handleDelete(category)}>Delete</button>
-              </div>
+      <div className="columns">
+        <section className="panel panel-flush" aria-label="Categories">
+          {loading && <p className="loading">Loading categories...</p>}
+          {!loading && categories.length === 0 && !error && (
+            <div className="empty">
+              <p className="strong">No categories yet.</p>
+              <p className="muted">Add your first one with the form.</p>
             </div>
-          ))}
-          {categories.length === 0 && <p className="muted">No categories yet. Add your first one above.</p>}
-        </div>
-      )}
+          )}
+          {categories.length > 0 && (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th className="num">Products</th>
+                  <th><span className="visually-hidden">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories.map((category) => (
+                  <tr key={category._id} className={category._id === editingId ? 'is-highlighted' : undefined}>
+                    <td className="cell-main">{category.name}</td>
+                    <td className="num">{category.productCount}</td>
+                    <td className="actions">
+                      <button type="button" className="btn btn-quiet" onClick={() => startEditing(category)}>
+                        Rename<span className="visually-hidden"> {category.name}</span>
+                      </button>
+                      <button type="button" className="btn btn-quiet btn-danger" onClick={() => handleDelete(category)}>
+                        Delete<span className="visually-hidden"> {category.name}</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+
+        <form className="panel stack" onSubmit={handleSubmit}>
+          <h2>{editingId ? 'Rename category' : 'Add a category'}</h2>
+          <div className="field">
+            <label className="field-label" htmlFor="category-name">Name</label>
+            <input id="category-name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. Hair care" />
+          </div>
+          <div className="btn-row">
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Saving...' : editingId ? 'Save name' : 'Add category'}
+            </button>
+            {editingId && <button type="button" className="btn" onClick={resetForm}>Cancel</button>}
+          </div>
+          <p className="muted small">A category can only be deleted when it has no products.</p>
+        </form>
+      </div>
     </div>
   );
 }

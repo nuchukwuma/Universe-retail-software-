@@ -25,16 +25,6 @@
   font-size: 14px;
 }
 
-.receipt-logo {
-  display: block;
-  width: 18mm;
-  height: 18mm;
-  margin: 0 auto 2mm;
-  object-fit: contain;
-  border-radius: 50%;
-  filter: grayscale(1); /* thermal printers only print black */
-}
-
 .receipt-store {
   text-align: center;
   font-size: 1.25em;
@@ -126,23 +116,15 @@
   justify-content: center;
   max-height: 55vh;
   overflow: auto;
-  padding: 16px;
-  border-radius: 10px;
-  background: #e9edf2;
+  padding: var(--space-5);
+  background: var(--color-floor);
 }
 
 .receipt-preview-paper {
   height: fit-content;
   padding: 2mm 4mm;
-  background: #fff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-}
-
-.receipt-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
+  border: var(--line-thin) solid var(--color-rule);
+  background: #fff; /* receipts are always printed on white paper */
 }
 
 /* ===== Printing a receipt =====

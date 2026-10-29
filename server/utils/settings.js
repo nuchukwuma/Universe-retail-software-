@@ -2,7 +2,7 @@ const Settings = require('../models/Settings');
 
 // The settings fields staff are allowed to change (owner only).
 const EDITABLE_FIELDS = [
-  'storeName', 'address', 'phone', 'footerMessage', 'logo', 'showLogoOnReceipt',
+  'storeName', 'address', 'phone', 'footerMessage',
   'paperSize', 'autoPrint', 'printerName', 'maxCashierDiscountPercent', 'telegramAlertsEnabled',
 ];
 

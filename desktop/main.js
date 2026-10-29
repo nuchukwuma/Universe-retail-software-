@@ -10,7 +10,7 @@ const { registerIpcHandlers } = require('./electron/ipc');
 const { buildMenu } = require('./electron/menu');
 
 const APP_DIR = path.join(__dirname, 'app'); // server + built client (see scripts/copy-app.js)
-const ALLOWED_PERMISSIONS = ['media', 'clipboard-sanitized-write', 'fullscreen'];
+const ALLOWED_PERMISSIONS = ['clipboard-sanitized-write', 'fullscreen'];
 
 let mainWindow = null;
 let server = null; // the running Express server
@@ -117,7 +117,8 @@ async function onReady() {
   process.env.JWT_SECRET = config.jwtSecret;
   process.env.MONGO_URI = config.mongoUri;
 
-  // Only allow the camera (barcode scanning), copying and full screen.
+  // Only allow copying and full screen. (No camera: barcodes come from a
+  // USB or Bluetooth scanner, which works like a keyboard.)
   session.defaultSession.setPermissionRequestHandler((contents, permission, callback) => {
     callback(ALLOWED_PERMISSIONS.includes(permission));
   });

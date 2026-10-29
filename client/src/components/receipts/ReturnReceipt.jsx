@@ -1,5 +1,4 @@
 import { ReceiptFrame, Divider, Row, money } from './ReceiptParts';
-import { PAYMENT_LABELS } from '../../utils/billMath';
 import { formatDateTime } from '../../utils/dates';
 
 // The printed slip for a return / refund.
@@ -32,7 +31,6 @@ function ReturnReceipt({ ret, settings, paper, duplicate = false }) {
       <Divider />
 
       <Row strong left="REFUND" right={money(ret.refundTotal)} />
-      <Row left="Refunded by:" right={PAYMENT_LABELS[ret.refundMethod]} />
       <div className="receipt-small">Reason: {ret.reason}</div>
       <Divider />
     </ReceiptFrame>

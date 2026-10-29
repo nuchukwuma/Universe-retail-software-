@@ -1,0 +1,380 @@
+/* ==========================================================================
+   Layout: top bar, back-office frame, page header, panels.
+   ========================================================================== */
+
+/* ---------- Top bar (every screen) ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  min-height: var(--topbar-height);
+  padding: 0 var(--space-5);
+  border-bottom: var(--line-strong) solid var(--color-rule-strong);
+  background: var(--color-surface);
+}
+
+.topbar-store {
+  font-size: var(--text-heading);
+  font-stretch: var(--width-wide);
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.topbar-nav {
+  display: flex;
+  align-self: stretch;
+  gap: var(--space-1);
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.topbar-link {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-4);
+  border-bottom: 5px solid transparent;
+  color: var(--color-text);
+  font-weight: 650;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.topbar-link:hover {
+  background: var(--color-surface-sunken);
+  color: var(--color-text);
+}
+
+.topbar-link.active {
+  border-bottom-color: var(--color-action);
+  color: var(--color-action);
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.topbar-person {
+  text-align: right;
+  line-height: 1.2;
+}
+
+.topbar-person strong {
+  display: block;
+}
+
+.topbar-person span {
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    flex-wrap: wrap;
+    gap: 0 var(--space-5);
+    padding-top: var(--space-3);
+  }
+
+  .topbar-nav {
+    order: 3;
+    width: 100%;
+    min-height: var(--control-height);
+  }
+
+  .topbar-person span {
+    display: none;
+  }
+}
+
+/* ---------- Back-office frame: page list on the left ---------- */
+
+.office {
+  display: grid;
+  grid-template-columns: var(--nav-width) minmax(0, 1fr);
+  min-height: calc(100vh - var(--topbar-height));
+}
+
+.office-nav {
+  padding: var(--space-5) 0 var(--space-7);
+  border-right: var(--line-thin) solid var(--color-rule);
+  background: var(--color-surface);
+}
+
+.office-nav-group + .office-nav-group {
+  margin-top: var(--space-5);
+}
+
+.office-nav-heading {
+  padding: 0 var(--space-5) var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.office-nav-link {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 var(--space-5);
+  color: var(--color-text);
+  font-stretch: var(--width-narrow);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.office-nav-link:hover {
+  background: var(--color-surface-sunken);
+  color: var(--color-text);
+}
+
+/* The current page reads like an aisle sign. */
+.office-nav-link.active {
+  background: var(--color-action);
+  color: var(--color-text-on-action);
+}
+
+.office-main {
+  min-width: 0;
+  padding: var(--space-6) var(--space-7) var(--space-9);
+}
+
+@media (max-width: 900px) {
+  .office {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .office-nav {
+    display: flex;
+    gap: var(--space-1);
+    padding: 0;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: var(--line-thin) solid var(--color-rule);
+  }
+
+  .office-nav-group {
+    display: flex;
+  }
+
+  .office-nav-group + .office-nav-group {
+    margin-top: 0;
+    border-left: var(--line-thin) solid var(--color-rule);
+  }
+
+  .office-nav-heading {
+    display: none;
+  }
+
+  .office-nav-link {
+    min-height: var(--control-height);
+    white-space: nowrap;
+  }
+
+  .office-main {
+    padding: var(--space-5) var(--space-4) var(--space-8);
+  }
+}
+
+/* ---------- Page header: title, one line of purpose, main action ---------- */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: 1280px;
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
+}
+
+.page-lead {
+  max-width: 70ch;
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+/* ---------- Panels: flat white working areas on the floor ---------- */
+
+.panel {
+  padding: var(--panel-padding);
+  background: var(--color-surface);
+}
+
+/* A panel whose table runs edge to edge. */
+.panel-flush {
+  padding: 0;
+}
+
+.panel-flush > .panel-head {
+  padding: var(--space-5) var(--panel-padding) 0;
+}
+
+.panel-flush > .panel-foot {
+  padding: var(--space-4) var(--panel-padding);
+}
+
+.panel-flush .table th:first-child,
+.panel-flush .table td:first-child {
+  padding-left: var(--panel-padding);
+}
+
+.panel-flush .table th:last-child,
+.panel-flush .table td:last-child {
+  padding-right: var(--panel-padding);
+}
+
+.panel-flush > .empty,
+.panel-flush > .loading {
+  padding-left: var(--panel-padding);
+  padding-right: var(--panel-padding);
+}
+
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.panel-head p {
+  color: var(--color-text-muted);
+}
+
+.panel > .panel-head:only-child {
+  margin-bottom: 0;
+}
+
+/* A bar of filters above a table. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4) var(--space-5);
+}
+
+.toolbar .field {
+  flex: 1 1 200px;
+  max-width: 360px;
+}
+
+.toolbar .check {
+  flex: none;
+}
+
+/* Two columns side by side on wide screens, stacked on narrow ones. */
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--gutter);
+  align-items: start;
+}
+
+.columns-even {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 1000px) {
+  .columns,
+  .columns-even {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-stack);
+}
+
+/* ---------- Login and first-run setup ---------- */
+
+.entry {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
+}
+
+.entry-sign {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--space-8);
+  background: var(--color-action);
+  color: var(--color-text-on-action);
+}
+
+.entry-sign h1 {
+  max-width: 12ch;
+  font-size: var(--font-size-8);
+  font-stretch: var(--width-widest);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.entry-sign p {
+  margin-top: var(--space-5);
+  max-width: 40ch;
+  font-size: var(--text-heading);
+}
+
+.entry-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-5);
+  padding: var(--space-8);
+  background: var(--color-surface);
+}
+
+@media (max-width: 800px) {
+  .entry {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .entry-sign {
+    padding: var(--space-6) var(--space-5);
+  }
+
+  .entry-sign h1 {
+    font-size: var(--font-size-7);
+  }
+
+  .entry-form {
+    padding: var(--space-6) var(--space-5);
+  }
+}
+
+/* ---------- Printing a whole page (labels, reports): content only ---------- */
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .topbar,
+  .office-nav,
+  .no-print {
+    display: none !important;
+  }
+
+  .office {
+    display: block;
+    min-height: 0;
+  }
+
+  .office-main {
+    padding: 0;
+  }
+}

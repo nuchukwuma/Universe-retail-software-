@@ -1,22 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api/api';
+import PageHeader from '../components/PageHeader';
 import BarcodeInput from '../components/BarcodeInput';
-import ImagePicker from '../components/ImagePicker';
-import { formatNaira } from '../utils/formatNaira';
-import { toDateInputValue } from '../utils/dates';
+import ScannerStatus from '../components/ScannerStatus';
+import { useGlobalScanner } from '../hooks/useScanner';
 
 const EMPTY_PRODUCT = {
   name: '',
   barcode: '',
   category: '',
-  image: '',
-  costPrice: '',
   sellingPrice: '',
-  wholesalePrice: '',
   quantity: '0',
   reorderLevel: '5',
-  expiryDate: '',
 };
 
 // Turns a product from the server into text values for the form boxes.
@@ -25,13 +21,9 @@ function productToForm(product) {
     name: product.name,
     barcode: product.barcode || '',
     category: product.category?._id || '',
-    image: product.image || '',
-    costPrice: String(product.costPrice ?? ''),
     sellingPrice: String(product.sellingPrice ?? ''),
-    wholesalePrice: product.wholesalePrice ? String(product.wholesalePrice) : '',
     quantity: String(product.quantity ?? 0),
     reorderLevel: String(product.reorderLevel ?? 0),
-    expiryDate: toDateInputValue(product.expiryDate),
   };
 }
 
@@ -39,19 +31,18 @@ function productToForm(product) {
 function formToProduct(form) {
   return {
     ...form,
-    costPrice: Number(form.costPrice) || 0,
     sellingPrice: Number(form.sellingPrice),
-    wholesalePrice: Number(form.wholesalePrice) || 0,
     quantity: Number(form.quantity) || 0,
     reorderLevel: Number(form.reorderLevel) || 0,
   };
 }
 
-// The Add Product / Edit Product page.
+// Add product / Edit product.
 // /products/new             -> add a new product
 // /products/new?barcode=123 -> add a new product with the barcode filled in
 // /products/:id/edit        -> edit an existing product
-// Adding "&from=checkout" goes back to the checkout after saving.
+// Adding "&from=checkout" goes back to the till after saving.
+// Scanning anywhere on this page fills in the barcode box.
 function ProductFormPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -64,17 +55,14 @@ function ProductFormPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [scanned, setScanned] = useState('');
 
   // Load the categories (and the product, when editing).
   useEffect(() => {
     async function loadData() {
       try {
-        const categoryList = await api.get('/categories');
-        setCategories(categoryList);
-        if (isEditing) {
-          const product = await api.get(`/products/${id}`);
-          setForm(productToForm(product));
-        }
+        setCategories(await api.get('/categories'));
+        if (isEditing) setForm(productToForm(await api.get(`/products/${id}`)));
       } catch (err) {
         setError(err.message);
       } finally {
@@ -89,23 +77,24 @@ function ProductFormPage() {
     setForm((current) => ({ ...current, [name]: value }));
   }
 
-  // Saves the product and goes back to the product list.
+  // A scan anywhere on the page fills in the barcode.
+  useGlobalScanner((code) => {
+    setField('barcode', code);
+    setScanned(code);
+  }, !loading);
+
+  // Saves the product and goes back.
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');
-
     if (form.sellingPrice === '' || Number(form.sellingPrice) < 0) {
-      setError('Enter a selling price.');
+      setError('Enter the selling price.');
       return;
     }
-
     setSaving(true);
     try {
-      if (isEditing) {
-        await api.put(`/products/${id}`, formToProduct(form));
-      } else {
-        await api.post('/products', formToProduct(form));
-      }
+      if (isEditing) await api.put(`/products/${id}`, formToProduct(form));
+      else await api.post('/products', formToProduct(form));
       navigate(backTo);
     } catch (err) {
       setError(err.message);
@@ -113,107 +102,56 @@ function ProductFormPage() {
     }
   }
 
-  if (loading) return <p className="muted">Loading...</p>;
-
-  const cost = Number(form.costPrice) || 0;
-  const price = Number(form.sellingPrice) || 0;
-  const profit = price - cost;
+  if (loading) return <p className="loading">Loading the product...</p>;
 
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="page-title">{isEditing ? 'Edit Product' : 'Add Product'}</h1>
-        <Link to={backTo} className="btn">← Back</Link>
-      </div>
+    <div className="page">
+      <PageHeader title={isEditing ? `Edit ${form.name || 'product'}` : 'Add product'} lead="A product needs a name and a selling price. Everything else can be filled in later.">
+        <Link to={backTo} className="btn">{backTo === '/checkout' ? 'Back to the till' : 'Back to products'}</Link>
+      </PageHeader>
 
-      {error && <div className="alert alert-error">{error}</div>}
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
 
-      <form className="card form-grid" onSubmit={handleSubmit}>
-        <h3 className="form-section">Details</h3>
-        <label className="span-2">
-          Product name *
-          <input value={form.name} onChange={(e) => setField('name', e.target.value)} required autoFocus={!isEditing} />
-        </label>
-
-        <label htmlFor="barcode-field">
-          Barcode
-          <BarcodeInput
-            id="barcode-field"
-            value={form.barcode}
-            onChange={(code) => setField('barcode', code)}
-            placeholder="Scan, type, or leave empty"
-          />
-        </label>
-
-        <label>
-          Category
-          <select value={form.category} onChange={(e) => setField('category', e.target.value)}>
-            <option value="">— No category —</option>
-            {categories.map((c) => (
-              <option key={c._id} value={c._id}>{c.icon} {c.name}</option>
-            ))}
+      <form className="panel form-grid" onSubmit={handleSubmit}>
+        <h2 className="form-section">Product</h2>
+        <div className="field span-all">
+          <label className="field-label" htmlFor="product-name">Name</label>
+          <input id="product-name" value={form.name} onChange={(e) => setField('name', e.target.value)} required autoFocus={!isEditing} />
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="product-barcode">Barcode</label>
+          <BarcodeInput id="product-barcode" value={form.barcode} onChange={(code) => setField('barcode', code)} placeholder="Scan it, type it, or leave it empty" />
+          <ScannerStatus readyText={scanned ? `Scanned ${scanned}` : 'Scanner ready: scan the product and the code fills in here.'} />
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="product-category">Category</label>
+          <select id="product-category" value={form.category} onChange={(e) => setField('category', e.target.value)}>
+            <option value="">No category</option>
+            {categories.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select>
-        </label>
-
-        <h3 className="form-section">Prices</h3>
-        <label>
-          Cost price (₦)
-          <input type="number" min="0" step="any" value={form.costPrice} onChange={(e) => setField('costPrice', e.target.value)} />
-        </label>
-
-        <label>
-          Selling price (₦) *
-          <input type="number" min="0" step="any" value={form.sellingPrice} onChange={(e) => setField('sellingPrice', e.target.value)} required />
-        </label>
-
-        <label>
-          Wholesale price (₦)
-          <input
-            type="number"
-            min="0"
-            step="any"
-            value={form.wholesalePrice}
-            onChange={(e) => setField('wholesalePrice', e.target.value)}
-            placeholder="Same as selling price"
-          />
-        </label>
-
-        <div className="profit-hint">
-          {price > 0 && (
-            profit >= 0 ? (
-              <span>Profit per item: <strong>{formatNaira(profit)}</strong>{cost > 0 && ` (${Math.round((profit / cost) * 100)}%)`}</span>
-            ) : (
-              <span className="text-error">Warning: selling price is lower than cost price.</span>
-            )
-          )}
         </div>
 
-        <h3 className="form-section">Stock</h3>
-        <label>
-          Quantity in stock
-          <input type="number" step="1" value={form.quantity} onChange={(e) => setField('quantity', e.target.value)} />
-        </label>
-
-        <label>
-          Reorder level
-          <input type="number" min="0" step="1" value={form.reorderLevel} onChange={(e) => setField('reorderLevel', e.target.value)} />
-        </label>
-
-        <label>
-          Expiry date
-          <input type="date" value={form.expiryDate} onChange={(e) => setField('expiryDate', e.target.value)} />
-        </label>
-
-        <h3 className="form-section">Picture</h3>
-        <div className="span-full">
-          <ImagePicker value={form.image} onChange={(url) => setField('image', url)} />
+        <h2 className="form-section">Price and stock</h2>
+        <div className="field">
+          <label className="field-label" htmlFor="product-price">Selling price (₦)</label>
+          <input id="product-price" type="number" min="0" step="any" inputMode="decimal" value={form.sellingPrice} onChange={(e) => setField('sellingPrice', e.target.value)} required />
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="product-quantity">Quantity in stock</label>
+          <input id="product-quantity" type="number" step="1" value={form.quantity} onChange={(e) => setField('quantity', e.target.value)} />
+          {isEditing && <span className="field-help">Use Receive stock for deliveries, so the stock history stays clear.</span>}
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="product-low">Low-stock level</label>
+          <input id="product-low" type="number" min="0" step="1" value={form.reorderLevel} onChange={(e) => setField('reorderLevel', e.target.value)} />
+          <span className="field-help">When stock falls to this number, the product shows as low.</span>
         </div>
 
-        <div className="span-full form-actions">
-          <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Product'}
+        <div className="span-all btn-row">
+          <button type="submit" className="btn btn-primary btn-large" disabled={saving}>
+            {saving ? 'Saving...' : isEditing ? 'Save product' : 'Add product'}
           </button>
-          <Link to={backTo} className="btn">Cancel</Link>
+          <Link to={backTo} className="btn btn-large">Cancel</Link>
         </div>
       </form>
     </div>

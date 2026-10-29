@@ -1,0 +1,140 @@
+/* ==========================================================================
+   Design tokens - see DESIGN.md
+   Three layers:
+     1. Primitive  - raw values. Only used in this file.
+     2. Semantic   - what a value means. Screens use these.
+     3. Component  - settings for one kind of component.
+   ========================================================================== */
+
+:root {
+  /* ---------- 1. Primitive ---------- */
+
+  /* Colours */
+  --white: #ffffff;
+  --grey-100: #f2f5f4;
+  --grey-200: #e3e8e7; /* floor */
+  --grey-300: #c9d2d1;
+  --grey-400: #9aa8a6;
+  --grey-600: #4a5a59;
+  --ink-900: #142322;
+  --teal-50: #e1f0ee;
+  --teal-700: #00665e;
+  --teal-800: #00524b;
+  --yellow-300: #ffe14a;
+  --yellow-100: #fff6c2;
+  --green-700: #17733a;
+  --green-50: #e2f3e7;
+  --amber-800: #7a4b00;
+  --amber-50: #fff0c7;
+  --red-700: #b3261e;
+  --red-800: #8f1d17;
+  --red-50: #fce7e5;
+
+  /* Type */
+  --font-family: 'Archivo Variable', 'Archivo', 'Arial Narrow', Arial, sans-serif;
+  --font-size-1: 14px;
+  --font-size-2: 16px;
+  --font-size-3: 17px;
+  --font-size-4: 21px;
+  --font-size-5: 26px;
+  --font-size-6: 30px;
+  --font-size-7: 40px;
+  --font-size-8: 56px;
+  --font-size-9: 72px;
+  --width-narrow: 87%;
+  --width-normal: 100%;
+  --width-wide: 112%;
+  --width-widest: 125%;
+
+  /* Space (4px base) */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+  --space-9: 64px;
+
+  /* Lines and corners */
+  --line-thin: 1px;
+  --line-strong: 2px;
+  --line-focus: 3px;
+  --corner-control: 4px;
+
+  /* ---------- 2. Semantic ---------- */
+
+  --color-floor: var(--grey-200);
+  --color-surface: var(--white);
+  --color-surface-sunken: var(--grey-100);
+  --color-text: var(--ink-900);
+  --color-text-muted: var(--grey-600);
+  --color-text-on-action: var(--white);
+  --color-rule: var(--grey-300);
+  --color-rule-strong: var(--ink-900);
+  --color-control-border: var(--grey-400);
+
+  --color-action: var(--teal-700);
+  --color-action-hover: var(--teal-800);
+  --color-action-tint: var(--teal-50);
+  --color-highlight: var(--yellow-300); /* the just-scanned line */
+  --color-highlight-soft: var(--yellow-100);
+  --color-focus: var(--ink-900);
+  --color-backdrop: rgba(20, 35, 34, 0.55); /* behind dialogs */
+
+  --color-ticket: var(--teal-700); /* the bill total panel */
+  --color-on-ticket: var(--white);
+  --color-on-ticket-faint: rgba(255, 255, 255, 0.45);
+
+  --color-success-text: var(--green-700);
+  --color-success-surface: var(--green-50);
+  --color-warning-text: var(--amber-800);
+  --color-warning-surface: var(--amber-50);
+  --color-danger-text: var(--red-700);
+  --color-danger-hover: var(--red-800);
+  --color-danger-surface: var(--red-50);
+
+  --text-small: var(--font-size-1);
+  --text-table: var(--font-size-2);
+  --text-body: var(--font-size-3);
+  --text-heading: var(--font-size-4);
+  --text-title: var(--font-size-6);
+  --text-figure: var(--font-size-7);
+  --leading-body: 1.4;
+  --leading-tight: 1.1;
+
+  --gap-inline: var(--space-3); /* between buttons in a row */
+  --gap-stack: var(--space-5); /* between stacked blocks */
+  --gutter: var(--space-5); /* floor between panels */
+  --panel-padding: var(--space-6);
+
+  /* ---------- 3. Component ---------- */
+
+  --control-height: 44px; /* inputs, normal buttons: finger-sized */
+  --button-height-large: 56px; /* till actions */
+  --button-padding-x: var(--space-5);
+  --table-row-height: 44px;
+  --table-cell-padding-x: var(--space-4);
+  --nav-width: 220px;
+  --topbar-height: 56px;
+  --dialog-width: 560px;
+  --ticket-font-size: var(--font-size-9); /* the bill total */
+  --ticket-width: 360px;
+  --scan-font-size: var(--font-size-4);
+}
+
+/* Tablet: slightly smaller total, narrower side column */
+@media (max-width: 1100px) {
+  :root {
+    --ticket-font-size: var(--font-size-8);
+    --ticket-width: 320px;
+    --panel-padding: var(--space-5);
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --gutter: var(--space-3);
+  }
+}

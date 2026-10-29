@@ -29,17 +29,10 @@ function makeFolder(folder) {
   for (const part of missing) fs.mkdirSync(part);
 }
 
-// Folder for uploaded product, category and logo pictures.
-function uploadsDir() {
-  const folder = path.join(dataDir(), 'uploads');
-  makeFolder(folder);
-  return folder;
-}
-
 // The default folder for backups (the owner can choose another one,
 // such as a USB drive, on the Backup page).
 function defaultBackupDir() {
   return path.join(dataDir(), 'backups');
 }
 
-module.exports = { dataDir, makeFolder, uploadsDir, defaultBackupDir };
+module.exports = { dataDir, makeFolder, defaultBackupDir };

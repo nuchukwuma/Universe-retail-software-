@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/api';
 import { useSettings } from '../context/SettingsContext';
 import { usePrinter } from '../context/PrintContext';
-import ImagePicker from '../components/ImagePicker';
+import PageHeader from '../components/PageHeader';
 import SaleReceipt from '../components/receipts/SaleReceipt';
 import TelegramSettings from '../components/settings/TelegramSettings';
 import PrinterPicker from '../components/settings/PrinterPicker';
@@ -13,7 +13,6 @@ const TEST_SALE = {
   createdAt: new Date().toISOString(),
   cashierName: 'Test Cashier',
   customerName: 'Test Customer',
-  priceType: 'standard',
   items: [
     { name: 'Royal Stallion Rice 5kg', quantity: 1, unitPrice: 12500, discount: 0, lineTotal: 12500 },
     { name: 'Peak Milk Powder 400g', quantity: 2, unitPrice: 4200, discount: 420, discountType: 'percent', discountValue: 5, lineTotal: 7980 },
@@ -22,13 +21,9 @@ const TEST_SALE = {
   billDiscount: 0,
   discountTotal: 420,
   total: 20480,
-  payments: [{ method: 'cash', amount: 20480 }],
-  paymentMethod: 'cash',
-  amountTendered: 25000,
-  change: 4520,
 };
 
-// Owner-only page for store details and receipt printing options.
+// Owner only: shop details, receipts, printing, discounts and Telegram.
 function SettingsPage() {
   const { settings, setSettings } = useSettings();
   const { printDocument } = usePrinter();
@@ -51,7 +46,7 @@ function SettingsPage() {
     setMessage('');
   }
 
-  // Saves the settings on the server and uses them straight away.
+  // Saves the settings and uses them straight away.
   // (The Telegram on/off switch saves itself, so it is not sent here.)
   async function handleSave(event) {
     event.preventDefault();
@@ -71,82 +66,71 @@ function SettingsPage() {
   }
 
   return (
-    <div>
-      <h1 className="page-title">Settings</h1>
-      {error && <div className="alert alert-error">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
+    <div className="page">
+      <PageHeader title="Settings" lead="The shop's details on receipts, how receipts print, and discount limits." />
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      {message && <div className="notice notice-success" role="status">{message}</div>}
+      {hasChanges && !message && <div className="notice notice-warning">You have changes that are not saved yet.</div>}
 
-      <div className="eod-layout">
-        <form className="card form-grid" onSubmit={handleSave}>
-          <h3 className="form-section">Store details (shown on receipts)</h3>
-          <label className="span-full">
-            Store name
-            <input value={form.storeName} onChange={(e) => setField('storeName', e.target.value)} required />
-          </label>
-          <label className="span-full">
-            Address
-            <input value={form.address} onChange={(e) => setField('address', e.target.value)} placeholder="e.g. 12 Allen Avenue, Ikeja, Lagos" />
-          </label>
-          <label>
-            Phone number
-            <input value={form.phone} onChange={(e) => setField('phone', e.target.value)} placeholder="0803 123 4567" />
-          </label>
-          <label className="span-full">
-            Message at the bottom of receipts
-            <input value={form.footerMessage} onChange={(e) => setField('footerMessage', e.target.value)} placeholder="Thank you for shopping with us!" />
-          </label>
-          <div className="span-full">
-            <span className="field-label">Logo</span>
-            <ImagePicker value={form.logo} onChange={(url) => setField('logo', url)} placeholder="🏪" />
+      <div className="columns">
+        <form className="panel form-grid" onSubmit={handleSave}>
+          <h2 className="form-section">Shop details on receipts</h2>
+          <div className="field span-all">
+            <label className="field-label" htmlFor="settings-name">Shop name</label>
+            <input id="settings-name" value={form.storeName} onChange={(e) => setField('storeName', e.target.value)} required />
           </div>
-          <label className="checkbox-row span-full">
-            <input type="checkbox" checked={form.showLogoOnReceipt} onChange={(e) => setField('showLogoOnReceipt', e.target.checked)} />
-            Print the logo on receipts (printed in black and white)
-          </label>
+          <div className="field span-all">
+            <label className="field-label" htmlFor="settings-address">Address</label>
+            <input id="settings-address" value={form.address} onChange={(e) => setField('address', e.target.value)} placeholder="e.g. 12 Allen Avenue, Ikeja, Lagos" />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="settings-phone">Phone number</label>
+            <input id="settings-phone" value={form.phone} onChange={(e) => setField('phone', e.target.value)} placeholder="0803 123 4567" />
+          </div>
+          <div className="field span-all">
+            <label className="field-label" htmlFor="settings-footer">Message at the bottom of receipts</label>
+            <input id="settings-footer" value={form.footerMessage} onChange={(e) => setField('footerMessage', e.target.value)} placeholder="Thank you for shopping with us!" />
+          </div>
 
-          <h3 className="form-section">Printing</h3>
-          <label>
-            Receipt paper size
-            <select value={form.paperSize} onChange={(e) => setField('paperSize', e.target.value)}>
+          <h2 className="form-section">Printing</h2>
+          <div className="field">
+            <label className="field-label" htmlFor="settings-paper">Receipt paper</label>
+            <select id="settings-paper" value={form.paperSize} onChange={(e) => setField('paperSize', e.target.value)}>
               <option value="80mm">80mm thermal roll</option>
               <option value="58mm">58mm thermal roll</option>
               <option value="A4">A4 paper</option>
             </select>
-          </label>
+          </div>
           <PrinterPicker value={form.printerName} onChange={(name) => setField('printerName', name)} />
-          <label className="checkbox-row span-full">
+          <label className="check span-all">
             <input type="checkbox" checked={form.autoPrint} onChange={(e) => setField('autoPrint', e.target.checked)} />
-            Auto-print receipts (print straight after payment, without the preview)
+            Print the receipt as soon as a sale is completed, without showing it first
           </label>
 
-          <h3 className="form-section">Discounts</h3>
-          <label>
-            Most a cashier can give without a manager (%)
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={form.maxCashierDiscountPercent}
-              onChange={(e) => setField('maxCashierDiscountPercent', e.target.value)}
-            />
-          </label>
+          <h2 className="form-section">Discounts</h2>
+          <div className="field">
+            <label className="field-label" htmlFor="settings-discount">Largest discount a cashier can give alone (%)</label>
+            <input id="settings-discount" type="number" min="0" max="100" value={form.maxCashierDiscountPercent} onChange={(e) => setField('maxCashierDiscountPercent', e.target.value)} />
+            <span className="field-help">Above this, a manager types their password on the till.</span>
+          </div>
 
-          <div className="span-full form-actions">
-            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save Settings'}</button>
+          <div className="span-all btn-row">
+            <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save settings'}</button>
             <button type="button" className="btn" onClick={() => printDocument(<SaleReceipt sale={TEST_SALE} settings={form} />, form.paperSize)}>
-              🖨️ Print test receipt
+              Print a test receipt
             </button>
           </div>
         </form>
 
-        <div className="card">
+        <section className="panel stack" aria-label="Receipt preview">
           <h2>Receipt preview</h2>
+          <p className="muted small">Changes show here as you type.</p>
           <div className="receipt-preview">
             <div className="receipt-preview-paper">
               <SaleReceipt sale={TEST_SALE} settings={form} />
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
       <TelegramSettings />

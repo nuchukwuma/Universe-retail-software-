@@ -1,24 +1,31 @@
 import { useEffect, useState } from 'react';
-import { billTotals, unitPriceFor } from '../utils/billMath';
+import { billTotals } from '../utils/billMath';
 
 // The current bill is saved in the browser, so a page refresh (or a
 // quick trip to another page) does not lose it.
 const BILL_KEY = 'pos_current_bill';
 
 export const EMPTY_BILL = {
-  priceType: 'standard', // 'standard' or 'wholesale'
   customer: null, // a saved customer { _id, name, phone }, or null
   customerName: '', // name typed for a walk-in customer
-  // [{ productId, name, sellingPrice, wholesalePrice, unitPrice, quantity, discountType, discountValue }]
+  // [{ productId, name, barcode, unitPrice, quantity, discountType, discountValue }]
   items: [],
   discount: null, // discount on the whole bill: { type: 'percent' | 'amount', value }
   approval: null, // manager approval for a large discount: { token, approverName }
 };
 
 // Reads the bill saved in the browser (or starts an empty one).
+// Only the fields the bill uses today are kept (older versions saved more).
 function loadSavedBill() {
   try {
-    return { ...EMPTY_BILL, ...JSON.parse(localStorage.getItem(BILL_KEY)) };
+    const saved = JSON.parse(localStorage.getItem(BILL_KEY)) || {};
+    return {
+      customer: saved.customer || null,
+      customerName: saved.customerName || '',
+      items: Array.isArray(saved.items) ? saved.items : [],
+      discount: saved.discount || null,
+      approval: saved.approval || null,
+    };
   } catch {
     return EMPTY_BILL;
   }
@@ -59,9 +66,8 @@ export function useBill() {
       const newItem = {
         productId: product._id,
         name: product.name,
-        sellingPrice: product.sellingPrice,
-        wholesalePrice: product.wholesalePrice || 0,
-        unitPrice: unitPriceFor(product, current.priceType),
+        barcode: product.barcode || '',
+        unitPrice: product.sellingPrice,
         quantity: 1,
         discountType: '',
         discountValue: 0,
@@ -101,15 +107,6 @@ export function useBill() {
     setBill((current) => ({ ...current, approval }));
   }
 
-  // Switches between Standard and Wholesale prices for every line.
-  function setPriceType(priceType) {
-    setBill((current) => ({
-      ...current,
-      priceType,
-      items: current.items.map((item) => ({ ...item, unitPrice: unitPriceFor(item, priceType) })),
-    }));
-  }
-
   // Links a saved customer to the bill (or null for none).
   function setCustomer(customer) {
     setBill((current) => ({ ...current, customer, customerName: customer ? customer.name : '' }));
@@ -129,20 +126,20 @@ export function useBill() {
       items: current.items.map((item) => {
         const product = byId[item.productId];
         if (!product) return item;
-        return {
-          ...item,
-          name: product.name,
-          sellingPrice: product.sellingPrice,
-          wholesalePrice: product.wholesalePrice || 0,
-          unitPrice: unitPriceFor(product, current.priceType),
-        };
+        return { ...item, name: product.name, barcode: product.barcode || '', unitPrice: product.sellingPrice };
       }),
     }));
   }
 
   // Replaces the whole bill (used when a held bill is recalled).
   function loadBill(savedBill) {
-    setBill({ ...EMPTY_BILL, ...savedBill });
+    setBill({
+      ...EMPTY_BILL,
+      customer: savedBill.customer || null,
+      customerName: savedBill.customerName || '',
+      items: savedBill.items || [],
+      discount: savedBill.discount || null,
+    });
   }
 
   // Empties the bill (after a sale, or when the cashier cancels).
@@ -160,7 +157,6 @@ export function useBill() {
     setItemDiscount,
     setBillDiscount,
     setApproval,
-    setPriceType,
     setCustomer,
     setCustomerName,
     updatePrices,

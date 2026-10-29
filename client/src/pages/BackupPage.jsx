@@ -2,10 +2,16 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
+import PageHeader from '../components/PageHeader';
 import { formatDateTime } from '../utils/dates';
 import { desktop } from '../utils/desktop';
 
-const REASON_LABELS = { manual: 'Made by hand', automatic: 'Automatic (daily)', 'before-restore': 'Safety copy before a restore' };
+const REASON_LABELS = {
+  manual: 'Made by hand',
+  automatic: 'Automatic (daily)',
+  'before-restore': 'Safety copy before a restore',
+  'before-update': 'Safety copy before an app update',
+};
 
 // Turns a number of bytes into "2.4 MB".
 function formatSize(bytes) {
@@ -72,110 +78,85 @@ function BackupPage() {
     });
   }
 
-  if (!info) return <p className="muted">{error || 'Loading backups...'}</p>;
+  if (!info) {
+    return error ? <div className="notice notice-error" role="alert">{error}</div> : <p className="loading">Loading backups...</p>;
+  }
 
   const daysSinceBackup = info.lastBackupAt ? (Date.now() - new Date(info.lastBackupAt)) / 86400000 : null;
+  const backupOverdue = daysSinceBackup === null || daysSinceBackup > 2;
 
   return (
-    <div>
-      <h1 className="page-title">Backup &amp; Restore</h1>
-      <p className="muted">
-        All the shop's data is kept only on this laptop. Backups protect it if the laptop breaks, is stolen or the hard
-        disk fails. For real safety, save backups to a <strong>USB drive or external disk</strong> and keep it away from
-        the laptop.
-      </p>
+    <div className="page">
+      <PageHeader title="Backup and restore" lead="The shop's data is only on this laptop. Keep backups on a USB drive, away from the laptop, so a broken or stolen laptop loses nothing.">
+        <button type="button" className="btn btn-primary" disabled={Boolean(working)} onClick={() => run('backup', async () => setMessage((await api.post('/backups')).message))}>
+          {working === 'backup' ? 'Backing up...' : 'Back up now'}
+        </button>
+      </PageHeader>
 
-      {error && <div className="alert alert-error">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
-      {info.lastBackupError && <div className="alert alert-error">Last backup problem: {info.lastBackupError}</div>}
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      {message && <div className="notice notice-success" role="status">{message}</div>}
+      {info.lastBackupError && <div className="notice notice-error"><span className="notice-title">The last backup failed</span>{info.lastBackupError}</div>}
 
-      <div className="stat-cards">
-        <div className={`stat-card ${daysSinceBackup === null || daysSinceBackup > 2 ? 'stat-card-red' : 'stat-card-green'}`}>
-          <span>Last backup</span>
-          <strong>{info.lastBackupAt ? formatDateTime(info.lastBackupAt) : 'Never'}</strong>
-          <small>{info.autoBackupEnabled ? 'An automatic backup is made once a day.' : 'Automatic backups are OFF.'}</small>
+      <dl className="figures">
+        <div className="figure">
+          <dt>Last backup</dt>
+          <dd className={backupOverdue ? 'danger-text' : undefined}>
+            {info.lastBackupAt ? formatDateTime(info.lastBackupAt) : 'Never'}
+            <span className="figure-note muted">{info.autoBackupEnabled ? 'A backup is made by itself once a day.' : 'Automatic backups are off.'}</span>
+          </dd>
         </div>
-      </div>
+        <div className="figure">
+          <dt>Backups in the folder</dt>
+          <dd>{info.backups.length}</dd>
+        </div>
+      </dl>
 
-      <div className="card form-grid">
-        <h3 className="form-section">Where backups are saved</h3>
-        <label className="span-2">
-          Backup folder
-          <input
-            value={folder}
-            onChange={(e) => setFolder(e.target.value)}
-            placeholder={`${info.defaultFolder} (on this laptop)`}
-          />
-        </label>
-        <div className="form-actions">
-          {desktop && <button type="button" className="btn" onClick={chooseFolder}>📁 Choose folder…</button>}
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={Boolean(working)}
-            onClick={() => run('folder', async () => setMessage((await api.put('/backups/settings', { folder })).message))}
-          >
+      <section className="panel form-grid" aria-labelledby="backup-folder-heading">
+        <h2 id="backup-folder-heading" className="form-section">Where backups are saved</h2>
+        <div className="field span-all">
+          <label className="field-label" htmlFor="backup-folder">Backup folder</label>
+          <input id="backup-folder" value={folder} onChange={(e) => setFolder(e.target.value)} placeholder={`${info.defaultFolder} (on this laptop)`} />
+          <span className="field-help">Saving to: {info.folder}</span>
+        </div>
+        <div className="span-all btn-row">
+          {desktop && <button type="button" className="btn" onClick={chooseFolder}>Choose folder</button>}
+          {desktop && <button type="button" className="btn" onClick={() => desktop.openFolder(info.folder)}>Open the folder</button>}
+          <button type="button" className="btn btn-primary" disabled={Boolean(working)} onClick={() => run('folder', async () => setMessage((await api.put('/backups/settings', { folder })).message))}>
             Save folder
           </button>
         </div>
-        <label className="checkbox-row span-full">
-          <input
-            type="checkbox"
-            checked={info.autoBackupEnabled}
-            onChange={(e) => run('auto', () => api.put('/backups/settings', { autoBackupEnabled: e.target.checked }))}
-          />
-          Make an automatic backup once a day (the newest 30 are kept)
+        <label className="check span-all">
+          <input type="checkbox" checked={info.autoBackupEnabled} onChange={(e) => run('auto', () => api.put('/backups/settings', { autoBackupEnabled: e.target.checked }))} />
+          Make a backup by itself once a day (the newest 30 are kept)
         </label>
-        <p className="span-full muted small">Saving to: {info.folder}</p>
-      </div>
+      </section>
 
-      <div className="card">
-        <div className="page-header">
-          <h2>Backups</h2>
-          <div className="actions">
-            {desktop && <button type="button" className="btn" onClick={() => desktop.openFolder(info.folder)}>Open folder</button>}
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={Boolean(working)}
-              onClick={() => run('backup', async () => setMessage((await api.post('/backups')).message))}
-            >
-              {working === 'backup' ? 'Backing up...' : '💾 Back up now'}
-            </button>
-          </div>
-        </div>
-
+      <section className="panel panel-flush" aria-labelledby="backup-list-heading">
+        <div className="panel-head"><h2 id="backup-list-heading">Backups</h2></div>
         {info.backups.length === 0 ? (
-          <p className="muted">No backups in this folder yet. Click "Back up now".</p>
+          <p className="empty muted">No backups in this folder yet. Press "Back up now".</p>
         ) : (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
                   <th>Made on</th>
-                  <th>Type</th>
-                  <th className="number">Records</th>
-                  <th className="number">Size</th>
-                  <th />
+                  <th>Kind</th>
+                  <th className="num">Records</th>
+                  <th className="num">Size</th>
+                  <th><span className="visually-hidden">Restore</span></th>
                 </tr>
               </thead>
               <tbody>
                 {info.backups.map((backup) => (
                   <tr key={backup.name}>
-                    <td>{formatDateTime(backup.createdAt)}</td>
+                    <td className="cell-main">{formatDateTime(backup.createdAt)}</td>
                     <td>{REASON_LABELS[backup.reason] || backup.reason}</td>
-                    <td className="number">{backup.records.toLocaleString('en-NG')}</td>
-                    <td className="number">{formatSize(backup.sizeBytes)}</td>
-                    <td>
-                      <button
-                        type="button"
-                        className="btn btn-small btn-danger"
-                        onClick={() => {
-                          setRestoreTarget(backup);
-                          setConfirmText('');
-                        }}
-                      >
-                        Restore…
+                    <td className="num">{backup.records.toLocaleString('en-NG')}</td>
+                    <td className="num">{formatSize(backup.sizeBytes)}</td>
+                    <td className="actions">
+                      <button type="button" className="btn btn-quiet btn-danger" onClick={() => { setRestoreTarget(backup); setConfirmText(''); }}>
+                        Restore<span className="visually-hidden"> the backup from {formatDateTime(backup.createdAt)}</span>
                       </button>
                     </td>
                   </tr>
@@ -184,26 +165,29 @@ function BackupPage() {
             </table>
           </div>
         )}
-      </div>
+      </section>
 
       {restoreTarget && (
-        <Modal title="Restore this backup?" onClose={() => setRestoreTarget(null)}>
-          <div className="alert alert-error">
-            This replaces <strong>ALL</strong> the current data (sales, products, staff, settings) with the backup from{' '}
+        <Modal
+          title="Restore this backup?"
+          onClose={() => setRestoreTarget(null)}
+          footer={
+            <>
+              <button type="button" className="btn" onClick={() => setRestoreTarget(null)}>Cancel</button>
+              <button type="button" className="btn btn-danger-solid" disabled={confirmText !== 'RESTORE' || Boolean(working)} onClick={restore}>
+                {working === 'restore' ? 'Restoring...' : 'Restore backup'}
+              </button>
+            </>
+          }
+        >
+          <div className="notice notice-error">
+            This replaces all the current data (sales, products, staff, settings) with the backup from{' '}
             <strong>{formatDateTime(restoreTarget.createdAt)}</strong>. Anything done after that time will be gone.
           </div>
-          <p className="small">
-            To be safe, a copy of the current data is saved first ("Safety copy before a restore"), so you can undo this.
-          </p>
-          <label>
-            Type RESTORE to confirm
-            <input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} autoFocus />
-          </label>
-          <div className="form-actions">
-            <button type="button" className="btn btn-danger" disabled={confirmText !== 'RESTORE' || Boolean(working)} onClick={restore}>
-              {working === 'restore' ? 'Restoring...' : 'Restore backup'}
-            </button>
-            <button type="button" className="btn" onClick={() => setRestoreTarget(null)}>Cancel</button>
+          <p>A copy of the current data is saved first ("Safety copy before a restore"), so this can be undone.</p>
+          <div className="field">
+            <label className="field-label" htmlFor="restore-confirm">Type RESTORE to confirm</label>
+            <input id="restore-confirm" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} autoFocus autoComplete="off" />
           </div>
         </Modal>
       )}

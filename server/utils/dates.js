@@ -45,4 +45,11 @@ function daysBetween(fromText, toText) {
   return Math.round(ms / ONE_DAY_MS) + 1;
 }
 
-module.exports = { todayInLagos, lagosDayRange, createdAtFilter, addDays, daysBetween };
+// Returns the Monday of the week a "YYYY-MM-DD" date is in (weeks run
+// Monday to Sunday), e.g. '2026-10-29' (a Thursday) -> '2026-10-26'.
+function mondayOf(dateText) {
+  const weekday = new Date(`${dateText}T12:00:00Z`).getUTCDay(); // 0 = Sunday
+  return addDays(dateText, -((weekday + 6) % 7));
+}
+
+module.exports = { todayInLagos, lagosDayRange, createdAtFilter, addDays, daysBetween, mondayOf };

@@ -1,0 +1,130 @@
+/* ==========================================================================
+   Base: page defaults, type, focus. Uses tokens from tokens.css.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-floor);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  font-size: var(--text-body);
+  font-stretch: var(--width-normal);
+  line-height: var(--leading-body);
+  /* Every number lines up in columns: prices, quantities, totals. */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: var(--text-title);
+  font-stretch: var(--width-wide);
+  font-weight: 750;
+  line-height: var(--leading-tight);
+}
+
+h2 {
+  font-size: var(--text-heading);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h3 {
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+
+a {
+  color: var(--color-action);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--color-action-hover);
+}
+
+/* One focus style everywhere: a thick ink outline with a gap. */
+:focus-visible {
+  outline: var(--line-focus) solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--color-highlight);
+  color: var(--color-text);
+}
+
+/* Small helpers */
+.muted {
+  color: var(--color-text-muted);
+}
+
+.small {
+  font-size: var(--text-small);
+}
+
+.strong {
+  font-weight: 700;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.danger-text {
+  color: var(--color-danger-text);
+}
+
+.success-text {
+  color: var(--color-success-text);
+}
+
+.warning-text {
+  color: var(--color-warning-text);
+}
+
+/* Hidden on screen, still read by screen readers. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

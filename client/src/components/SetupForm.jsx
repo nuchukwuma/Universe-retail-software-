@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 
 // First-time setup, shown when the app has no staff accounts yet:
-// the owner chooses the store name and creates their own account.
+// the owner names the shop and creates their own account.
 function SetupForm({ onDone }) {
   const { startSession } = useAuth();
   const { reloadSettings } = useSettings();
@@ -24,11 +24,11 @@ function SetupForm({ onDone }) {
     setForm((current) => ({ ...current, [name]: value }));
   }
 
-  // Creates the owner account and logs straight in.
+  // Creates the owner account and signs straight in.
   async function handleSubmit(event) {
     event.preventDefault();
     if (form.password !== form.confirm) {
-      setError('The two passwords are not the same.');
+      setError('The two passwords are not the same. Type them again.');
       return;
     }
     setSaving(true);
@@ -45,40 +45,38 @@ function SetupForm({ onDone }) {
   }
 
   return (
-    <form className="login-card setup-card" onSubmit={handleSubmit}>
-      <img src="/logo.png" alt="" className="login-logo" />
-      <h1>Welcome!</h1>
-      <p className="muted">Let's set up the shop. You only do this once.</p>
+    <form className="entry-form" onSubmit={handleSubmit}>
+      <h2>First-time setup</h2>
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
 
-      {error && <div className="alert alert-error">{error}</div>}
-
-      <label>
-        Shop name
-        <input value={form.storeName} onChange={(e) => setField('storeName', e.target.value)} required />
-      </label>
-      <label>
-        Your name (the owner)
-        <input value={form.ownerName} onChange={(e) => setField('ownerName', e.target.value)} required autoFocus />
-      </label>
-      <label>
-        Choose a username
-        <input value={form.username} onChange={(e) => setField('username', e.target.value)} required autoComplete="username" />
-      </label>
-      <label>
-        Choose a password (at least 6 characters)
-        <input type="password" minLength={6} value={form.password} onChange={(e) => setField('password', e.target.value)} required autoComplete="new-password" />
-      </label>
-      <label>
-        Type the password again
-        <input type="password" minLength={6} value={form.confirm} onChange={(e) => setField('confirm', e.target.value)} required autoComplete="new-password" />
-      </label>
-      <label className="checkbox-row setup-sample">
+      <div className="field">
+        <label className="field-label" htmlFor="setup-store">Shop name (printed on receipts)</label>
+        <input id="setup-store" value={form.storeName} onChange={(e) => setField('storeName', e.target.value)} required />
+      </div>
+      <div className="field">
+        <label className="field-label" htmlFor="setup-owner">Your name (the owner)</label>
+        <input id="setup-owner" value={form.ownerName} onChange={(e) => setField('ownerName', e.target.value)} required autoFocus />
+      </div>
+      <div className="field">
+        <label className="field-label" htmlFor="setup-username">Choose a username</label>
+        <input id="setup-username" value={form.username} onChange={(e) => setField('username', e.target.value)} required autoComplete="username" />
+      </div>
+      <div className="field">
+        <label className="field-label" htmlFor="setup-password">Choose a password</label>
+        <input id="setup-password" type="password" minLength={6} value={form.password} onChange={(e) => setField('password', e.target.value)} required autoComplete="new-password" />
+        <span className="field-help">At least 6 characters.</span>
+      </div>
+      <div className="field">
+        <label className="field-label" htmlFor="setup-confirm">Type the password again</label>
+        <input id="setup-confirm" type="password" minLength={6} value={form.confirm} onChange={(e) => setField('confirm', e.target.value)} required autoComplete="new-password" />
+      </div>
+      <label className="check">
         <input type="checkbox" checked={form.loadSampleData} onChange={(e) => setField('loadSampleData', e.target.checked)} />
-        Add sample products so I can practise (you can delete them later)
+        Add sample products to practise with (you can delete them later)
       </label>
 
-      <button type="submit" className="btn btn-primary btn-block" disabled={saving}>
-        {saving ? 'Setting up...' : 'Start using the app'}
+      <button type="submit" className="btn btn-primary btn-large btn-block" disabled={saving}>
+        {saving ? 'Setting up...' : 'Finish setup'}
       </button>
       <p className="muted small">Write the username and password down somewhere safe. All data stays on this computer.</p>
     </form>

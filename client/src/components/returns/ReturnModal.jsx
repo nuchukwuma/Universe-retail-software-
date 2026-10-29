@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { api } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import Modal from '../Modal';
 import BarcodeInput from '../BarcodeInput';
-import { ManagerApprovalForm } from '../checkout/ManagerApprovalForm';
+import { ManagerApprovalModal } from '../checkout/ManagerApprovalForm';
 import { formatNaira } from '../../utils/formatNaira';
 import { formatDateTime } from '../../utils/dates';
-import { PAYMENT_LABELS, roundMoney } from '../../utils/billMath';
+import { roundMoney } from '../../utils/billMath';
 import { canUseBackOffice } from '../../utils/roles';
 
 // What the customer really paid for ONE of a sale line, after all
@@ -17,22 +17,17 @@ function refundPerItem(sale, item) {
   return Math.round((item.lineTotal / item.quantity) * share);
 }
 
-// Refund the same way they paid, or cash if they split the payment.
-function defaultRefundMethod(sale) {
-  return sale.paymentMethod === 'split' ? 'cash' : sale.paymentMethod;
-}
-
-// The Return pop-up:
-// 1. find the sale (type or scan the receipt barcode)
-// 2. choose what comes back, how to refund and why
-// 3. a manager approves (if a cashier is doing it)
+// Returning items:
+// 1. find the sale (scan the receipt barcode or type its number)
+// 2. choose what comes back and why
+// 3. a manager approves (when a cashier is doing it)
 // Calls onDone({ return, sale }) when the return is saved.
 function ReturnModal({ initialSale = null, onDone, onClose }) {
   const { user } = useAuth();
+  const formId = useId();
   const [receiptNumber, setReceiptNumber] = useState('');
   const [sale, setSale] = useState(initialSale);
   const [quantities, setQuantities] = useState({}); // { lineIndex: quantity }
-  const [refundMethod, setRefundMethod] = useState(initialSale ? defaultRefundMethod(initialSale) : 'cash');
   const [reason, setReason] = useState('');
   const [askApproval, setAskApproval] = useState(false);
   const [working, setWorking] = useState(false);
@@ -43,9 +38,7 @@ function ReturnModal({ initialSale = null, onDone, onClose }) {
     setError('');
     setWorking(true);
     try {
-      const found = await api.get(`/sales/by-receipt/${encodeURIComponent(number.trim())}`);
-      setSale(found);
-      setRefundMethod(defaultRefundMethod(found));
+      setSale(await api.get(`/sales/by-receipt/${encodeURIComponent(number.trim())}`));
       setQuantities({});
     } catch (err) {
       setError(err.message);
@@ -60,7 +53,7 @@ function ReturnModal({ initialSale = null, onDone, onClose }) {
     setQuantities({ ...quantities, [index]: quantity });
   }
 
-  // Ticks every item that has not been returned yet.
+  // Fills in every item that has not been returned yet.
   function returnEverything() {
     const all = {};
     sale.items.forEach((item, index) => {
@@ -69,7 +62,7 @@ function ReturnModal({ initialSale = null, onDone, onClose }) {
     setQuantities(all);
   }
 
-  // Sends the return to the server (with a manager's approval token if needed).
+  // Sends the return to the server (with a manager's approval if needed).
   async function saveReturn(approvalToken) {
     setWorking(true);
     setError('');
@@ -77,8 +70,7 @@ function ReturnModal({ initialSale = null, onDone, onClose }) {
       const items = Object.entries(quantities)
         .filter(([, quantity]) => quantity > 0)
         .map(([lineIndex, quantity]) => ({ lineIndex: Number(lineIndex), quantity }));
-      const result = await api.post('/returns', { saleId: sale._id, items, refundMethod, reason, approvalToken });
-      onDone(result);
+      onDone(await api.post('/returns', { saleId: sale._id, items, reason, approvalToken }));
     } catch (err) {
       setError(err.message);
       setAskApproval(false);
@@ -86,18 +78,15 @@ function ReturnModal({ initialSale = null, onDone, onClose }) {
     }
   }
 
-  // Runs when "Complete Return" is pressed.
+  // Runs when "Complete return" is pressed.
   function handleSubmit(event) {
     event.preventDefault();
     if (!reason.trim()) {
       setError('Enter the reason for the return.');
       return;
     }
-    if (canUseBackOffice(user)) {
-      saveReturn();
-    } else {
-      setAskApproval(true);
-    }
+    if (canUseBackOffice(user)) saveReturn();
+    else setAskApproval(true);
   }
 
   // Never more than what is left of what the customer paid.
@@ -111,35 +100,35 @@ function ReturnModal({ initialSale = null, onDone, onClose }) {
   // ----- Step 3: manager approval -----
   if (askApproval) {
     return (
-      <Modal title="Manager approval needed" onClose={onClose}>
-        <ManagerApprovalForm
-          reason={`Approve a refund of ${formatNaira(refundTotal)} on receipt ${sale.receiptNumber}.`}
-          onApproved={(approval) => saveReturn(approval.token)}
-          onCancel={() => setAskApproval(false)}
-        />
-      </Modal>
+      <ManagerApprovalModal
+        reason={`Approve a refund of ${formatNaira(refundTotal)} on receipt ${sale.receiptNumber}.`}
+        onApproved={(approval) => saveReturn(approval.token)}
+        onClose={() => setAskApproval(false)}
+      />
     );
   }
 
   // ----- Step 1: find the sale -----
   if (!sale) {
     return (
-      <Modal title="Return items" onClose={onClose}>
-        <p className="muted">Scan the barcode on the customer's receipt, or type the receipt number.</p>
-        <BarcodeInput
-          value={receiptNumber}
-          onChange={setReceiptNumber}
-          onEnter={findSale}
-          placeholder="e.g. 261027-0001"
-          autoFocus
-        />
-        {error && <div className="alert alert-error top-gap">{error}</div>}
-        <div className="form-actions">
-          <button type="button" className="btn btn-primary" onClick={() => findSale(receiptNumber)} disabled={!receiptNumber.trim() || working}>
-            {working ? 'Looking...' : 'Find Sale'}
-          </button>
-          <button type="button" className="btn" onClick={onClose}>Cancel</button>
+      <Modal
+        title="Return items"
+        onClose={onClose}
+        footer={
+          <>
+            <button type="button" className="btn" onClick={onClose}>Cancel</button>
+            <button type="button" className="btn btn-primary" onClick={() => findSale(receiptNumber)} disabled={!receiptNumber.trim() || working}>
+              {working ? 'Looking...' : 'Find the sale'}
+            </button>
+          </>
+        }
+      >
+        <div className="field">
+          <label className="field-label" htmlFor={`${formId}-receipt`}>Receipt number</label>
+          <BarcodeInput id={`${formId}-receipt`} value={receiptNumber} onChange={setReceiptNumber} onEnter={findSale} placeholder="e.g. 261027-0001" autoFocus />
+          <span className="field-help">Scan the barcode at the bottom of the customer's receipt, or type the number.</span>
         </div>
+        {error && <div className="notice notice-error" role="alert">{error}</div>}
       </Modal>
     );
   }
@@ -148,24 +137,39 @@ function ReturnModal({ initialSale = null, onDone, onClose }) {
   const nothingLeft = sale.items.every((item) => item.quantity - (item.returnedQuantity || 0) <= 0);
 
   return (
-    <Modal title={`Return from receipt ${sale.receiptNumber}`} onClose={onClose} wide>
-      <p className="muted small">
-        Sold {formatDateTime(sale.createdAt)} by {sale.cashierName}
-        {sale.customerName && ` to ${sale.customerName}`} · Paid {formatNaira(sale.total)} ({PAYMENT_LABELS[sale.paymentMethod]})
+    <Modal
+      title={`Return from receipt ${sale.receiptNumber}`}
+      onClose={onClose}
+      wide
+      footer={
+        <>
+          {!initialSale && <button type="button" className="btn push-left" onClick={() => setSale(null)}>Use a different receipt</button>}
+          <button type="button" className="btn" onClick={onClose}>Cancel</button>
+          {!nothingLeft && (
+            <button type="submit" form={formId} className="btn btn-primary" disabled={refundTotal <= 0 || working}>
+              {working ? 'Saving...' : canUseBackOffice(user) ? 'Complete return' : 'Complete return (needs a manager)'}
+            </button>
+          )}
+        </>
+      }
+    >
+      <p className="muted">
+        Sold on {formatDateTime(sale.createdAt)} by {sale.cashierName}
+        {sale.customerName ? ` to ${sale.customerName}` : ''}. Total paid {formatNaira(sale.total)}.
       </p>
 
       {nothingLeft ? (
-        <div className="alert alert-error">Everything on this receipt has already been returned.</div>
+        <div className="notice notice-warning">Everything on this receipt has already been returned.</div>
       ) : (
-        <form onSubmit={handleSubmit} className="return-form">
+        <form id={formId} className="stack" onSubmit={handleSubmit}>
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
                   <th>Item</th>
-                  <th className="number">Bought</th>
-                  <th className="number">Refund each</th>
-                  <th className="number">Return</th>
+                  <th className="num">Bought</th>
+                  <th className="num">Refund each</th>
+                  <th className="num">Return</th>
                 </tr>
               </thead>
               <tbody>
@@ -174,21 +178,21 @@ function ReturnModal({ initialSale = null, onDone, onClose }) {
                   return (
                     <tr key={index}>
                       <td>
-                        {item.name}
-                        {item.returnedQuantity > 0 && <div className="muted small">{item.returnedQuantity} already returned</div>}
+                        <span className="cell-main">{item.name}</span>
+                        {item.returnedQuantity > 0 && <span className="cell-sub">{item.returnedQuantity} already returned</span>}
                       </td>
-                      <td className="number">{item.quantity}</td>
-                      <td className="number">{formatNaira(refundPerItem(sale, item))}</td>
-                      <td className="number">
+                      <td className="num">{item.quantity}</td>
+                      <td className="num">{formatNaira(refundPerItem(sale, item))}</td>
+                      <td className="num">
                         <input
                           type="number"
                           min="0"
                           max={left}
-                          className="copies-input"
+                          className="input-number"
                           value={quantities[index] || 0}
                           onChange={(e) => setQuantity(index, e.target.value, left)}
                           disabled={left <= 0}
-                          aria-label={`Return quantity for ${item.name}`}
+                          aria-label={`How many ${item.name} to return`}
                         />
                       </td>
                     </tr>
@@ -197,37 +201,20 @@ function ReturnModal({ initialSale = null, onDone, onClose }) {
               </tbody>
             </table>
           </div>
-          <button type="button" className="btn btn-small" onClick={returnEverything}>Return everything</button>
-
-          <div className="form-grid top-gap">
-            <label>
-              Refund by
-              <select value={refundMethod} onChange={(e) => setRefundMethod(e.target.value)}>
-                <option value="cash">Cash</option>
-                <option value="transfer">Bank Transfer</option>
-                <option value="card">Card (POS reversal)</option>
-              </select>
-            </label>
-            <label className="span-2">
-              Reason *
-              <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Damaged, expired, wrong item" />
-            </label>
+          <div className="btn-row">
+            <button type="button" className="btn btn-small" onClick={returnEverything}>Return everything</button>
           </div>
 
-          <div className="payment-total top-gap">
-            <span>Refund to customer</span>
-            <strong>{formatNaira(refundTotal)}</strong>
+          <div className="field">
+            <label className="field-label" htmlFor={`${formId}-reason`}>Reason</label>
+            <input id={`${formId}-reason`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Damaged, wrong item" />
           </div>
 
-          {error && <div className="alert alert-error top-gap">{error}</div>}
-
-          <div className="form-actions">
-            <button type="submit" className="btn btn-primary" disabled={refundTotal <= 0 || working}>
-              {working ? 'Saving...' : canUseBackOffice(user) ? 'Complete Return' : 'Complete Return (needs manager)'}
-            </button>
-            {!initialSale && <button type="button" className="btn" onClick={() => setSale(null)}>Different receipt</button>}
-            <button type="button" className="btn" onClick={onClose}>Cancel</button>
-          </div>
+          <dl className="facts">
+            <dt>Refund to customer</dt>
+            <dd className="confirm-total">{formatNaira(refundTotal)}</dd>
+          </dl>
+          {error && <div className="notice notice-error" role="alert">{error}</div>}
         </form>
       )}
     </Modal>

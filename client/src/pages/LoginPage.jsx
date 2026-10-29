@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import SetupForm from '../components/SetupForm';
 
-// The login screen. Every staff member logs in here first.
+// The sign-in screen. Every staff member signs in here first.
 // On a brand-new install (no staff accounts yet) it shows the
 // first-time setup form instead.
 function LoginPage() {
@@ -26,17 +26,16 @@ function LoginPage() {
       .catch(() => setNeedsSetup(false));
   }, []);
 
-  // Already logged in? Go straight to the checkout.
+  // Already signed in? Go straight to the till.
   if (user) {
     return <Navigate to="/checkout" replace />;
   }
 
-  // Runs when the Login button is pressed.
+  // Runs when "Sign in" is pressed.
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       await login(username, password);
       navigate('/checkout');
@@ -47,50 +46,33 @@ function LoginPage() {
     }
   }
 
-  if (needsSetup) {
-    return (
-      <div className="login-page">
-        <SetupForm onDone={() => navigate('/dashboard')} />
-      </div>
-    );
-  }
-
   return (
-    <div className="login-page">
-      <form className="login-card" onSubmit={handleSubmit}>
-        <img src={settings.logo || '/logo.png'} alt={`${settings.storeName} logo`} className="login-logo" />
+    <div className="entry">
+      <div className="entry-sign">
         <h1>{settings.storeName}</h1>
-        <p className="muted">Staff login</p>
+        <p>{needsSetup ? 'Set up the till. You only do this once.' : 'Sign in to start selling.'}</p>
+      </div>
 
-        {error && <div className="alert alert-error">{error}</div>}
-
-        <label>
-          Username
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            autoComplete="username"
-            autoFocus
-            required
-          />
-        </label>
-
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            required
-          />
-        </label>
-
-        <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
+      {needsSetup ? (
+        <SetupForm onDone={() => navigate('/dashboard')} />
+      ) : (
+        <form className="entry-form" onSubmit={handleSubmit}>
+          <h2>Staff sign in</h2>
+          {error && <div className="notice notice-error" role="alert">{error}</div>}
+          <div className="field">
+            <label className="field-label" htmlFor="login-username">Username</label>
+            <input id="login-username" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus required />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="login-password">Password</label>
+            <input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
+          </div>
+          <button type="submit" className="btn btn-primary btn-large btn-block" disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign in'}
+          </button>
+          <p className="muted small">Forgot your password? Ask the owner to reset it on the Staff page.</p>
+        </form>
+      )}
     </div>
   );
 }

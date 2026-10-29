@@ -33,7 +33,7 @@ export async function exportToExcel({ fileName, title, subtitle, columns, rows, 
     [{ value: title, fontWeight: 'bold', fontSize: 14, columnSpan: span }, ...emptyCells],
     [{ value: subtitle, textColor: '#555555', columnSpan: span }, ...emptyCells],
     [null],
-    columns.map((column) => ({ value: column.header, fontWeight: 'bold', backgroundColor: '#DCE9F9' })),
+    columns.map((column) => ({ value: column.header, fontWeight: 'bold', backgroundColor: '#E1F0EE' })),
     ...rows.map((row) => columns.map((column) => toCell(column, column.excelValue ? column.excelValue(row) : row[column.key]))),
   ];
 

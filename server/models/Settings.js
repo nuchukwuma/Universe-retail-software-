@@ -9,8 +9,6 @@ const settingsSchema = new mongoose.Schema(
     address: { type: String, default: '', trim: true },
     phone: { type: String, default: '', trim: true },
     footerMessage: { type: String, default: 'Thank you for shopping with us!', trim: true },
-    logo: { type: String, default: '/logo.png' },
-    showLogoOnReceipt: { type: Boolean, default: true },
     paperSize: { type: String, enum: ['58mm', '80mm', 'A4'], default: '80mm' },
     autoPrint: { type: Boolean, default: false },
     // Desktop app: the printer receipts go to. Empty = ask every time.
@@ -28,6 +26,9 @@ const settingsSchema = new mongoose.Schema(
     backupFolder: { type: String, default: '' }, // empty = the app's own backups folder
     lastBackupAt: { type: Date, default: null },
     lastBackupError: { type: String, default: '' },
+
+    // Which data clean-ups have been run (see utils/migrations.js).
+    dataVersion: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

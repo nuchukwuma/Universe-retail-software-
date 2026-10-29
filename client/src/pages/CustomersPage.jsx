@@ -1,20 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { api } from '../api/api';
 import Modal from '../components/Modal';
+import PageHeader from '../components/PageHeader';
 import CustomerForm from '../components/CustomerForm';
 import CustomerHistoryModal from '../components/CustomerHistoryModal';
 import { formatNaira } from '../utils/formatNaira';
 import { formatDate } from '../utils/dates';
 
-// Back office page listing customers, with their purchase history.
+// Saved customers, how often they come and what they have bought.
 function CustomersPage() {
+  const formId = useId();
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
-  // Which pop-up is open: null, { type: 'add' }, { type: 'edit', customer } or { type: 'history', customer }
+  // Which dialog is open: null, { type: 'add' }, { type: 'edit', customer } or { type: 'history', customer }
   const [modal, setModal] = useState(null);
 
   // Search the server 300ms after the user stops typing.
@@ -41,7 +43,7 @@ function CustomersPage() {
     try {
       if (modal.type === 'edit') {
         await api.put(`/customers/${modal.customer._id}`, details);
-        setMessage(`${details.name} updated.`);
+        setMessage(`${details.name} saved.`);
       } else {
         await api.post('/customers', details);
         setMessage(`${details.name} added.`);
@@ -58,7 +60,7 @@ function CustomersPage() {
 
   // Deletes a customer after confirming.
   async function handleDelete(customer) {
-    if (!window.confirm(`Delete ${customer.name}? Their old receipts will keep the name.`)) return;
+    if (!window.confirm(`Delete ${customer.name}? Their old receipts keep the name.`)) return;
     try {
       await api.delete(`/customers/${customer._id}`);
       setCustomers(customers.filter((c) => c._id !== customer._id));
@@ -69,62 +71,74 @@ function CustomersPage() {
   }
 
   return (
-    <div>
-      <div className="page-header">
-        <h1 className="page-title">Customers</h1>
-        <button type="button" className="btn btn-primary" onClick={() => setModal({ type: 'add' })}>+ Add Customer</button>
+    <div className="page">
+      <PageHeader title="Customers" lead="Regular customers, their visits and everything they have bought.">
+        <button type="button" className="btn btn-primary" onClick={() => setModal({ type: 'add' })}>Add customer</button>
+      </PageHeader>
+
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      {message && <div className="notice notice-success" role="status">{message}</div>}
+
+      <div className="panel toolbar">
+        <div className="field">
+          <label className="field-label" htmlFor="customers-search">Search</label>
+          <input id="customers-search" type="search" placeholder="Name or phone" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
-
-      <div className="card filter-bar">
-        <input type="search" placeholder="Search by name or phone" value={search} onChange={(e) => setSearch(e.target.value)} />
-      </div>
-
-      <div className="card">
-        {loading ? (
-          <p className="muted">Loading customers...</p>
-        ) : (
+      <section className="panel panel-flush" aria-label="Customer list">
+        {loading && <p className="loading">Loading customers...</p>}
+        {!loading && customers.length === 0 && (
+          <p className="empty muted">{search ? `No customer matches "${search}".` : 'No customers yet. Add one here, or at the till with Customer (F3).'}</p>
+        )}
+        {customers.length > 0 && (
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
                   <th>Name</th>
                   <th>Phone</th>
-                  <th className="number">Visits</th>
-                  <th className="number">Total spent</th>
+                  <th className="num">Visits</th>
+                  <th className="num">Total spent</th>
                   <th>Last visit</th>
-                  <th />
+                  <th><span className="visually-hidden">Actions</span></th>
                 </tr>
               </thead>
               <tbody>
                 {customers.map((customer) => (
                   <tr key={customer._id}>
-                    <td><strong>{customer.name}</strong></td>
-                    <td>{customer.phone || <span className="muted">—</span>}</td>
-                    <td className="number">{customer.visits}</td>
-                    <td className="number">{formatNaira(customer.totalSpent)}</td>
+                    <td className="cell-main">{customer.name}</td>
+                    <td>{customer.phone || <span className="muted">None</span>}</td>
+                    <td className="num">{customer.visits}</td>
+                    <td className="num">{formatNaira(customer.totalSpent)}</td>
                     <td>{customer.lastVisit ? formatDate(customer.lastVisit) : <span className="muted">Never</span>}</td>
-                    <td>
-                      <div className="actions">
-                        <button type="button" className="btn btn-small" onClick={() => setModal({ type: 'history', customer })}>History</button>
-                        <button type="button" className="btn btn-small" onClick={() => setModal({ type: 'edit', customer })}>Edit</button>
-                        <button type="button" className="btn btn-small btn-danger" onClick={() => handleDelete(customer)}>Delete</button>
-                      </div>
+                    <td className="actions">
+                      <button type="button" className="btn btn-quiet" onClick={() => setModal({ type: 'history', customer })}>History</button>
+                      <button type="button" className="btn btn-quiet" onClick={() => setModal({ type: 'edit', customer })}>Edit</button>
+                      <button type="button" className="btn btn-quiet btn-danger" onClick={() => handleDelete(customer)}>
+                        Delete<span className="visually-hidden"> {customer.name}</span>
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {customers.length === 0 && <p className="muted">No customers found.</p>}
           </div>
         )}
-      </div>
+      </section>
 
       {(modal?.type === 'add' || modal?.type === 'edit') && (
-        <Modal title={modal.type === 'edit' ? 'Edit customer' : 'Add customer'} onClose={() => setModal(null)}>
-          <CustomerForm initial={modal.customer} saving={saving} onSave={handleSave} onCancel={() => setModal(null)} />
+        <Modal
+          title={modal.type === 'edit' ? `Edit ${modal.customer.name}` : 'Add a customer'}
+          onClose={() => setModal(null)}
+          footer={
+            <>
+              <button type="button" className="btn" onClick={() => setModal(null)}>Cancel</button>
+              <button type="submit" form={formId} className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save customer'}</button>
+            </>
+          }
+        >
+          <CustomerForm formId={formId} initial={modal.customer} onSave={handleSave} />
         </Modal>
       )}
       {modal?.type === 'history' && <CustomerHistoryModal customer={modal.customer} onClose={() => setModal(null)} />}

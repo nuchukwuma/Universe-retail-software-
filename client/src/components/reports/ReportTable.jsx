@@ -7,15 +7,12 @@ import { exportToExcel } from '../../utils/exportExcel';
 function displayValue(column, row) {
   if (column.render) return column.render(row);
   const value = row[column.key];
-  if (value === null || value === undefined || value === '') return <span className="muted">—</span>;
-
+  if (value === null || value === undefined || value === '') return <span className="muted">None</span>;
   switch (column.type) {
     case 'money':
       return formatNaira(value);
     case 'number':
       return Number(value).toLocaleString('en-NG');
-    case 'percent':
-      return `${value}%`;
     case 'date':
       return formatDate(value);
     default:
@@ -23,11 +20,11 @@ function displayValue(column, row) {
   }
 }
 
-const RIGHT_ALIGNED = ['money', 'number', 'percent'];
+const RIGHT_ALIGNED = ['money', 'number'];
 
-// A report table with an optional TOTAL line and an "Export to Excel" button.
+// A report table with an optional Total line and an "Export to Excel" button.
 // "columns": [{ key, header, type, width?, render?, excelValue? }]
-function ReportTable({ title, subtitle, fileName, columns, rows, totals, emptyText = 'No data for these dates.' }) {
+function ReportTable({ title, subtitle, fileName, columns, rows, totals, emptyText = 'No sales on these dates.' }) {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState('');
 
@@ -38,57 +35,63 @@ function ReportTable({ title, subtitle, fileName, columns, rows, totals, emptyTe
     try {
       await exportToExcel({ fileName, title, subtitle, columns, rows, totals });
     } catch (err) {
-      setError(`Could not create the Excel file: ${err.message}`);
+      setError(`The Excel file could not be made: ${err.message}`);
     } finally {
       setExporting(false);
     }
   }
 
   return (
-    <div className="card">
-      <div className="page-header">
-        <h2>{title}</h2>
-        <button type="button" className="btn btn-excel" onClick={handleExport} disabled={exporting || rows.length === 0}>
-          {exporting ? 'Exporting...' : '📗 Export to Excel'}
+    <section className="panel panel-flush" aria-label={title}>
+      <div className="panel-head">
+        <div>
+          <h2>{title}</h2>
+          <p className="small">{subtitle}</p>
+        </div>
+        <button type="button" className="btn" onClick={handleExport} disabled={exporting || rows.length === 0}>
+          {exporting ? 'Exporting...' : 'Export to Excel'}
         </button>
       </div>
-      {error && <div className="alert alert-error">{error}</div>}
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
 
-      <div className="table-wrap">
-        <table className="table report-table">
-          <thead>
-            <tr>
-              {columns.map((column) => (
-                <th key={column.key} className={RIGHT_ALIGNED.includes(column.type) ? 'number' : ''}>{column.header}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, index) => (
-              <tr key={row._key || index}>
-                {columns.map((column) => (
-                  <td key={column.key} className={RIGHT_ALIGNED.includes(column.type) ? 'number' : ''}>
-                    {displayValue(column, row)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-          {totals && rows.length > 0 && (
-            <tfoot>
+      {rows.length === 0 ? (
+        <p className="empty muted">{emptyText}</p>
+      ) : (
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
               <tr>
-                {columns.map((column, index) => (
-                  <td key={column.key} className={RIGHT_ALIGNED.includes(column.type) ? 'number' : ''}>
-                    {index === 0 ? 'TOTAL' : totals[column.key] !== undefined ? displayValue(column, totals) : ''}
-                  </td>
+                {columns.map((column) => (
+                  <th key={column.key} className={RIGHT_ALIGNED.includes(column.type) ? 'num' : undefined}>{column.header}</th>
                 ))}
               </tr>
-            </tfoot>
-          )}
-        </table>
-      </div>
-      {rows.length === 0 && <p className="muted">{emptyText}</p>}
-    </div>
+            </thead>
+            <tbody>
+              {rows.map((row, index) => (
+                <tr key={row._key || index}>
+                  {columns.map((column) => (
+                    <td key={column.key} className={RIGHT_ALIGNED.includes(column.type) ? 'num' : undefined}>
+                      {displayValue(column, row)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+            {totals && (
+              <tfoot>
+                <tr>
+                  {columns.map((column, index) => (
+                    <td key={column.key} className={RIGHT_ALIGNED.includes(column.type) ? 'num' : undefined}>
+                      {index === 0 ? 'Total' : totals[column.key] !== undefined ? displayValue(column, totals) : ''}
+                    </td>
+                  ))}
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 

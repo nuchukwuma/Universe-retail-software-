@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import ProductImage from './ProductImage';
+import { formatNaira } from '../utils/formatNaira';
 
 // Returns up to "limit" products whose name or barcode matches the text.
 export function searchProducts(products, text, limit = 8) {
@@ -12,7 +12,7 @@ export function searchProducts(products, text, limit = 8) {
 
 // A search box that lists matching products as you type.
 // Clicking a result (or pressing Enter for the first one) calls onSelect(product).
-function ProductSearch({ products, onSelect, placeholder = 'Search product by name or barcode' }) {
+function ProductSearch({ products, onSelect, id, placeholder = 'Type part of a name or barcode' }) {
   const [text, setText] = useState('');
   const matches = searchProducts(products, text);
 
@@ -33,6 +33,7 @@ function ProductSearch({ products, onSelect, placeholder = 'Search product by na
   return (
     <div className="product-search">
       <input
+        id={id}
         type="search"
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -42,13 +43,14 @@ function ProductSearch({ products, onSelect, placeholder = 'Search product by na
       />
       {text && (
         <ul className="product-search-results">
-          {matches.length === 0 && <li className="muted">No product matches "{text}"</li>}
+          {matches.length === 0 && <li className="product-search-empty">No product matches "{text}".</li>}
           {matches.map((product) => (
             <li key={product._id}>
               <button type="button" onClick={() => choose(product)}>
-                <ProductImage product={product} size={32} />
-                <span>{product.name}</span>
-                <small className="muted">Stock: {product.quantity}</small>
+                <span className="strong">{product.name}</span>
+                <span className="muted">{product.barcode || 'No barcode'}</span>
+                <span className="num">{formatNaira(product.sellingPrice)}</span>
+                <span className="num muted">{product.quantity} in stock</span>
               </button>
             </li>
           ))}

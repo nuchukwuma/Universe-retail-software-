@@ -8,7 +8,6 @@ import StaffPage from './pages/StaffPage';
 import ProductsPage from './pages/ProductsPage';
 import ProductFormPage from './pages/ProductFormPage';
 import CategoriesPage from './pages/CategoriesPage';
-import SuppliersPage from './pages/SuppliersPage';
 import ReceiveStockPage from './pages/ReceiveStockPage';
 import StockCountPage from './pages/StockCountPage';
 import BarcodeLabelsPage from './pages/BarcodeLabelsPage';
@@ -67,7 +66,6 @@ function App() {
         <Route path="/products/new" element={managersOnly(<ProductFormPage />)} />
         <Route path="/products/:id/edit" element={managersOnly(<ProductFormPage />)} />
         <Route path="/categories" element={managersOnly(<CategoriesPage />)} />
-        <Route path="/suppliers" element={managersOnly(<SuppliersPage />)} />
         <Route path="/receive-stock" element={managersOnly(<ReceiveStockPage />)} />
         <Route path="/stock-count" element={managersOnly(<StockCountPage />)} />
         <Route path="/barcode-labels" element={managersOnly(<BarcodeLabelsPage />)} />

@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
 // POST /api/returns
 // Returns items from an earlier sale, refunds the customer and puts the
 // items back in stock. Needs a manager/owner (or a cashier with an approvalToken).
-// Body: { saleId, items: [{ lineIndex, quantity }], refundMethod, reason, approvalToken? }
+// Body: { saleId, items: [{ lineIndex, quantity }], reason, approvalToken? }
 router.post('/', async (req, res) => {
   try {
     const approver = await findApprover(req);
@@ -54,10 +54,7 @@ router.post('/', async (req, res) => {
       return res.status(403).json({ code: 'APPROVAL_REQUIRED', message: 'A manager or owner must approve returns.' });
     }
 
-    const { saleId, items, refundMethod, reason } = req.body;
-    if (!['cash', 'transfer', 'card'].includes(refundMethod)) {
-      return res.status(400).json({ message: 'Choose how the money is refunded.' });
-    }
+    const { saleId, items, reason } = req.body;
     if (!String(reason || '').trim()) {
       return res.status(400).json({ message: 'Enter the reason for the return.' });
     }
@@ -82,7 +79,6 @@ router.post('/', async (req, res) => {
       customerName: sale.customerName,
       items: returnItems,
       refundTotal,
-      refundMethod,
       reason,
       processedBy: req.user._id,
       processedByName: req.user.name,

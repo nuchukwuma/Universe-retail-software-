@@ -1,0 +1,353 @@
+/* ==========================================================================
+   The till (sales screen). See DESIGN.md "Sales screen".
+   Left: scan box and bill. Right: the price ticket and the actions.
+   ========================================================================== */
+
+.till {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.till-main {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) var(--ticket-width);
+  gap: var(--gutter);
+  min-height: 0;
+  padding: var(--gutter);
+}
+
+.till-bill {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--color-surface);
+}
+
+.till-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ---------- Scan box ---------- */
+
+.scan {
+  padding: var(--space-5) var(--panel-padding) var(--space-4);
+  border-bottom: var(--line-strong) solid var(--color-rule-strong);
+}
+
+.scan-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-weight: 700;
+}
+
+.scan-row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.scan-row input.scan-input {
+  min-height: var(--button-height-large);
+  border: var(--line-strong) solid var(--color-text);
+  font-size: var(--scan-font-size);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.scan-row .btn {
+  min-height: var(--button-height-large);
+}
+
+.scan-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-5);
+  min-height: 24px;
+  margin-top: var(--space-3);
+}
+
+.scan-result {
+  font-weight: 650;
+}
+
+/* "Product not found" and other messages under the scan box. */
+.till-bill > .notice {
+  margin: var(--space-4) var(--panel-padding) 0;
+}
+
+.till > .notice {
+  margin: var(--gutter) var(--gutter) 0;
+}
+
+/* ---------- Bill ---------- */
+
+.bill-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--panel-padding);
+  border-bottom: var(--line-thin) solid var(--color-rule);
+}
+
+.bill-customer strong {
+  margin-left: var(--space-2);
+}
+
+.bill-lines {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.bill-table {
+  font-size: var(--text-body);
+}
+
+.bill-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface);
+}
+
+.bill-table th:first-child,
+.bill-table td:first-child {
+  padding-left: var(--panel-padding);
+}
+
+.bill-table th:last-child,
+.bill-table td:last-child {
+  padding-right: var(--panel-padding);
+}
+
+.bill-table td {
+  height: 56px;
+}
+
+.bill-item-name {
+  font-weight: 700;
+  font-stretch: var(--width-normal);
+}
+
+.bill-item-note {
+  display: block;
+  font-size: var(--text-small);
+}
+
+.bill-table tr.is-just-scanned,
+.bill-table tr.is-just-scanned:hover {
+  background: var(--color-highlight);
+  animation: just-scanned 600ms ease-out;
+}
+
+@keyframes just-scanned {
+  from {
+    background: var(--color-surface);
+  }
+}
+
+.bill-amount {
+  font-weight: 750;
+  font-size: var(--text-heading);
+  font-stretch: var(--width-narrow);
+}
+
+.bill-empty {
+  max-width: 46ch;
+  padding: var(--space-8) var(--panel-padding);
+}
+
+.bill-empty h2 {
+  font-size: var(--text-heading);
+}
+
+.bill-empty p {
+  margin-top: var(--space-3);
+  color: var(--color-text-muted);
+}
+
+.bill-discount {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--panel-padding);
+  border-top: var(--line-thin) solid var(--color-rule);
+  background: var(--color-surface-sunken);
+}
+
+/* ---------- Price ticket (the total) ---------- */
+
+.ticket {
+  /* The total is sized from the ticket's width (container units), so it
+     always stays on one line, however many digits it has. */
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6) var(--space-6);
+  background: var(--color-ticket);
+  color: var(--color-on-ticket);
+}
+
+.ticket-label {
+  font-size: var(--text-heading);
+  font-weight: 600;
+}
+
+/* --chars is set by PriceTicket.jsx: the number of characters in the total.
+   Each character of the wide, heavy figures is about 0.78em wide. */
+.ticket-total {
+  font-size: min(var(--ticket-font-size), calc(100cqi / (var(--chars, 8) * 0.78)));
+  font-stretch: var(--width-widest);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.ticket-lines {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-1) var(--space-5);
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: var(--line-thin) solid var(--color-on-ticket-faint);
+}
+
+.ticket-lines dt,
+.ticket-lines dd {
+  margin: 0;
+}
+
+.ticket-lines dd {
+  font-weight: 700;
+  text-align: right;
+}
+
+/* The big button on the ticket: white on teal, like a tear-off tab. */
+.ticket .btn-complete {
+  min-height: 64px;
+  margin-top: var(--space-3);
+  border: var(--line-strong) solid var(--color-on-ticket);
+  background: var(--color-on-ticket);
+  color: var(--color-text);
+  font-size: var(--text-heading);
+  font-weight: 800;
+}
+
+.ticket .btn-complete:hover {
+  background: var(--color-highlight);
+  color: var(--color-text);
+}
+
+.ticket .btn-complete:disabled {
+  border-color: var(--color-on-ticket-faint);
+  background: transparent;
+  color: var(--color-on-ticket);
+}
+
+.ticket .btn-complete:focus-visible {
+  outline-color: var(--color-on-ticket);
+}
+
+/* ---------- Till actions ---------- */
+
+.till-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--color-surface);
+}
+
+.till-actions .btn {
+  justify-content: space-between;
+  min-height: var(--button-height-large);
+  padding: 0 var(--space-4);
+  text-align: left;
+}
+
+.till-actions .span-all {
+  grid-column: 1 / -1;
+}
+
+.till-hint {
+  padding: 0 var(--space-5) var(--space-5);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+}
+
+/* ---------- Find product dialog ---------- */
+
+.find-results {
+  max-height: 46vh;
+  overflow-y: auto;
+  border-top: var(--line-thin) solid var(--color-rule);
+}
+
+.find-results tr.is-selected td {
+  background: var(--color-highlight-soft);
+}
+
+/* ---------- Complete sale and sale done ---------- */
+
+.confirm-total {
+  font-size: var(--font-size-8);
+  font-stretch: var(--width-widest);
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ---------- Tablet: ticket on top, bill below ---------- */
+
+@media (max-width: 900px) {
+  .till {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .till-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Total first, then the barcode box and bill, then the other actions. */
+  .till-side {
+    display: contents;
+  }
+
+  .ticket {
+    order: 1;
+  }
+
+  .till-bill {
+    order: 2;
+  }
+
+  .till-tools {
+    order: 3;
+  }
+
+  .till-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .bill-lines {
+    max-height: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .till-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

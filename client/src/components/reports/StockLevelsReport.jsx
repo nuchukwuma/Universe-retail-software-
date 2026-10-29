@@ -1,76 +1,63 @@
 import { useState } from 'react';
 import { useReport } from '../../hooks/useReport';
 import ReportTable from './ReportTable';
-import SummaryCards from './SummaryCards';
+import ReportFigures from './ReportFigures';
 import { formatDate } from '../../utils/dates';
 
-const STATUS_BADGES = { OK: 'badge badge-green', Low: 'badge badge-orange', 'Out of stock': 'badge badge-red' };
+const STATUS_CLASS = { 'In stock': 'status status-ok', Low: 'status status-low', 'Out of stock': 'status status-out' };
 
 const COLUMNS = [
   { key: 'name', header: 'Product', type: 'text', width: 30 },
   { key: 'category', header: 'Category', type: 'text', width: 16 },
   { key: 'quantity', header: 'In stock', type: 'number', width: 10 },
-  { key: 'reorderLevel', header: 'Reorder at', type: 'number', width: 10 },
-  {
-    key: 'status',
-    header: 'Status',
-    type: 'text',
-    width: 13,
-    render: (row) => <span className={STATUS_BADGES[row.status]}>{row.status}</span>,
-  },
-  { key: 'soldInPeriod', header: 'Sold (dates chosen)', type: 'number', width: 12 },
-  { key: 'daysLeft', header: 'Days left (approx.)', type: 'number', width: 12 },
-  { key: 'costValue', header: 'Stock value (cost)', type: 'money', width: 16 },
-  { key: 'retailValue', header: 'Stock value (selling)', type: 'money', width: 16 },
+  { key: 'reorderLevel', header: 'Low at', type: 'number', width: 9 },
+  { key: 'status', header: 'Status', type: 'text', width: 13, render: (row) => <span className={STATUS_CLASS[row.status]}>{row.status}</span> },
+  { key: 'soldInPeriod', header: 'Sold in these dates', type: 'number', width: 14 },
+  { key: 'daysLeft', header: 'Days of stock left', type: 'number', width: 14 },
+  { key: 'stockValue', header: 'Stock value', type: 'money', width: 16 },
 ];
 
-// Stock levels report: every product's stock now, its value, and how fast
-// it sold in the chosen dates (to plan re-ordering).
+// Every product's stock now, how fast it sold in the chosen dates, and
+// roughly how long it will last (to plan re-ordering).
 function StockLevelsReport({ from, to }) {
   const [status, setStatus] = useState('');
   const { data, loading, error } = useReport('/reports/stock-levels', from, to);
 
-  if (loading && !data) return <p className="muted">Loading report...</p>;
-  if (error) return <div className="alert alert-error">{error}</div>;
+  if (loading && !data) return <p className="loading">Loading the report...</p>;
+  if (error) return <div className="notice notice-error" role="alert">{error}</div>;
 
   const { totals } = data;
-  const rows = data.rows
-    .filter((row) => !status || row.status === status)
-    .map((row) => ({ ...row, _key: row.product }));
+  const rows = data.rows.filter((row) => !status || row.status === status).map((row) => ({ ...row, _key: row.product }));
 
   return (
     <>
-      <SummaryCards
-        cards={[
-          { label: 'Stock value (cost)', value: totals.costValue, type: 'money', note: 'what the stock cost you' },
-          { label: 'Stock value (selling)', value: totals.retailValue, type: 'money', note: 'if everything sold at full price' },
-          { label: 'Low stock', value: totals.lowCount, type: 'number', tone: 'orange' },
-          { label: 'Out of stock', value: totals.outCount, type: 'number', tone: 'red' },
+      <ReportFigures
+        figures={[
+          { label: 'Stock value', value: totals.stockValue, type: 'money', note: 'everything in stock at its selling price' },
+          { label: 'Low stock', value: totals.lowCount, type: 'number', note: 'at or below their low-stock level' },
+          { label: 'Out of stock', value: totals.outCount, type: 'number' },
         ]}
       />
-      <div className="card filter-bar">
-        <label className="date-filter">
-          Show
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+      <div className="panel toolbar">
+        <div className="field">
+          <label className="field-label" htmlFor="stock-show">Show</label>
+          <select id="stock-show" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">All products</option>
-            <option value="Low">Low stock only</option>
-            <option value="Out of stock">Out of stock only</option>
-            <option value="OK">OK only</option>
+            <option value="Low">Low stock</option>
+            <option value="Out of stock">Out of stock</option>
+            <option value="In stock">In stock</option>
           </select>
-        </label>
+        </div>
       </div>
       <ReportTable
         title="Stock levels"
-        subtitle={`Stock now · sales from ${formatDate(from)} to ${formatDate(to)}`}
+        subtitle={`Stock now. Sales from ${formatDate(from)} to ${formatDate(to)}. "Days of stock left" assumes it keeps selling at the same speed.`}
         fileName={`stock-levels-${to}.xlsx`}
         columns={COLUMNS}
         rows={rows}
         totals={status ? null : totals}
         emptyText="No products match."
       />
-      <p className="muted small">
-        "Days left" is how long the stock should last if it keeps selling as fast as in the dates chosen.
-      </p>
     </>
   );
 }

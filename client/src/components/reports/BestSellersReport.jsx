@@ -5,16 +5,15 @@ import ReportTable from './ReportTable';
 import { formatDate } from '../../utils/dates';
 
 const COLUMNS = [
-  { key: 'rank', header: '#', type: 'number', width: 5 },
+  { key: 'rank', header: 'Rank', type: 'number', width: 6 },
   { key: 'name', header: 'Product', type: 'text', width: 30 },
   { key: 'category', header: 'Category', type: 'text', width: 16 },
-  { key: 'quantity', header: 'Qty sold', type: 'number', width: 10 },
-  { key: 'revenue', header: 'Revenue', type: 'money' },
-  { key: 'profit', header: 'Profit', type: 'money' },
-  { key: 'margin', header: 'Margin', type: 'percent', width: 9 },
+  { key: 'quantity', header: 'Quantity sold', type: 'number', width: 12 },
+  { key: 'revenue', header: 'Sales value', type: 'money', width: 16 },
 ];
 
-// Best-selling products, most sold first. Can be narrowed to one category.
+// Best-selling products, most sold first (returns taken off).
+// Can be narrowed to one category.
 function BestSellersReport({ from, to }) {
   const [categories, setCategories] = useState([]);
   const [category, setCategory] = useState('');
@@ -29,17 +28,17 @@ function BestSellersReport({ from, to }) {
 
   return (
     <>
-      <div className="card filter-bar">
-        <label className="date-filter">
-          Category
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
+      <div className="panel toolbar">
+        <div className="field">
+          <label className="field-label" htmlFor="best-category">Category</label>
+          <select id="best-category" value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="">All categories</option>
-            {categories.map((c) => <option key={c._id} value={c._id}>{c.icon} {c.name}</option>)}
+            {categories.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select>
-        </label>
+        </div>
       </div>
-      {loading && !data && <p className="muted">Loading report...</p>}
-      {error && <div className="alert alert-error">{error}</div>}
+      {loading && !data && <p className="loading">Loading the report...</p>}
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
       {data && (
         <ReportTable
           title={categoryName ? `Best-selling products: ${categoryName}` : 'Best-selling products'}
@@ -47,7 +46,7 @@ function BestSellersReport({ from, to }) {
           fileName={`best-sellers-${from}-to-${to}.xlsx`}
           columns={COLUMNS}
           rows={data.rows.map((row) => ({ ...row, _key: row.product }))}
-          totals={data.totals}
+          totals={data.rows.length ? data.totals : null}
         />
       )}
     </>

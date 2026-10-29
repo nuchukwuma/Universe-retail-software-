@@ -4,26 +4,28 @@
   <meta charset="utf-8" />
   <title>Universe POS - could not start</title>
   <style>
+    /* Same colours as the app (see DESIGN.md). Plain text, no pictures. */
     body {
       margin: 0;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #eef3f9;
-      color: #1d2733;
+      font-family: 'Arial Narrow', Arial, sans-serif;
+      font-size: 17px;
+      background: #e3e8e7;
+      color: #142322;
     }
     .box {
-      max-width: 640px;
-      margin: 60px auto;
-      padding: 28px 32px;
-      border-radius: 12px;
-      background: #fff;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+      max-width: 680px;
+      margin: 48px auto;
+      padding: 24px 32px 32px;
+      border-top: 6px solid #b3261e;
+      background: #ffffff;
     }
-    h1 { margin-top: 0; color: #b42318; font-size: 24px; }
-    .message { padding: 10px 12px; border-radius: 8px; background: #fdecea; font-family: Consolas, monospace; font-size: 13px; white-space: pre-wrap; }
+    h1 { margin-top: 0; font-size: 30px; }
+    .message { padding: 12px 16px; border-left: 6px solid #b3261e; background: #fce7e5; font-size: 15px; white-space: pre-wrap; }
     ol { line-height: 1.6; }
-    button { padding: 10px 18px; border: none; border-radius: 8px; background: #1565c0; color: #fff; font-size: 16px; cursor: pointer; }
-    button.plain { background: #e3e8ef; color: #1d2733; }
-    .muted { color: #5b6b7d; font-size: 13px; }
+    button { min-height: 44px; padding: 0 16px; border: 2px solid #00665e; border-radius: 4px; background: #00665e; color: #ffffff; font: inherit; font-weight: 700; cursor: pointer; }
+    button.plain { border-color: #142322; background: #ffffff; color: #142322; }
+    button:focus-visible { outline: 3px solid #142322; outline-offset: 2px; }
+    .muted { color: #4a5a59; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -34,11 +36,11 @@
 
     <p><strong>Usually this means MongoDB is not running. Try this:</strong></p>
     <ol>
-      <li>Wait one minute - just after the laptop is switched on, MongoDB can take a moment to start.</li>
+      <li>Wait one minute. Just after the laptop is switched on, MongoDB can take a moment to start.</li>
       <li>Press <strong>Try again</strong>.</li>
       <li>Still not working? Press the Windows key, type <strong>services.msc</strong> and press Enter.
         Find <strong>MongoDB Server</strong>, right-click it and choose <strong>Start</strong>.</li>
-      <li>If MongoDB Server is not in the list, MongoDB is not installed - see the install guide (README).</li>
+      <li>If MongoDB Server is not in the list, MongoDB is not installed. See the install guide (README).</li>
     </ol>
 
     <p>

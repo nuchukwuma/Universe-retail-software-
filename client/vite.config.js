@@ -2,8 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 // Vite settings.
-// - In development, the "proxy" sends every /api and /uploads request from
-//   the React app (port 5173) to the Express server (port 5000).
+// - In development, the "proxy" sends every /api request from the React
+//   app (port 5173) to the Express server (port 5000).
 // - "npm run build" makes the finished app in client/dist, which the
 //   desktop app shows.
 export default defineConfig({
@@ -16,7 +16,6 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': 'http://localhost:5000',
-      '/uploads': 'http://localhost:5000',
     },
   },
 });
