@@ -70,8 +70,25 @@ async function exportCollection(db, collectionName, file) {
     count += 1;
   }
   stream.end();
-  await once(stream, 'finish');
+  // Wait until the file is CLOSED, not just written: Windows will not
+  // rename a folder while a file inside it is still open.
+  await once(stream, 'close');
   return count;
+}
+
+// Renames a folder. On Windows, antivirus or the search indexer can hold a
+// new file open for a moment ("EPERM"/"EBUSY"), so try again a few times.
+async function renameWithRetry(from, to) {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      fs.renameSync(from, to);
+      return;
+    } catch (error) {
+      const locked = ['EPERM', 'EBUSY', 'EACCES'].includes(error.code);
+      if (!locked || attempt >= 10) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+  }
 }
 
 // Makes a complete backup now. "reason" is 'manual', 'automatic' or
@@ -105,7 +122,7 @@ async function createBackup(reason = 'manual') {
       counts,
     };
     fs.writeFileSync(path.join(workFolder, 'manifest.json'), JSON.stringify(manifest, null, 2));
-    fs.renameSync(workFolder, finalFolder);
+    await renameWithRetry(workFolder, finalFolder);
 
     settings.lastBackupAt = new Date();
     settings.lastBackupError = '';
