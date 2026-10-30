@@ -9,40 +9,50 @@ money, next customer. Their second job: find a product, count stock, fix a price
 ## Direction: shelf signage
 
 A supermarket already has a visual language that everyone in the shop reads without
-thinking: **aisle signs and shelf-edge price tickets**. Solid colour panels, heavy wide
-numerals for the price, plain narrow text for everything else. The app borrows that
+thinking: **aisle signs and shelf-edge price tickets**. Solid colour panels, big
+numerals for the price, plain text for everything else. The app borrows that
 language and nothing else.
 
 - **Mood:** calm, dense, high-contrast, utilitarian. Nothing moves unless the user did
   something. Nothing is there to decorate.
 - **One loud thing:** the bill total. It is set like a shelf price ticket: a solid teal
-  panel with very wide, very heavy figures that can be read from the customer's side of the
+  panel with large serif figures that can be read from the customer's side of the
   counter. Every other part of the screen stays quiet so the total wins.
 - **One functional highlight:** the line that was just scanned gets a yellow
   "sticker" background, like a promotion ticket, so the cashier sees at a glance
   what the scanner added.
-- **No icons, emoji, pictures, logos, gradients or shadows.** Hierarchy comes from type
-  width, weight, size, colour and rules (lines) only. Every button says what it does in words.
+- **No icons, emoji, pictures, logos, gradients or shadows.** Hierarchy comes from typeface,
+  weight, size, colour and rules (lines) only. Every button says what it does in words.
 
 ## Typography
 
-One family: **Archivo** (variable, bundled with the app because the shop laptop is
-offline). Its *width* axis is the main tool for hierarchy. The same letters run narrow
-in dense tables and wide and heavy on the total.
+Two families, both bundled with the app because the shop laptop is offline
+(`@fontsource-variable`, imported in `main.jsx`):
 
-| Role | Width | Weight | Size |
-|------|-------|--------|------|
-| Bill total (price ticket) | 125 (expanded) | 800 | 72px desktop, 56px tablet |
-| Page title | 112 | 750 | 30px |
-| Section heading | 100 | 700 | 21px |
-| Body, form labels, buttons | 100 | 400 / 600 | 17px |
-| Tables, navigation | 87 (semi-condensed) | 400 / 600 | 16px |
-| Small print (help text) | 100 | 400 | 14px |
+- **Cormorant Garamond** (display serif): the shop name, page titles, the bill total and
+  the big figures. Its high-contrast, beauty-counter feel suits a cosmetics and skincare
+  shop, and it is only used large, where it reads well.
+- **Plus Jakarta Sans** (text): everything else. Clear at 14-17px on a laptop screen,
+  with an open, friendly shape that sits well next to the serif.
+
+| Role | Family | Weight | Size |
+|------|--------|--------|------|
+| Bill total (price ticket) | Cormorant Garamond | 700 | up to 80px desktop, 56px tablet |
+| Page title | Cormorant Garamond | 600 | 40px |
+| Shop name (top bar) | Cormorant Garamond | 700 | 26px |
+| Big figures (Today, End of day) | Cormorant Garamond | 700 | 26-40px |
+| Section heading | Plus Jakarta Sans | 700 | 21px |
+| Body, form labels, buttons | Plus Jakarta Sans | 400 / 600 | 17px |
+| Tables, navigation | Plus Jakarta Sans | 400 / 600 | 16px |
+| Small print (help text) | Plus Jakarta Sans | 400 | 14px |
 
 - All figures use **tabular numerals**, so prices and quantities line up in columns.
+  Cormorant figures also use **lining numerals** (`lining-nums`) so amounts sit on the
+  line instead of dipping like old-style figures.
+- Both families have the Naira sign (₦).
 - Sentence case everywhere. No all-caps labels, no tracked-out eyebrows.
 - Body line length stays under about 75 characters.
-- Scale: 14 / 16 / 17 / 21 / 26 / 30 / 40 / 56 / 72 (roughly 1.25 steps, with a
+- Scale: 14 / 16 / 17 / 21 / 26 / 30 / 40 / 56 / 80 (roughly 1.25 steps, with a
   jump for the total).
 
 ## Colour
@@ -83,7 +93,7 @@ background around a control and stays visible even next to teal.
 
 ```
 +------------------------------------------------------------------------------+
-| Universe Cosmetics & Beauty   Sell  Sales history  End of day  Back office   |
+| Universe Cosmetics & Beauty Skincare     Sell  My sales  (or Back office)    |
 |                                                   Amaka (cashier)   Log out  |
 +---------------------------------------------------+--------------------------+
 | Scan or type a barcode [_____________________]    | Total                    |
@@ -92,10 +102,9 @@ background around a control and stays visible even next to teal.
 | Item                      Qty        Price  Amount|                          |
 | Royal Stallion Rice 5kg   - 2 +     12,500  25,000| [ Complete sale  F10 ]   |
 | Milo 500g  (just scanned) - 1 +      5,500   5,225| Find product       F2    |
-| ...                                               | Customer           F3    |
-|                                                   | Discount           F8    |
-|                                                   | Hold F6     Recall F7    |
-|                                                   | Return      Cancel F9    |
+| ...                                               | Discount F8   Hold F6    |
+|                                                   | Recall F7     Return     |
+|                                                   | Cancel bill        F9    |
 +---------------------------------------------------+--------------------------+
 ```
 
@@ -104,19 +113,33 @@ background around a control and stays visible even next to teal.
   another input.
 - Left: the bill, newest scan highlighted. Right: the price ticket and the actions, in
   the order a cashier uses them. The main action is the only filled teal button.
-- Keyboard first: F2 find, F3 customer, F6 hold, F7 recall, F8 discount, F9 cancel,
+- Keyboard first: F2 find, F6 hold, F7 recall, F8 discount, F9 cancel,
   F10 complete sale, F1 shortcut list. Every shortcut is printed on its button.
 - Tablet (under 900px wide): the price ticket and Complete sale sit at the top, the bill
   below, the other actions in a two-column grid.
 
 ### Back office
 
-A top bar (shop name, signed-in person, Log out) and a left list of pages grouped by
-job (Selling, Stock, People, Reports, Shop). The current page is a teal bar with
-white text, like an aisle sign. Each page has a title, one short line saying what
+A top bar (shop name, signed-in person, Log out) and a left list of pages:
+**Today** on its own at the top, then three groups, each under a small heading and
+separated by a line:
+
+- **Selling:** Sales history, End of day, Reports
+- **Stock:** Add stock, Products, Stock count, Categories
+- **Shop:** Staff, Settings, Backup and restore
+
+Within a group, the page used most comes first. Each person only sees the pages their
+role allows (a cashier sees Sales history and End of day). The current page is a teal bar
+with white text, like an aisle sign. Each page has a title, one short line saying what
 the page is for, and its main action on the right. Content is tables and forms.
 
 Below 900px the page list becomes a horizontal scrolling row under the top bar.
+
+### Printing
+
+The only thing the app prints is the customer's receipt (and the return slip, which is
+the customer's refund receipt). Receipts carry no staff or customer names. Reports and
+End of day are screen-only (reports can still be exported to Excel).
 
 ## Writing
 
@@ -143,7 +166,7 @@ Screens use only semantic and component tokens, never raw hex values.
 ## Rules that keep it working
 
 - **The total never wraps.** It is sized from the ticket's width and the number of
-  characters (container units, `--chars` in `PriceTicket.jsx`), up to 72px.
+  characters (container units, `--chars` in `PriceTicket.jsx`), up to 80px.
 - **Big figures shrink on tablets** (`clamp()` on `.figure dd`), so long Naira amounts fit.
 - **No browser-drawn symbols:** the clear "x" in search boxes, the spinner arrows in number
   boxes and the calendar symbol in date boxes are hidden. Date boxes open their calendar
@@ -153,7 +176,7 @@ Screens use only semantic and component tokens, never raw hex values.
 
 ## Deliberate exceptions to "no images, no icons"
 
-- **Barcode stripes** on printed labels and at the bottom of receipts. They are
+- **Barcode stripes** at the bottom of receipts. They are
   machine-readable data for the scanner (returns are found by scanning the receipt),
   not decoration.
 - **The Windows program icon** (taskbar, desktop shortcut, installer). It is part of

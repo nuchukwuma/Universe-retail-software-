@@ -3,8 +3,11 @@
 // Version 2 (the redesign) removed: product cost price, wholesale price,
 // expiry date and picture; category icons and pictures; suppliers; how a
 // sale was paid (cash/transfer/card, amount handed over, change); how a
-// refund was paid; the shop logo. The app ignores those old fields anyway,
-// so nothing breaks if they are still there - this just removes them.
+// refund was paid; the shop logo.
+// Version 3 removed: customers (the customer page and the customer name on
+// sales and returns) and customer feedback.
+// The app ignores those old fields anyway, so nothing breaks if they are
+// still there - this just removes them.
 //
 // Runs each time the server starts (and after a backup is restored), but
 // only does work once: the version reached is saved in the settings.
@@ -14,19 +17,19 @@ const mongoose = require('mongoose');
 const { getSettings } = require('./settings');
 const { createBackup } = require('./backup');
 
-const CURRENT_DATA_VERSION = 2;
+const CURRENT_DATA_VERSION = 3;
 
 // Which old fields to remove from which database table.
 // "items.$[].costPrice" means: from every line of the sale.
 const FIELDS_TO_REMOVE = [
   { collection: 'products', fields: ['costPrice', 'wholesalePrice', 'expiryDate', 'image'] },
   { collection: 'categories', fields: ['icon', 'image'] },
-  { collection: 'sales', fields: ['priceType', 'payments', 'paymentMethod', 'amountTendered', 'change', 'items.$[].costPrice'] },
-  { collection: 'returns', fields: ['refundMethod'] },
+  { collection: 'sales', fields: ['priceType', 'payments', 'paymentMethod', 'amountTendered', 'change', 'items.$[].costPrice', 'customer', 'customerName'] },
+  { collection: 'returns', fields: ['refundMethod', 'customerName'] },
   { collection: 'stockmovements', fields: ['supplier', 'costPrice'] },
   { collection: 'settings', fields: ['logo', 'showLogoOnReceipt'] },
 ];
-const TABLES_TO_DELETE = ['suppliers'];
+const TABLES_TO_DELETE = ['suppliers', 'customers', 'feedbacks'];
 
 // The database filter "has at least one of these old fields".
 function hasAnyOf(fields) {

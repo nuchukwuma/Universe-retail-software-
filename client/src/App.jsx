@@ -8,14 +8,11 @@ import StaffPage from './pages/StaffPage';
 import ProductsPage from './pages/ProductsPage';
 import ProductFormPage from './pages/ProductFormPage';
 import CategoriesPage from './pages/CategoriesPage';
-import ReceiveStockPage from './pages/ReceiveStockPage';
+import AddStockPage from './pages/AddStockPage';
 import StockCountPage from './pages/StockCountPage';
-import BarcodeLabelsPage from './pages/BarcodeLabelsPage';
-import CustomersPage from './pages/CustomersPage';
 import SalesHistoryPage from './pages/SalesHistoryPage';
 import EndOfDayPage from './pages/EndOfDayPage';
 import SettingsPage from './pages/SettingsPage';
-import FeedbackPage from './pages/FeedbackPage';
 import ReportsPage from './pages/ReportsPage';
 import BackupPage from './pages/BackupPage';
 
@@ -66,11 +63,9 @@ function App() {
         <Route path="/products/new" element={managersOnly(<ProductFormPage />)} />
         <Route path="/products/:id/edit" element={managersOnly(<ProductFormPage />)} />
         <Route path="/categories" element={managersOnly(<CategoriesPage />)} />
-        <Route path="/receive-stock" element={managersOnly(<ReceiveStockPage />)} />
+        <Route path="/add-stock" element={managersOnly(<AddStockPage />)} />
+        <Route path="/receive-stock" element={<Navigate to="/add-stock" replace />} />
         <Route path="/stock-count" element={managersOnly(<StockCountPage />)} />
-        <Route path="/barcode-labels" element={managersOnly(<BarcodeLabelsPage />)} />
-        <Route path="/customers" element={managersOnly(<CustomersPage />)} />
-        <Route path="/feedback" element={managersOnly(<FeedbackPage />)} />
 
         {/* Owner only */}
         <Route path="/staff" element={ownerOnly(<StaffPage />)} />

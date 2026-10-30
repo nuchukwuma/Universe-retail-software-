@@ -1,9 +1,9 @@
 import Modal from '../Modal';
 import { formatNaira } from '../../utils/formatNaira';
 
-// Last check before the sale is saved: the total, how many items and who
-// the customer is. Enter completes the sale; Esc goes back to the bill.
-function CompleteSaleModal({ bill, totals, saving, error, onConfirm, onClose }) {
+// Last check before the sale is saved: the total and how many items.
+// Enter completes the sale; Esc goes back to the bill.
+function CompleteSaleModal({ totals, saving, error, onConfirm, onClose }) {
   return (
     <Modal
       title="Complete this sale?"
@@ -27,8 +27,6 @@ function CompleteSaleModal({ bill, totals, saving, error, onConfirm, onClose }) 
             <dd>{formatNaira(totals.discountTotal)}</dd>
           </>
         )}
-        <dt>Customer</dt>
-        <dd>{bill.customerName || 'Walk-in customer'}</dd>
       </dl>
       {error && <div className="notice notice-error" role="alert">{error}</div>}
     </Modal>

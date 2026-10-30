@@ -4,7 +4,6 @@ import Modal from '../Modal';
 export const SHORTCUT_LIST = [
   ['F1', 'Show this list'],
   ['F2', 'Find a product by name'],
-  ['F3', 'Choose or add a customer'],
   ['F6', 'Hold the bill'],
   ['F7', 'Recall a held bill'],
   ['F8', 'Discount'],

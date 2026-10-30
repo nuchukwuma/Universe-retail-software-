@@ -76,7 +76,6 @@ router.post('/', async (req, res) => {
       returnNumber: await nextReturnNumber(),
       sale: sale._id,
       receiptNumber: sale.receiptNumber,
-      customerName: sale.customerName,
       items: returnItems,
       refundTotal,
       reason,

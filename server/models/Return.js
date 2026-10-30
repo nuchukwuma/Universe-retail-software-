@@ -19,7 +19,6 @@ const returnSchema = new mongoose.Schema(
     returnNumber: { type: String, required: true, unique: true },
     sale: { type: mongoose.Schema.Types.ObjectId, ref: 'Sale', required: true },
     receiptNumber: { type: String, required: true }, // the original receipt
-    customerName: { type: String, default: '' },
     items: [returnItemSchema],
     refundTotal: { type: Number, required: true },
     reason: { type: String, required: true, trim: true },

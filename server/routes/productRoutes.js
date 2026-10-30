@@ -3,8 +3,6 @@ const Product = require('../models/Product');
 const { requireLogin, requireRole } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
 const { logStockMovement } = require('../utils/stockHelpers');
-const { makeStoreBarcode } = require('../utils/barcodes');
-const { nextCounterValue } = require('../utils/counters');
 
 const router = express.Router();
 const canManage = requireRole('owner', 'manager');
@@ -49,31 +47,6 @@ router.get('/barcode/:code', async (req, res) => {
     res.json(product);
   } catch (error) {
     handleError(res, error, 'Could not look up barcode.');
-  }
-});
-
-// POST /api/products/generate-barcodes
-// Gives each listed product that has NO barcode a new in-store barcode,
-// so labels can be printed for it. Body: { productIds: [...] }
-router.post('/generate-barcodes', canManage, async (req, res) => {
-  try {
-    const productIds = Array.isArray(req.body.productIds) ? req.body.productIds : [];
-    const products = await Product.find({ _id: { $in: productIds }, barcode: { $exists: false } });
-
-    for (const product of products) {
-      // Keep taking the next number until we find a code nobody uses.
-      let code;
-      do {
-        code = makeStoreBarcode(await nextCounterValue('store-barcode'));
-      } while (await Product.exists({ barcode: code }));
-
-      product.barcode = code;
-      await product.save();
-    }
-
-    res.json({ message: `${products.length} barcode(s) created.`, updated: products.length });
-  } catch (error) {
-    handleError(res, error, 'Could not create barcodes.');
   }
 });
 

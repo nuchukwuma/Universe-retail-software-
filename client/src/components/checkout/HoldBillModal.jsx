@@ -1,11 +1,11 @@
 import { useId, useState } from 'react';
 import Modal from '../Modal';
 
-// Asks for a short name for the bill being put on hold, so it is easy
-// to find again (e.g. "Lady in red", "Mr Emeka").
-function HoldBillModal({ defaultLabel, saving, error, onHold, onClose }) {
+// Asks for a short note for the bill being put on hold, so it is easy
+// to find again (e.g. "Red basket"). Without a note, the time is used.
+function HoldBillModal({ saving, error, onHold, onClose }) {
   const formId = useId();
-  const [label, setLabel] = useState(defaultLabel);
+  const [label, setLabel] = useState('');
 
   // Runs when "Hold bill" is pressed.
   function handleSubmit(event) {
@@ -28,8 +28,8 @@ function HoldBillModal({ defaultLabel, saving, error, onHold, onClose }) {
     >
       <form id={formId} className="stack" onSubmit={handleSubmit}>
         <div className="field">
-          <label className="field-label" htmlFor={`${formId}-label`}>Name for this bill</label>
-          <input id={`${formId}-label`} value={label} onChange={(e) => setLabel(e.target.value)} autoFocus placeholder="e.g. Customer in blue shirt" />
+          <label className="field-label" htmlFor={`${formId}-label`}>Note for this bill (optional)</label>
+          <input id={`${formId}-label`} value={label} onChange={(e) => setLabel(e.target.value)} autoFocus placeholder="e.g. Red basket" />
           <span className="field-help">The till empties for the next customer. Use Recall bill (F7) to bring it back.</span>
         </div>
         {error && <div className="notice notice-error" role="alert">{error}</div>}

@@ -8,8 +8,6 @@ function SaleReceipt({ sale, settings, paper, duplicate = false }) {
     <ReceiptFrame settings={settings} paper={paper} duplicate={duplicate} footer={settings.footerMessage}>
       <Row left="Receipt No:" right={sale.receiptNumber} />
       <Row left="Date:" right={formatDateTime(sale.createdAt)} />
-      <Row left="Cashier:" right={sale.cashierName} />
-      {sale.customerName && <Row left="Customer:" right={sale.customerName} />}
       <Divider />
 
       {sale.items.map((item, index) => (

@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
-const Customer = require('../models/Customer');
 const { requireLogin } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
 const { nextReceiptNumber } = require('../utils/counters');
@@ -36,14 +35,14 @@ async function reduceStockForSale(sale, user) {
 
 // GET /api/sales?search=&from=YYYY-MM-DD&to=YYYY-MM-DD
 // Lists sales (newest first) for the Sales History page.
-// "search" matches a receipt number or a customer's name.
+// "search" matches (part of) a receipt number.
 router.get('/', async (req, res) => {
   try {
     const filter = {};
     const search = String(req.query.search || '').trim();
     if (search) {
       const pattern = new RegExp(escapeRegex(search), 'i');
-      filter.$or = [{ receiptNumber: pattern }, { customerName: pattern }];
+      filter.receiptNumber = pattern;
     }
 
     const dateFilter = createdAtFilter(req.query.from, req.query.to);
@@ -73,10 +72,10 @@ router.get('/by-receipt/:receiptNumber', async (req, res) => {
 // POST /api/sales
 // Completes a sale. Body:
 // { items: [{ productId, quantity, discountType?, discountValue? }],
-//   billDiscount?: { type, value }, customerId?, customerName?, approvalToken? }
+//   billDiscount?: { type, value }, approvalToken? }
 router.post('/', async (req, res) => {
   try {
-    const { items, billDiscount, customerId, customerName } = req.body;
+    const { items, billDiscount } = req.body;
 
     // 1. Look up every product on the bill (badly formed ids are skipped,
     //    so they show up as "no longer exists" instead of a database error).
@@ -105,27 +104,22 @@ router.post('/', async (req, res) => {
       discountApprovedBy = approver ? approver.name : '';
     }
 
-    // 4. Link the customer, if one was picked.
-    const customer = mongoose.isValidObjectId(customerId) ? await Customer.findById(customerId) : null;
-
-    // 5. Save the sale with the next receipt number.
+    // 4. Save the sale with the next receipt number.
     const sale = await Sale.create({
       receiptNumber: await nextReceiptNumber(),
       items: saleItems,
-      customer: customer ? customer._id : null,
-      customerName: customer ? customer.name : String(customerName || '').trim(),
       ...totals,
       discountApprovedBy,
       cashier: req.user._id,
       cashierName: req.user.name,
     });
 
-    // 6. Take the items off the stock.
+    // 5. Take the items off the stock.
     await reduceStockForSale(sale, req.user);
 
     res.status(201).json(sale);
 
-    // 7. Send the Telegram alert AFTER replying, so the till never waits for
+    // 6. Send the Telegram alert AFTER replying, so the till never waits for
     //    Telegram. If it fails, it is saved and retried later.
     queueSaleAlert(sale).catch((error) => {
       console.error(`Could not queue Telegram alert for ${sale.receiptNumber}:`, error.message);

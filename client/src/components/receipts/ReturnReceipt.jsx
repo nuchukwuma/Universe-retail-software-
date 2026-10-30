@@ -14,11 +14,6 @@ function ReturnReceipt({ ret, settings, paper, duplicate = false }) {
       <Row left="Return No:" right={ret.returnNumber} />
       <Row left="Original receipt:" right={ret.receiptNumber} />
       <Row left="Date:" right={formatDateTime(ret.createdAt)} />
-      <Row left="Processed by:" right={ret.processedByName} />
-      {ret.approvedByName && ret.approvedByName !== ret.processedByName && (
-        <Row left="Approved by:" right={ret.approvedByName} />
-      )}
-      {ret.customerName && <Row left="Customer:" right={ret.customerName} />}
       <Divider />
 
       <div className="receipt-small">ITEMS RETURNED</div>

@@ -6,9 +6,6 @@ function TillActions({ hasItems, actions }) {
       <button type="button" className="btn span-all" onClick={actions.onFind}>
         Find product <span className="key">F2</span>
       </button>
-      <button type="button" className="btn" onClick={actions.onCustomer}>
-        Customer <span className="key">F3</span>
-      </button>
       <button type="button" className="btn" onClick={actions.onDiscount} disabled={!hasItems}>
         Discount <span className="key">F8</span>
       </button>
@@ -20,9 +17,6 @@ function TillActions({ hasItems, actions }) {
       </button>
       <button type="button" className="btn" onClick={actions.onReturn}>
         Return
-      </button>
-      <button type="button" className="btn" onClick={actions.onFeedback}>
-        Feedback
       </button>
       <button type="button" className="btn btn-danger span-all" onClick={actions.onCancel} disabled={!hasItems}>
         Cancel bill <span className="key">F9</span>

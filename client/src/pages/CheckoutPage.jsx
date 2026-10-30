@@ -28,7 +28,7 @@ function CheckoutPage() {
   const { settings } = useSettings();
   const navigate = useNavigate();
   const billState = useBill();
-  const { bill, totals, addProduct, clearBill, setCustomer, setCustomerName, loadBill, setItemDiscount, setBillDiscount, setApproval, updatePrices } = billState;
+  const { bill, totals, addProduct, clearBill, loadBill, setItemDiscount, setBillDiscount, setApproval, updatePrices } = billState;
   const { toast, showToast } = useToast();
   const { printSale } = useReceiptPrinting();
   const scanRef = useRef(null);
@@ -164,8 +164,6 @@ function CheckoutPage() {
           discountValue: item.discountValue,
         })),
         billDiscount: bill.discount,
-        customerId: bill.customer?._id || null,
-        customerName: bill.customerName,
         approvalToken,
       });
 
@@ -273,25 +271,7 @@ function CheckoutPage() {
     loadProducts();
   }
 
-  // ----- Customer, feedback, returns -----
-
-  // Links a saved customer to the bill.
-  function pickCustomer(customer) {
-    setCustomer(customer);
-    closeModal();
-  }
-
-  // Writes a walk-in customer's name on the bill ('' = no name).
-  function setWalkIn(name) {
-    setCustomerName(name);
-    closeModal();
-  }
-
-  // After feedback is saved.
-  function feedbackSaved() {
-    closeModal();
-    showToast('Feedback saved', 'success');
-  }
+  // ----- Returns -----
 
   // After a return: show the return receipt and refresh stock.
   function returnDone(result) {
@@ -304,7 +284,6 @@ function CheckoutPage() {
     {
       F1: () => setModal('shortcuts'),
       F2: () => setModal({ type: 'find' }),
-      F3: () => setModal('customer'),
       F6: () => openForBill('hold'),
       F7: openRecall,
       F8: () => openForBill('discount'),
@@ -321,7 +300,7 @@ function CheckoutPage() {
   const checkout = {
     bill, totals, settings, isCashier, lastAddedId, saving, saleError, holdError, products, categories,
     closeModal, addToBill, completeSale, approveAndRetrySale, printLater, applyDiscount, holdBill, recallBill,
-    pickCustomer, setWalkIn, feedbackSaved, returnDone,
+    returnDone,
   };
 
   return (
@@ -361,21 +340,6 @@ function CheckoutPage() {
             </div>
           )}
 
-          <div className="bill-meta">
-            <p className="bill-customer">
-              Customer:<strong>{bill.customerName || 'Walk-in'}</strong>
-              {bill.customer?.phone && <span className="muted"> ({bill.customer.phone})</span>}
-            </p>
-            <div className="btn-row">
-              {bill.customerName && (
-                <button type="button" className="btn btn-quiet" onClick={() => setCustomer(null)}>Remove customer</button>
-              )}
-              <button type="button" className="btn btn-quiet" onClick={() => setModal('customer')}>
-                Change customer <span className="key">F3</span>
-              </button>
-            </div>
-          </div>
-
           <div className="bill-lines">
             <BillTable billState={billState} productsById={productsById} lastAddedId={lastAddedId} />
           </div>
@@ -398,12 +362,10 @@ function CheckoutPage() {
               hasItems={bill.items.length > 0}
               actions={{
                 onFind: () => setModal({ type: 'find' }),
-                onCustomer: () => setModal('customer'),
                 onDiscount: () => openForBill('discount'),
                 onHold: () => openForBill('hold'),
                 onRecall: openRecall,
                 onReturn: () => setModal('return'),
-                onFeedback: () => setModal('feedback'),
                 onCancel: cancelBill,
               }}
             />

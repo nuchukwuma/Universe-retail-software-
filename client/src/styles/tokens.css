@@ -31,7 +31,10 @@
   --red-50: #fce7e5;
 
   /* Type */
-  --font-family: 'Archivo Variable', 'Archivo', 'Arial Narrow', Arial, sans-serif;
+  /* Two families: an elegant serif for display (shop name, titles, big
+     figures, the bill total) and a clear sans-serif for everything else. */
+  --font-display: 'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-text: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
   --font-size-1: 14px;
   --font-size-2: 16px;
   --font-size-3: 17px;
@@ -40,11 +43,7 @@
   --font-size-6: 30px;
   --font-size-7: 40px;
   --font-size-8: 56px;
-  --font-size-9: 72px;
-  --width-narrow: 87%;
-  --width-normal: 100%;
-  --width-wide: 112%;
-  --width-widest: 125%;
+  --font-size-9: 80px;
 
   /* Space (4px base) */
   --space-1: 2px;
@@ -99,7 +98,7 @@
   --text-table: var(--font-size-2);
   --text-body: var(--font-size-3);
   --text-heading: var(--font-size-4);
-  --text-title: var(--font-size-6);
+  --text-title: var(--font-size-7);
   --text-figure: var(--font-size-7);
   --leading-body: 1.4;
   --leading-tight: 1.1;
