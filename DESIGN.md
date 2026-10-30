@@ -162,6 +162,22 @@ layers:
    `--ticket-font-size`).
 
 Screens use only semantic and component tokens, never raw hex values.
+Control sizes (small and normal controls, the bill row, Complete sale, tick boxes, the
+widest dialog and page) are component tokens too. The only plain pixel values left in
+the styles are screen-width breakpoints (CSS cannot use variables there) and the receipt's
+text sizes, which are fixed for the thermal printer.
+
+### Button states
+
+| Button | Normal | Hover | Pressed | Disabled |
+|--------|--------|-------|---------|----------|
+| Plain | white, dark border | light grey | grey (`--color-surface-pressed`) | grey, muted text |
+| Main (teal) | teal | darker teal | darkest teal (`--color-action-pressed`) | grey, muted text |
+| Danger | red text and border | pale red | pale red, darkest red text | grey, muted text |
+| Quiet (underlined, in tables) | teal or red text | pale teal or pale red | darker text | muted text |
+| Complete sale | white on the teal ticket | yellow | pale yellow | outlined, faint |
+
+Every button also shows the focus outline when reached with the keyboard.
 
 ## Rules that keep it working
 

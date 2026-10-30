@@ -28,6 +28,10 @@
   color: var(--color-text);
 }
 
+.btn:active:not(:disabled) {
+  background: var(--color-surface-pressed);
+}
+
 .btn:disabled {
   border-color: var(--color-rule);
   background: var(--color-surface-sunken);
@@ -48,6 +52,11 @@
   color: var(--color-text-on-action);
 }
 
+.btn-primary:active:not(:disabled) {
+  border-color: var(--color-action-pressed);
+  background: var(--color-action-pressed);
+}
+
 .btn-danger {
   border-color: var(--color-danger-text);
   color: var(--color-danger-text);
@@ -56,6 +65,11 @@
 .btn-danger:hover {
   background: var(--color-danger-surface);
   color: var(--color-danger-hover);
+}
+
+.btn-danger:active:not(:disabled) {
+  background: var(--color-danger-surface);
+  color: var(--color-danger-pressed);
 }
 
 .btn-danger-solid {
@@ -69,9 +83,14 @@
   color: var(--color-text-on-action);
 }
 
+.btn-danger-solid:active:not(:disabled) {
+  border-color: var(--color-danger-pressed);
+  background: var(--color-danger-pressed);
+}
+
 /* A plain text button (secondary actions inside tables and lists). */
 .btn-quiet {
-  min-height: 36px;
+  min-height: var(--control-height-small);
   padding: 0 var(--space-3);
   border-color: transparent;
   background: transparent;
@@ -85,12 +104,27 @@
   color: var(--color-action-hover);
 }
 
+.btn-quiet:active:not(:disabled) {
+  background: var(--color-action-tint);
+  color: var(--color-action-pressed);
+}
+
 .btn-quiet.btn-danger {
   color: var(--color-danger-text);
 }
 
+.btn-quiet.btn-danger:hover {
+  background: var(--color-danger-surface);
+  color: var(--color-danger-hover);
+}
+
+.btn-quiet.btn-danger:active:not(:disabled) {
+  background: var(--color-danger-surface);
+  color: var(--color-danger-pressed);
+}
+
 .btn-small {
-  min-height: 36px;
+  min-height: var(--control-height-small);
   padding: 0 var(--space-4);
   font-size: var(--text-table);
 }
@@ -153,15 +187,15 @@ select:disabled {
 
 input[type='checkbox'],
 input[type='radio'] {
-  width: 22px;
-  height: 22px;
+  width: var(--check-size);
+  height: var(--check-size);
   margin: 0;
   accent-color: var(--color-action);
   flex: none;
 }
 
 textarea {
-  min-height: 88px;
+  min-height: var(--textarea-min-height);
   resize: vertical;
 }
 
@@ -193,7 +227,7 @@ input[type='date'] {
 
 /* A short number box, e.g. a quantity inside a table. */
 .input-number {
-  width: 96px;
+  width: var(--number-input-width);
   text-align: right;
 }
 
@@ -265,14 +299,14 @@ input[type='date'] {
 }
 
 .qty .btn {
-  width: 44px;
+  width: var(--control-height);
   padding: 0;
   font-size: var(--text-heading);
   line-height: 1;
 }
 
 .qty input {
-  width: 64px;
+  width: var(--qty-input-width);
   text-align: center;
   font-weight: 700;
 }
@@ -507,7 +541,7 @@ a.figure-link:hover dd {
 }
 
 .choice {
-  min-height: 36px;
+  min-height: var(--control-height-small);
   padding: 0 var(--space-4);
   border: var(--line-thin) solid var(--color-control-border);
   border-radius: var(--corner-control);
@@ -549,7 +583,7 @@ a.figure-link:hover dd {
 }
 
 .dialog-wide {
-  max-width: 880px;
+  max-width: var(--dialog-width-wide);
 }
 
 .dialog-head {

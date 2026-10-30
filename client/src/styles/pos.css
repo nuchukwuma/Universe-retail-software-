@@ -68,7 +68,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-2) var(--space-5);
-  min-height: 24px;
+  min-height: var(--space-6);
   margin-top: var(--space-3);
 }
 
@@ -115,7 +115,7 @@
 }
 
 .bill-table td {
-  height: 56px;
+  height: var(--bill-row-height);
 }
 
 .bill-item-name {
@@ -220,7 +220,7 @@
 
 /* The big button on the ticket: white on teal, like a tear-off tab. */
 .ticket .btn-complete {
-  min-height: 64px;
+  min-height: var(--button-height-complete);
   margin-top: var(--space-3);
   border: var(--line-strong) solid var(--color-on-ticket);
   background: var(--color-on-ticket);
@@ -232,6 +232,10 @@
 .ticket .btn-complete:hover {
   background: var(--color-highlight);
   color: var(--color-text);
+}
+
+.ticket .btn-complete:active:not(:disabled) {
+  background: var(--color-highlight-soft);
 }
 
 .ticket .btn-complete:disabled {

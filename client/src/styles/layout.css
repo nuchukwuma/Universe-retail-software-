@@ -126,7 +126,7 @@
 .office-nav-link {
   display: flex;
   align-items: center;
-  min-height: 44px;
+  min-height: var(--control-height);
   margin: 0 var(--space-3);
   padding: 0 var(--space-4);
   border-radius: var(--corner-control);
@@ -195,7 +195,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-  max-width: 1280px;
+  max-width: var(--page-max-width);
 }
 
 .page-head {
@@ -275,7 +275,7 @@
 
 .toolbar .field {
   flex: 1 1 200px;
-  max-width: 360px;
+  max-width: var(--field-max-width);
 }
 
 .toolbar .check {

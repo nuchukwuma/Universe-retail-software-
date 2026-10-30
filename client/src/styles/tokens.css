@@ -20,6 +20,7 @@
   --teal-50: #e1f0ee;
   --teal-700: #00665e;
   --teal-800: #00524b;
+  --teal-900: #003d38;
   --yellow-300: #ffe14a;
   --yellow-100: #fff6c2;
   --green-700: #17733a;
@@ -28,6 +29,7 @@
   --amber-50: #fff0c7;
   --red-700: #b3261e;
   --red-800: #8f1d17;
+  --red-900: #6e1611;
   --red-50: #fce7e5;
 
   /* Type */
@@ -76,6 +78,8 @@
 
   --color-action: var(--teal-700);
   --color-action-hover: var(--teal-800);
+  --color-action-pressed: var(--teal-900);
+  --color-surface-pressed: var(--grey-200);
   --color-action-tint: var(--teal-50);
   --color-highlight: var(--yellow-300); /* the just-scanned line */
   --color-highlight-soft: var(--yellow-100);
@@ -92,6 +96,7 @@
   --color-warning-surface: var(--amber-50);
   --color-danger-text: var(--red-700);
   --color-danger-hover: var(--red-800);
+  --color-danger-pressed: var(--red-900);
   --color-danger-surface: var(--red-50);
 
   --text-small: var(--font-size-1);
@@ -111,13 +116,23 @@
   /* ---------- 3. Component ---------- */
 
   --control-height: 44px; /* inputs, normal buttons: finger-sized */
+  --control-height-small: 36px; /* quiet buttons in tables, choice buttons */
   --button-height-large: 56px; /* till actions */
+  --button-height-complete: 64px; /* Complete sale on the price ticket */
+  --check-size: 22px; /* tick boxes and round choices */
+  --textarea-min-height: 88px;
+  --number-input-width: 96px;
+  --qty-input-width: 64px;
+  --field-max-width: 360px; /* one box in a filter toolbar */
   --button-padding-x: var(--space-5);
   --table-row-height: 44px;
+  --bill-row-height: 56px; /* a line on the till bill */
   --table-cell-padding-x: var(--space-4);
   --nav-width: 220px;
   --topbar-height: 56px;
   --dialog-width: 560px;
+  --dialog-width-wide: 880px;
+  --page-max-width: 1280px;
   --ticket-font-size: var(--font-size-9); /* the bill total */
   --ticket-width: 360px;
   --scan-font-size: var(--font-size-4);
