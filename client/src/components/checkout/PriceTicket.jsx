@@ -1,6 +1,6 @@
 import { formatNaira } from '../../utils/formatNaira';
 
-// The bill total, set like a shelf price ticket so it can be read from
+// The bill total in aqua on the Night counter, so it can be read from
 // across the counter, with the Complete sale button underneath.
 function PriceTicket({ totals, onComplete }) {
   const empty = totals.lineCount === 0;

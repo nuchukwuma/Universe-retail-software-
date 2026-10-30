@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Design tokens - see DESIGN.md
+   Design tokens - see DESIGN.md ("the night counter")
    Three layers:
      1. Primitive  - raw values. Only used in this file.
      2. Semantic   - what a value means. Screens use these.
@@ -9,41 +9,45 @@
 :root {
   /* ---------- 1. Primitive ---------- */
 
-  /* Colours */
+  /* Colours. Night and aqua are the logo's own colours. */
+  --night: #000000;
+  --night-800: #141c1c; /* hover on the counter */
+  --night-700: #2a3434; /* outlines on the counter */
   --white: #ffffff;
-  --grey-100: #f2f5f4;
-  --grey-200: #e3e8e7; /* floor */
-  --grey-300: #c9d2d1;
-  --grey-400: #9aa8a6;
-  --grey-600: #4a5a59;
-  --ink-900: #142322;
-  --teal-50: #e1f0ee;
-  --teal-700: #00665e;
-  --teal-800: #00524b;
-  --teal-900: #003d38;
-  --yellow-300: #ffe14a;
-  --yellow-100: #fff6c2;
+  --mist-100: #f5f8f8;
+  --mist-200: #eef3f3; /* floor */
+  --mist-300: #dde6e6;
+  --mist-400: #c5d1d1;
+  --grey-500: #9ba7a7; /* muted text on Night */
+  --grey-600: #6b7778; /* faint text on Night */
+  --graphite: #4f5b5c;
+  --aqua-100: #e3fafa;
+  --aqua-200: #bff4f4; /* glow */
+  --aqua-400: #30e0e0; /* Universe aqua */
+  --aqua-500: #1fc4c4;
+  --aqua-700: #00676d; /* deep aqua: aqua that works on white */
+  --aqua-800: #004f54;
+  --aqua-900: #003a3e;
   --green-700: #17733a;
   --green-50: #e2f3e7;
   --amber-800: #7a4b00;
   --amber-50: #fff0c7;
+  --red-300: #ff8a80; /* red that works on Night */
   --red-700: #b3261e;
   --red-800: #8f1d17;
   --red-900: #6e1611;
   --red-50: #fce7e5;
 
-  /* Type */
-  /* Two families: an elegant serif for display (shop name, titles, big
-     figures, the bill total) and a clear sans-serif for everything else. */
-  --font-display: 'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  /* Type: the logo's slab-serif (Bitter) for display, a clear sans for text. */
+  --font-display: 'Bitter Variable', 'Bitter', Rockwell, Georgia, serif;
   --font-text: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
   --font-size-1: 14px;
   --font-size-2: 16px;
   --font-size-3: 17px;
   --font-size-4: 21px;
-  --font-size-5: 26px;
-  --font-size-6: 30px;
-  --font-size-7: 40px;
+  --font-size-5: 22px;
+  --font-size-6: 26px;
+  --font-size-7: 36px;
   --font-size-8: 56px;
   --font-size-9: 80px;
 
@@ -62,33 +66,50 @@
   --line-thin: 1px;
   --line-strong: 2px;
   --line-focus: 3px;
-  --corner-control: 4px;
+  --radius-8: 8px;
+  --radius-10: 10px;
+  --radius-12: 12px;
+  --radius-round: 999px;
 
   /* ---------- 2. Semantic ---------- */
 
-  --color-floor: var(--grey-200);
+  --color-floor: var(--mist-200);
   --color-surface: var(--white);
-  --color-surface-sunken: var(--grey-100);
-  --color-text: var(--ink-900);
-  --color-text-muted: var(--grey-600);
+  --color-surface-sunken: var(--mist-100);
+  --color-surface-hover: var(--mist-200);
+  --color-surface-pressed: var(--mist-300);
+  --color-text: var(--night);
+  --color-text-muted: var(--graphite);
   --color-text-on-action: var(--white);
-  --color-rule: var(--grey-300);
-  --color-rule-strong: var(--ink-900);
-  --color-control-border: var(--grey-400);
+  --color-rule: var(--mist-300);
+  --color-rule-strong: var(--night);
+  --color-control-border: var(--mist-400);
 
-  --color-action: var(--teal-700);
-  --color-action-hover: var(--teal-800);
-  --color-action-pressed: var(--teal-900);
-  --color-surface-pressed: var(--grey-200);
-  --color-action-tint: var(--teal-50);
-  --color-highlight: var(--yellow-300); /* the just-scanned line */
-  --color-highlight-soft: var(--yellow-100);
-  --color-focus: var(--ink-900);
-  --color-backdrop: rgba(20, 35, 34, 0.55); /* behind dialogs */
+  /* The main action on a light page: Night, turning deep aqua. */
+  --color-action: var(--night);
+  --color-action-hover: var(--aqua-700);
+  --color-action-pressed: var(--aqua-900);
+  /* Links, the current tab, selected choices. */
+  --color-accent: var(--aqua-700);
+  --color-accent-hover: var(--aqua-800);
+  --color-accent-pressed: var(--aqua-900);
+  --color-accent-tint: var(--aqua-100);
+  --color-highlight: var(--aqua-200); /* the just-scanned line, selected rows */
+  --color-highlight-soft: var(--aqua-100);
+  --color-focus: var(--night);
+  --color-backdrop: rgba(0, 0, 0, 0.6); /* behind dialogs */
 
-  --color-ticket: var(--teal-700); /* the bill total panel */
-  --color-on-ticket: var(--white);
-  --color-on-ticket-faint: rgba(255, 255, 255, 0.45);
+  /* Night surfaces: the top bar, the till counter, sign in, the current page. */
+  --color-night: var(--night);
+  --color-night-hover: var(--night-800);
+  --color-night-line: var(--night-700);
+  --color-on-night: var(--white);
+  --color-on-night-muted: var(--grey-500);
+  --color-on-night-faint: var(--grey-600);
+  --color-brand: var(--aqua-400); /* only ever on Night */
+  --color-brand-hover: var(--white);
+  --color-brand-pressed: var(--aqua-500);
+  --color-danger-on-night: var(--red-300);
 
   --color-success-text: var(--green-700);
   --color-success-surface: var(--green-50);
@@ -103,9 +124,10 @@
   --text-table: var(--font-size-2);
   --text-body: var(--font-size-3);
   --text-heading: var(--font-size-4);
+  --text-brand: var(--font-size-5);
   --text-title: var(--font-size-7);
   --text-figure: var(--font-size-7);
-  --leading-body: 1.4;
+  --leading-body: 1.45;
   --leading-tight: 1.1;
 
   --gap-inline: var(--space-3); /* between buttons in a row */
@@ -115,10 +137,15 @@
 
   /* ---------- 3. Component ---------- */
 
+  --corner-control: var(--radius-8); /* buttons, inputs */
+  --corner-panel: var(--radius-10); /* white panels on the floor */
+  --corner-dialog: var(--radius-12);
+  --corner-chip: var(--radius-round); /* on/off choice buttons */
+
   --control-height: 44px; /* inputs, normal buttons: finger-sized */
   --control-height-small: 36px; /* quiet buttons in tables, choice buttons */
   --button-height-large: 56px; /* till actions */
-  --button-height-complete: 64px; /* Complete sale on the price ticket */
+  --button-height-complete: 64px; /* Complete sale on the counter */
   --check-size: 22px; /* tick boxes and round choices */
   --textarea-min-height: 88px;
   --number-input-width: 96px;
@@ -128,17 +155,19 @@
   --table-row-height: 44px;
   --bill-row-height: 56px; /* a line on the till bill */
   --table-cell-padding-x: var(--space-4);
-  --nav-width: 220px;
-  --topbar-height: 56px;
+  --nav-width: 228px;
+  --topbar-height: 60px;
   --dialog-width: 560px;
   --dialog-width-wide: 880px;
   --page-max-width: 1280px;
   --ticket-font-size: var(--font-size-9); /* the bill total */
-  --ticket-width: 360px;
+  --ticket-width: 360px; /* the till counter column */
   --scan-font-size: var(--font-size-4);
+  --notice-bar: 6px; /* the coloured edge of a notice or toast */
+  --current-bar: 4px; /* the line under the current tab */
 }
 
-/* Tablet: slightly smaller total, narrower side column */
+/* Tablet: slightly smaller total, narrower counter */
 @media (max-width: 1100px) {
   :root {
     --ticket-font-size: var(--font-size-8);

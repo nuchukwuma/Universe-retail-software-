@@ -12,13 +12,13 @@ const TEST_SALE = {
   receiptNumber: 'TEST-0001',
   createdAt: new Date().toISOString(),
   items: [
-    { name: 'Royal Stallion Rice 5kg', quantity: 1, unitPrice: 12500, discount: 0, lineTotal: 12500 },
-    { name: 'Peak Milk Powder 400g', quantity: 2, unitPrice: 4200, discount: 420, discountType: 'percent', discountValue: 5, lineTotal: 7980 },
+    { name: 'Nivea Soft Cream 200ml', quantity: 1, unitPrice: 4500, discount: 0, lineTotal: 4500 },
+    { name: 'Nivea Body Lotion 400ml', quantity: 2, unitPrice: 6500, discount: 650, discountType: 'percent', discountValue: 5, lineTotal: 12350 },
   ],
-  subtotal: 20900,
+  subtotal: 17500,
   billDiscount: 0,
-  discountTotal: 420,
-  total: 20480,
+  discountTotal: 650,
+  total: 16850,
 };
 
 // Owner only: shop details, receipts, printing, discounts and Telegram.
@@ -123,7 +123,7 @@ function SettingsPage() {
         <section className="panel stack" aria-label="Receipt preview">
           <h2>Receipt preview</h2>
           <p className="muted small">Changes show here as you type.</p>
-          <div className="receipt-preview">
+          <div className="receipt-preview receipt-preview-full">
             <div className="receipt-preview-paper">
               <SaleReceipt sale={TEST_SALE} settings={form} />
             </div>

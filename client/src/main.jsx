@@ -5,7 +5,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { PrintProvider } from './context/PrintContext';
-import '@fontsource-variable/cormorant-garamond/wght.css'; // fonts are bundled: the shop laptop is offline
+import '@fontsource-variable/bitter/wght.css'; // fonts are bundled: the shop laptop is offline
 import '@fontsource-variable/plus-jakarta-sans/wght.css';
 import './styles/tokens.css';
 import './styles/base.css';

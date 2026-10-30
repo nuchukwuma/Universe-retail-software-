@@ -2,7 +2,7 @@
    Layout: top bar, back-office frame, page header, panels.
    ========================================================================== */
 
-/* ---------- Top bar (every screen) ---------- */
+/* ---------- Top bar (every screen): the shop's sign, Night with aqua ---------- */
 
 .topbar {
   display: flex;
@@ -10,14 +10,19 @@
   gap: var(--space-6);
   min-height: var(--topbar-height);
   padding: 0 var(--space-5);
-  border-bottom: var(--line-strong) solid var(--color-rule-strong);
-  background: var(--color-surface);
+  background: var(--color-night);
+  color: var(--color-on-night);
+}
+
+.topbar :focus-visible {
+  outline-color: var(--color-brand);
 }
 
 .topbar-store {
-  font-size: var(--font-size-5);
+  color: var(--color-brand);
+  font-size: var(--text-brand);
   font-family: var(--font-display);
-  font-variant-numeric: lining-nums tabular-nums;
+  font-variant-numeric: lining-nums;
   font-weight: 700;
   line-height: 1.1;
   white-space: nowrap;
@@ -35,21 +40,21 @@
   display: flex;
   align-items: center;
   padding: 0 var(--space-4);
-  border-bottom: 5px solid transparent;
-  color: var(--color-text);
+  border-bottom: var(--current-bar) solid transparent;
+  color: var(--color-on-night-muted);
   font-weight: 650;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .topbar-link:hover {
-  background: var(--color-surface-sunken);
-  color: var(--color-text);
+  background: var(--color-night-hover);
+  color: var(--color-on-night);
 }
 
 .topbar-link.active {
-  border-bottom-color: var(--color-action);
-  color: var(--color-action);
+  border-bottom-color: var(--color-brand);
+  color: var(--color-on-night);
 }
 
 .topbar-user {
@@ -70,8 +75,25 @@
 }
 
 .topbar-person span {
-  color: var(--color-text-muted);
+  color: var(--color-on-night-muted);
   font-size: var(--text-small);
+}
+
+/* Log out: an outlined button on Night. */
+.topbar .btn {
+  border-color: var(--color-night-line);
+  background: transparent;
+  color: var(--color-on-night);
+}
+
+.topbar .btn:hover {
+  border-color: var(--color-brand);
+  background: var(--color-night-hover);
+  color: var(--color-on-night);
+}
+
+.topbar .btn:active {
+  background: var(--color-night);
 }
 
 @media (max-width: 900px) {
@@ -116,11 +138,10 @@
 }
 
 .office-nav-heading {
-  padding: 0 var(--space-5) var(--space-3);
-  color: var(--color-text);
+  padding: 0 var(--space-5) var(--space-2);
+  color: var(--color-text-muted);
   font-size: var(--text-small);
-  font-weight: 750;
-  letter-spacing: 0.01em;
+  font-weight: 700;
 }
 
 .office-nav-link {
@@ -130,20 +151,24 @@
   margin: 0 var(--space-3);
   padding: 0 var(--space-4);
   border-radius: var(--corner-control);
-  color: var(--color-text-muted);
+  color: var(--color-text);
   font-weight: 600;
   text-decoration: none;
 }
 
 .office-nav-link:hover {
-  background: var(--color-surface-sunken);
+  background: var(--color-surface-hover);
   color: var(--color-text);
 }
 
-/* The current page: a solid teal bar with white text. */
+/* The current page: the brand pair, aqua on Night, meaning "you are here". */
 .office-nav-link.active {
-  background: var(--color-action);
-  color: var(--color-text-on-action);
+  background: var(--color-night);
+  color: var(--color-brand);
+}
+
+.office-nav-link.active:focus-visible {
+  outline-color: var(--color-night);
 }
 
 .office-main {
@@ -212,10 +237,11 @@
   color: var(--color-text-muted);
 }
 
-/* ---------- Panels: flat white working areas on the floor ---------- */
+/* ---------- Panels: white working areas on the Mist floor ---------- */
 
 .panel {
   padding: var(--panel-padding);
+  border-radius: var(--corner-panel);
   background: var(--color-surface);
 }
 
@@ -315,27 +341,28 @@
   grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
 }
 
+/* The shop's sign: the name in aqua slab on Night, like the logo. */
 .entry-sign {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   padding: var(--space-8);
-  background: var(--color-action);
-  color: var(--color-text-on-action);
+  background: var(--color-night);
+  color: var(--color-on-night);
 }
 
 .entry-sign h1 {
-  max-width: 12ch;
-  font-size: var(--font-size-8);
-  font-family: var(--font-display);
-  font-variant-numeric: lining-nums tabular-nums;
+  max-width: 11ch;
+  color: var(--color-brand);
+  font-size: clamp(var(--font-size-8), 6vw, var(--font-size-9));
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.02;
 }
 
 .entry-sign p {
   margin-top: var(--space-5);
   max-width: 40ch;
+  color: var(--color-on-night-muted);
   font-size: var(--text-heading);
 }
 

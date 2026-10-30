@@ -1,6 +1,8 @@
 /* ==========================================================================
    The till (sales screen). See DESIGN.md "Sales screen".
-   Left: scan box and bill. Right: the price ticket and the actions.
+   Left: the white bill on the Mist floor. Right: the Night counter with the
+   total, Complete sale and the other actions. The Night top bar and the
+   counter make one black frame, like the counter under the shop's sign.
    ========================================================================== */
 
 .till {
@@ -13,31 +15,38 @@
   display: grid;
   flex: 1;
   grid-template-columns: minmax(0, 1fr) var(--ticket-width);
-  gap: var(--gutter);
   min-height: 0;
-  padding: var(--gutter);
 }
 
 .till-bill {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  margin: var(--gutter);
+  overflow: hidden;
+  border-radius: var(--corner-panel);
   background: var(--color-surface);
 }
 
 .till-side {
   display: flex;
   flex-direction: column;
-  gap: var(--gutter);
   min-height: 0;
   overflow-y: auto;
+  background: var(--color-night);
+  color: var(--color-on-night);
+}
+
+/* On Night, the keyboard outline is aqua. */
+.till-side :focus-visible {
+  outline-color: var(--color-brand);
 }
 
 /* ---------- Scan box ---------- */
 
 .scan {
   padding: var(--space-5) var(--panel-padding) var(--space-4);
-  border-bottom: var(--line-strong) solid var(--color-rule-strong);
+  border-bottom: var(--line-thin) solid var(--color-rule);
 }
 
 .scan-label {
@@ -133,6 +142,11 @@
   animation: just-scanned 600ms ease-out;
 }
 
+/* A deep aqua edge too, so the line stands out without relying on colour alone. */
+.bill-table tr.is-just-scanned td:first-child {
+  box-shadow: inset var(--current-bar) 0 0 var(--color-accent);
+}
+
 @keyframes just-scanned {
   from {
     background: var(--color-surface);
@@ -168,34 +182,36 @@
   background: var(--color-surface-sunken);
 }
 
-/* ---------- Price ticket (the total) ---------- */
+/* ---------- The counter: the total ---------- */
 
 .ticket {
-  /* The total is sized from the ticket's width (container units), so it
+  /* The total is sized from the counter's width (container units), so it
      always stays on one line, however many digits it has. */
   container-type: inline-size;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding: var(--space-5) var(--space-6) var(--space-6);
-  background: var(--color-ticket);
-  color: var(--color-on-ticket);
+  padding: var(--space-6) var(--space-6) var(--space-6);
+  background: var(--color-night);
+  color: var(--color-on-night);
 }
 
 .ticket-label {
-  font-size: var(--text-heading);
+  color: var(--color-on-night-muted);
+  font-size: var(--text-body);
   font-weight: 600;
 }
 
 /* --chars is set by PriceTicket.jsx: the number of characters in the total.
-   Each figure of the display serif is at most about 0.56em wide. */
+   Each figure of Bitter bold is at most about 0.62em wide. */
 .ticket-total {
-  font-size: min(var(--ticket-font-size), calc(100cqi / (var(--chars, 8) * 0.56)));
+  color: var(--color-brand);
+  font-size: min(var(--ticket-font-size), calc(100cqi / (var(--chars, 8) * 0.62)));
   font-family: var(--font-display);
-  font-variant-numeric: lining-nums tabular-nums;
+  font-variant-numeric: lining-nums;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   white-space: nowrap;
 }
 
@@ -204,8 +220,9 @@
   grid-template-columns: 1fr auto;
   gap: var(--space-1) var(--space-5);
   margin: 0;
-  padding-top: var(--space-3);
-  border-top: var(--line-thin) solid var(--color-on-ticket-faint);
+  padding-top: var(--space-4);
+  border-top: var(--line-thin) solid var(--color-night-line);
+  color: var(--color-on-night-muted);
 }
 
 .ticket-lines dt,
@@ -214,55 +231,86 @@
 }
 
 .ticket-lines dd {
+  color: var(--color-on-night);
   font-weight: 700;
   text-align: right;
 }
 
-/* The big button on the ticket: white on teal, like a tear-off tab. */
+/* The one aqua button in the app. */
 .ticket .btn-complete {
   min-height: var(--button-height-complete);
-  margin-top: var(--space-3);
-  border: var(--line-strong) solid var(--color-on-ticket);
-  background: var(--color-on-ticket);
-  color: var(--color-text);
+  margin-top: var(--space-4);
+  border: var(--line-strong) solid var(--color-brand);
+  background: var(--color-brand);
+  color: var(--color-night);
   font-size: var(--text-heading);
   font-weight: 800;
 }
 
 .ticket .btn-complete:hover {
-  background: var(--color-highlight);
-  color: var(--color-text);
+  border-color: var(--color-brand-hover);
+  background: var(--color-brand-hover);
+  color: var(--color-night);
 }
 
 .ticket .btn-complete:active:not(:disabled) {
-  background: var(--color-highlight-soft);
+  border-color: var(--color-brand-pressed);
+  background: var(--color-brand-pressed);
 }
 
 .ticket .btn-complete:disabled {
-  border-color: var(--color-on-ticket-faint);
+  border-color: var(--color-night-line);
   background: transparent;
-  color: var(--color-on-ticket);
+  color: var(--color-on-night-faint);
 }
 
-.ticket .btn-complete:focus-visible {
-  outline-color: var(--color-on-ticket);
-}
+/* ---------- The counter: the other actions, outlined on Night ---------- */
 
-/* ---------- Till actions ---------- */
+.till-tools {
+  border-top: var(--line-thin) solid var(--color-night-line);
+  background: var(--color-night);
+}
 
 .till-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
-  padding: var(--space-5);
-  background: var(--color-surface);
+  padding: var(--space-5) var(--space-6);
 }
 
 .till-actions .btn {
   justify-content: space-between;
   min-height: var(--button-height-large);
   padding: 0 var(--space-4);
+  border: var(--line-thin) solid var(--color-night-line);
+  background: transparent;
+  color: var(--color-on-night);
   text-align: left;
+}
+
+.till-actions .btn:hover {
+  border-color: var(--color-brand);
+  background: var(--color-night-hover);
+  color: var(--color-on-night);
+}
+
+.till-actions .btn:active:not(:disabled) {
+  background: var(--color-night);
+}
+
+.till-actions .btn-danger,
+.till-actions .btn-danger:hover {
+  color: var(--color-danger-on-night);
+}
+
+.till-actions .btn-danger:hover {
+  border-color: var(--color-danger-on-night);
+}
+
+.till-actions .btn:disabled {
+  border-color: var(--color-night-line);
+  background: transparent;
+  color: var(--color-on-night-faint);
 }
 
 .till-actions .span-all {
@@ -270,9 +318,8 @@
 }
 
 .till-hint {
-  padding: 0 var(--space-5) var(--space-5);
-  background: var(--color-surface);
-  color: var(--color-text-muted);
+  padding: 0 var(--space-6) var(--space-5);
+  color: var(--color-on-night-muted);
   font-size: var(--text-small);
 }
 
@@ -293,7 +340,7 @@
 .confirm-total {
   font-size: var(--font-size-8);
   font-family: var(--font-display);
-  font-variant-numeric: lining-nums tabular-nums;
+  font-variant-numeric: lining-nums;
   font-weight: 700;
   line-height: 1;
 }
@@ -308,6 +355,10 @@
 
   .till-main {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .till-bill {
+    margin: var(--gutter);
   }
 
   /* Total first, then the barcode box and bill, then the other actions. */

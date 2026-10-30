@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@fontsource-variable/cormorant-garamond": "^5.3.0",
+    "@fontsource-variable/bitter": "^5.3.0",
     "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
     "html2canvas": "^1.4.1",
     "jsbarcode": "^3.12.3",

@@ -120,6 +120,11 @@
   background: var(--color-floor);
 }
 
+/* On the Settings page there is room for the whole receipt. */
+.receipt-preview-full {
+  max-height: none;
+}
+
 .receipt-preview-paper {
   height: fit-content;
   padding: 2mm 4mm;
