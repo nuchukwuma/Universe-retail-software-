@@ -24,18 +24,22 @@
 }
 
 .btn:hover {
-  background: var(--color-surface-sunken);
+  background: var(--color-surface-hover);
   color: var(--color-text);
+}
+
+.btn:active:not(:disabled) {
+  background: var(--color-surface-pressed);
 }
 
 .btn:disabled {
   border-color: var(--color-rule);
-  background: var(--color-surface-sunken);
+  background: var(--color-surface-hover);
   color: var(--color-text-muted);
   cursor: not-allowed;
 }
 
-/* The one main action on a screen. */
+/* The one main action on a screen: Night, turning deep aqua. */
 .btn-primary {
   border-color: var(--color-action);
   background: var(--color-action);
@@ -48,6 +52,11 @@
   color: var(--color-text-on-action);
 }
 
+.btn-primary:active:not(:disabled) {
+  border-color: var(--color-action-pressed);
+  background: var(--color-action-pressed);
+}
+
 .btn-danger {
   border-color: var(--color-danger-text);
   color: var(--color-danger-text);
@@ -56,6 +65,11 @@
 .btn-danger:hover {
   background: var(--color-danger-surface);
   color: var(--color-danger-hover);
+}
+
+.btn-danger:active:not(:disabled) {
+  background: var(--color-danger-surface);
+  color: var(--color-danger-pressed);
 }
 
 .btn-danger-solid {
@@ -69,28 +83,48 @@
   color: var(--color-text-on-action);
 }
 
+.btn-danger-solid:active:not(:disabled) {
+  border-color: var(--color-danger-pressed);
+  background: var(--color-danger-pressed);
+}
+
 /* A plain text button (secondary actions inside tables and lists). */
 .btn-quiet {
-  min-height: 36px;
+  min-height: var(--control-height-small);
   padding: 0 var(--space-3);
   border-color: transparent;
   background: transparent;
-  color: var(--color-action);
+  color: var(--color-accent);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .btn-quiet:hover {
-  background: var(--color-action-tint);
-  color: var(--color-action-hover);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-hover);
+}
+
+.btn-quiet:active:not(:disabled) {
+  background: var(--color-accent-tint);
+  color: var(--color-accent-pressed);
 }
 
 .btn-quiet.btn-danger {
   color: var(--color-danger-text);
 }
 
+.btn-quiet.btn-danger:hover {
+  background: var(--color-danger-surface);
+  color: var(--color-danger-hover);
+}
+
+.btn-quiet.btn-danger:active:not(:disabled) {
+  background: var(--color-danger-surface);
+  color: var(--color-danger-pressed);
+}
+
 .btn-small {
-  min-height: 36px;
+  min-height: var(--control-height-small);
   padding: 0 var(--space-4);
   font-size: var(--text-table);
 }
@@ -153,15 +187,15 @@ select:disabled {
 
 input[type='checkbox'],
 input[type='radio'] {
-  width: 22px;
-  height: 22px;
+  width: var(--check-size);
+  height: var(--check-size);
   margin: 0;
-  accent-color: var(--color-action);
+  accent-color: var(--color-accent);
   flex: none;
 }
 
 textarea {
-  min-height: 88px;
+  min-height: var(--textarea-min-height);
   resize: vertical;
 }
 
@@ -193,7 +227,7 @@ input[type='date'] {
 
 /* A short number box, e.g. a quantity inside a table. */
 .input-number {
-  width: 96px;
+  width: var(--number-input-width);
   text-align: right;
 }
 
@@ -265,14 +299,20 @@ input[type='date'] {
 }
 
 .qty .btn {
-  width: 44px;
+  width: var(--control-height);
   padding: 0;
+  border-width: var(--line-thin);
+  border-color: var(--color-control-border);
   font-size: var(--text-heading);
   line-height: 1;
 }
 
+.qty .btn:hover:not(:disabled) {
+  border-color: var(--color-text);
+}
+
 .qty input {
-  width: 64px;
+  width: var(--qty-input-width);
   text-align: center;
   font-weight: 700;
 }
@@ -370,7 +410,8 @@ input[type='date'] {
 
 .notice {
   padding: var(--space-4) var(--space-5);
-  border-left: 6px solid var(--color-text);
+  border-left: var(--notice-bar) solid var(--color-text);
+  border-radius: var(--corner-control);
   background: var(--color-surface-sunken);
 }
 
@@ -483,19 +524,19 @@ a.figure-link:hover dd {
   min-height: var(--control-height);
   padding: 0 var(--space-5);
   border: none;
-  border-bottom: 5px solid transparent;
+  border-bottom: var(--current-bar) solid transparent;
   background: transparent;
   font-weight: 600;
   cursor: pointer;
 }
 
 .tab:hover {
-  background: var(--color-surface-sunken);
+  background: var(--color-surface-hover);
 }
 
 .tab[aria-selected='true'] {
-  border-bottom-color: var(--color-action);
-  color: var(--color-action);
+  border-bottom-color: var(--color-accent);
+  color: var(--color-accent);
   font-weight: 750;
 }
 
@@ -507,10 +548,10 @@ a.figure-link:hover dd {
 }
 
 .choice {
-  min-height: 36px;
-  padding: 0 var(--space-4);
+  min-height: var(--control-height-small);
+  padding: 0 var(--space-5);
   border: var(--line-thin) solid var(--color-control-border);
-  border-radius: var(--corner-control);
+  border-radius: var(--corner-chip);
   background: var(--color-surface);
   font-size: var(--text-table);
   font-weight: 600;
@@ -544,12 +585,13 @@ a.figure-link:hover dd {
 .dialog {
   width: 100%;
   max-width: var(--dialog-width);
-  border: var(--line-strong) solid var(--color-text);
+  overflow: hidden;
+  border-radius: var(--corner-dialog);
   background: var(--color-surface);
 }
 
 .dialog-wide {
-  max-width: 880px;
+  max-width: var(--dialog-width-wide);
 }
 
 .dialog-head {
@@ -584,6 +626,8 @@ a.figure-link:hover dd {
 
 /* ---------- Toast (short message after an action) ---------- */
 
+/* Night with white text, so it stands out on any page; the coloured edge
+   says what kind of message it is. */
 .toast {
   position: fixed;
   top: calc(var(--topbar-height) + var(--space-4));
@@ -591,20 +635,20 @@ a.figure-link:hover dd {
   z-index: 60;
   max-width: calc(100vw - 32px);
   padding: var(--space-4) var(--space-6);
-  border: var(--line-strong) solid var(--color-text);
-  background: var(--color-surface);
+  border-left: var(--notice-bar) solid var(--color-on-night-muted);
+  border-radius: var(--corner-control);
+  background: var(--color-night);
+  color: var(--color-on-night);
   font-weight: 650;
   transform: translateX(-50%);
 }
 
 .toast-success {
-  border-color: var(--color-success-text);
-  background: var(--color-success-surface);
+  border-left-color: var(--color-brand);
 }
 
 .toast-error {
-  border-color: var(--color-danger-text);
-  background: var(--color-danger-surface);
+  border-left-color: var(--color-danger-on-night);
 }
 
 /* ---------- Definition lists (label: value rows) ---------- */
@@ -654,7 +698,9 @@ a.figure-link:hover dd {
   z-index: 20;
   margin: 0;
   padding: 0;
+  overflow: hidden;
   border: var(--line-strong) solid var(--color-text);
+  border-radius: var(--corner-control);
   background: var(--color-surface);
   list-style: none;
 }

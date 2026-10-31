@@ -29,6 +29,7 @@ owner can switch it off.
 | 7 | Desktop app for Windows 8: installer, first-run setup, backups, direct printing | ✅ Done |
 | 8 | Redesign: new look, keyboard-wedge scanner, simpler products and sales | ✅ Done |
 | 9 | Add stock by scanning (new products too), new typefaces, tidier menu | ✅ Done |
+| 10 | Redesign in the shop's own brand: the logo's black and aqua, its slab-serif lettering, skincare sample products | ✅ Done |
 
 Removed along the way: the public website (the app is offline), WhatsApp sharing, the
 camera scanner, pictures and logos, expiry dates, suppliers, cost prices and profit,
@@ -161,12 +162,12 @@ Receipt: 261027-0001
 Time: 27 Oct 2026, 9:13
 Cashier: Amaka Cashier
 
-Royal Stallion Rice 5kg: 2 at ₦12,500 = ₦25,000
-Milo 500g: 1 at ₦5,500 = ₦5,225 (discount ₦275)
+Nivea Body Lotion 400ml: 2 at ₦6,500 = ₦13,000
+Zaron Pressed Powder: 1 at ₦9,000 = ₦8,550 (discount ₦450)
 
-Subtotal: ₦30,500
-Discount: ₦275
-Total: ₦30,225
+Subtotal: ₦22,000
+Discount: ₦450
+Total: ₦21,550
 ```
 
 1. **Create the bot:** in Telegram, open **@BotFather** (blue tick), send `/newbot`, give it
@@ -192,7 +193,7 @@ on nearly every scanner.
   says **Scanner ready**. Scan, and the product is added to the bill (scanning it again
   adds 1 more). An unknown barcode shows **Product not found** and nothing is added.
 - **Typing instead of scanning:** type the barcode in the box and press Enter. If you type
-  a word instead (for example "rice"), the Find product window opens with that word.
+  a word instead (for example "nivea"), the Find product window opens with that word.
 - **The app tells scanner from typing** by speed: a scanner types a whole code in a few
   milliseconds. So a scan still works when the cursor is in another box (for example a
   quantity), and the code is never left behind in that box.
@@ -337,8 +338,9 @@ something to sell.
 
 1. **Scan:** just scan. There is no need to click first. Scanning the same item again adds
    1. The line that was just scanned turns yellow. No scanner? Type a sample barcode and
-   press Enter: Royal Stallion Rice 5kg = `6150001000012`, Power Oil 1L = `6150002000011`,
-   Indomie Chicken = `6150003000034`. Try `9999999999999` to see **Product not found**.
+   press Enter: CeraVe Hydrating Cleanser 236ml = `6150001000012`, Nivea Body Lotion 400ml =
+   `6150002000011`, House of Tara Lip Gloss = `6150003000034`. Try `9999999999999` to see
+   **Product not found**.
 2. **Find product (F2):** for items without a barcode. Type part of the name, choose with
    the arrow keys, Enter adds it. Category buttons narrow the list.
 3. **Change the bill** with **-** and **+**, type a quantity, or **Remove** a line.

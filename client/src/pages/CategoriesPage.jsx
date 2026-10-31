@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/api';
 import PageHeader from '../components/PageHeader';
 
-// Add, rename and delete product categories (e.g. Rice, Hair care).
+// Add, rename and delete product categories (e.g. Skincare, Hair care).
 function CategoriesPage() {
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState('');

@@ -31,17 +31,22 @@ p {
   margin: 0;
 }
 
-h1 {
+/* Titles and headings use the logo's slab-serif. */
+h1,
+h2 {
   font-family: var(--font-display);
-  font-size: var(--text-title);
   font-weight: 600;
   font-variant-numeric: lining-nums;
+}
+
+h1 {
+  font-size: var(--text-title);
   line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
 }
 
 h2 {
   font-size: var(--text-heading);
-  font-weight: 700;
   line-height: 1.2;
 }
 
@@ -51,16 +56,17 @@ h3 {
 }
 
 a {
-  color: var(--color-action);
+  color: var(--color-accent);
   font-weight: 600;
   text-underline-offset: 3px;
 }
 
 a:hover {
-  color: var(--color-action-hover);
+  color: var(--color-accent-hover);
 }
 
-/* One focus style everywhere: a thick ink outline with a gap. */
+/* One focus style everywhere: a thick Night outline with a gap
+   (aqua on Night surfaces, see layout.css and pos.css). */
 :focus-visible {
   outline: var(--line-focus) solid var(--color-focus);
   outline-offset: 2px;
