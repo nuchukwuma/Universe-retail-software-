@@ -3,8 +3,10 @@
 //
 // A backup folder looks like:
 //   universe-pos-backup-2026-10-27-1830/
-//     manifest.json            <- what is inside, and when it was made
 //     collections/sales.jsonl  <- one record per line (one file per table)
+//     manifest.json            <- what is inside, and when it was made.
+//                                 Written LAST: a folder without it is an
+//                                 unfinished backup and is ignored.
 // (Backups from older versions also have an "uploads" folder of pictures;
 // the app no longer uses pictures, so it is ignored.)
 //
@@ -42,7 +44,7 @@ function backupName(date = new Date()) {
 function freeBackupName(parent) {
   const base = backupName();
   let name = base;
-  for (let n = 2; fs.existsSync(path.join(parent, name)) || fs.existsSync(path.join(parent, `${name}.partial`)); n += 1) {
+  for (let n = 2; fs.existsSync(path.join(parent, name)); n += 1) {
     name = `${base}-${n}`;
   }
   return name;
@@ -70,24 +72,18 @@ async function exportCollection(db, collectionName, file) {
     count += 1;
   }
   stream.end();
-  // Wait until the file is CLOSED, not just written: Windows will not
-  // rename a folder while a file inside it is still open.
-  await once(stream, 'close');
+  await once(stream, 'close'); // wait until the file is fully saved
   return count;
 }
 
-// Renames a folder. On Windows, antivirus or the search indexer can hold a
-// new file open for a moment ("EPERM"/"EBUSY"), so try again a few times.
-async function renameWithRetry(from, to) {
-  for (let attempt = 1; ; attempt += 1) {
-    try {
-      fs.renameSync(from, to);
-      return;
-    } catch (error) {
-      const locked = ['EPERM', 'EBUSY', 'EACCES'].includes(error.code);
-      if (!locked || attempt >= 10) throw error;
-      await new Promise((resolve) => setTimeout(resolve, 300));
-    }
+// Deletes an unfinished backup folder. On Windows, antivirus can still be
+// reading a new file, so this may fail; that is harmless, because a folder
+// without manifest.json is ignored anyway.
+function removeUnfinished(folder) {
+  try {
+    fs.rmSync(folder, { recursive: true, force: true });
+  } catch (error) {
+    console.error(`Could not delete the unfinished backup ${folder}: ${error.message}`);
   }
 }
 
@@ -97,20 +93,21 @@ async function createBackup(reason = 'manual') {
   const settings = await getSettings();
   const parent = backupFolderFrom(settings);
   const name = freeBackupName(parent);
-  const finalFolder = path.join(parent, name);
-  // Write into a ".partial" folder first, so a half-finished backup
-  // (e.g. the laptop switched off) is never mistaken for a good one.
-  const workFolder = `${finalFolder}.partial`;
+  const folder = path.join(parent, name);
+  // The folder is not renamed at the end: on Windows, antivirus and the
+  // search indexer briefly open new files, and a rename then fails with
+  // "EPERM". Instead manifest.json is written last, and only folders that
+  // have it count as backups.
 
   try {
-    makeFolder(path.join(workFolder, 'collections'));
+    makeFolder(path.join(folder, 'collections'));
 
     const db = mongoose.connection.db;
     const collections = await db.listCollections({}, { nameOnly: true }).toArray();
     const counts = {};
     for (const { name: collectionName } of collections) {
       if (collectionName.startsWith('system.')) continue;
-      counts[collectionName] = await exportCollection(db, collectionName, path.join(workFolder, 'collections', `${collectionName}.jsonl`));
+      counts[collectionName] = await exportCollection(db, collectionName, path.join(folder, 'collections', `${collectionName}.jsonl`));
     }
 
     const manifest = {
@@ -121,17 +118,16 @@ async function createBackup(reason = 'manual') {
       storeName: settings.storeName,
       counts,
     };
-    fs.writeFileSync(path.join(workFolder, 'manifest.json'), JSON.stringify(manifest, null, 2));
-    await renameWithRetry(workFolder, finalFolder);
+    fs.writeFileSync(path.join(folder, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
     settings.lastBackupAt = new Date();
     settings.lastBackupError = '';
     await settings.save();
 
     if (reason === 'automatic') pruneOldBackups(parent);
-    return { name, folder: finalFolder, counts };
+    return { name, folder, counts };
   } catch (error) {
-    fs.rmSync(workFolder, { recursive: true, force: true });
+    removeUnfinished(folder);
     settings.lastBackupError = `${new Date().toLocaleString('en-NG')}: ${error.message}`;
     await settings.save();
     throw error;
