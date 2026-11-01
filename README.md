@@ -84,7 +84,7 @@ MongoDB 4.2 is the newest MongoDB that runs on Windows 8.1. Newer versions do no
 
 ### Step 2: get the Universe POS installer
 
-The installer is a file called `Universe-POS-Setup-1.0.0.exe`. GitHub builds it for you
+The installer is a file called `Universe-POS-Setup-1.1.0.exe`. GitHub builds it for you
 on a Windows computer every time the code changes:
 
 1. On GitHub, open this repository and click the **Actions** tab.
@@ -96,7 +96,7 @@ on a Windows computer every time the code changes:
 
 ### Step 3: install Universe POS
 
-1. Double-click `Universe-POS-Setup-1.0.0.exe`.
+1. Double-click `Universe-POS-Setup-1.1.0.exe`.
 2. Windows may say *"Windows protected your PC"*, because the app is not signed by a
    paid certificate. Click **More info → Run anyway**.
 3. Follow the steps. A **Universe POS** icon appears on the desktop.
@@ -267,7 +267,14 @@ Windows Explorer address bar to open it.)
 
 ### Updating the app
 
-Run the new `Universe-POS-Setup-x.y.z.exe`. Your data is kept. Make a backup first, just in case.
+1. On the laptop, open Universe POS, go to **Backup and restore** and click **Back up now**
+   (to the USB drive), just in case.
+2. Close Universe POS.
+3. Run the new `Universe-POS-Setup-x.y.z.exe` (for example `Universe-POS-Setup-1.1.0.exe`).
+   It replaces the old version. Your data is kept: it is in MongoDB on the laptop, not in
+   the app.
+4. Open Universe POS. On the first start it tidies data from older versions by itself
+   (after making its own safety backup) and corrects the shop name if needed.
 
 ### A note on security
 
@@ -352,7 +359,7 @@ On a **Windows** computer:
 ```bash
 cd desktop
 npm install
-npm run dist       # builds the client, then makes desktop/dist/Universe-POS-Setup-1.0.0.exe
+npm run dist       # builds the client, then makes desktop/dist/Universe-POS-Setup-1.1.0.exe
 ```
 
 Or push to GitHub: `.github/workflows/build-windows.yml` builds it on a Windows machine
