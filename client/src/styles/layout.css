@@ -387,6 +387,24 @@
   font-size: var(--text-heading);
 }
 
+/* Backups found on the first-run "Restore from a backup" screen. */
+.restore-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--line-thin) solid var(--color-rule);
+}
+
+.restore-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: var(--table-row-height);
+  padding: var(--space-2) 0;
+  border-bottom: var(--line-thin) solid var(--color-rule);
+}
+
 .entry-form {
   display: flex;
   flex-direction: column;

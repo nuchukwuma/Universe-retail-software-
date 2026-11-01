@@ -83,11 +83,14 @@ async function processQueue() {
   }
 }
 
+let workerTimer = null;
+
 // Starts the background job that retries unsent alerts every 30 seconds.
 function startTelegramWorker() {
+  stopTelegramWorker();
   let busy = false;
 
-  setInterval(async () => {
+  workerTimer = setInterval(async () => {
     if (busy) return; // the last round is still running
     busy = true;
     try {
@@ -104,4 +107,10 @@ function startTelegramWorker() {
     .catch(() => {});
 }
 
-module.exports = { queueSaleAlert, processQueue, startTelegramWorker, MAX_ATTEMPTS };
+// Stops the background job (when the server stops).
+function stopTelegramWorker() {
+  if (workerTimer) clearInterval(workerTimer);
+  workerTimer = null;
+}
+
+module.exports = { queueSaleAlert, processQueue, startTelegramWorker, stopTelegramWorker, MAX_ATTEMPTS };

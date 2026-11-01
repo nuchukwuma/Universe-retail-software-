@@ -32,42 +32,6 @@ jobs:
         working-directory: desktop
         run: npm ci
 
-      # MongoDB 4.2 is the last version that runs on Windows 8.1 (it runs on
-      # Windows 10 and 11 too). Only mongod.exe (the database program) and
-      # its licence files go into the installer.
-      - name: Get MongoDB 4.2 to include in the installer
-        working-directory: desktop
-        shell: pwsh
-        run: |
-          $version = '4.2.25'
-          $name = "mongodb-win32-x86_64-2012plus-$version"
-          New-Item -ItemType Directory -Force mongodb-download, mongodb | Out-Null
-          Invoke-WebRequest "https://fastdl.mongodb.org/win32/$name.zip" -OutFile "mongodb-download/$name.zip"
-          Invoke-WebRequest "https://fastdl.mongodb.org/win32/$name.zip.sha256" -OutFile "mongodb-download/$name.zip.sha256"
-          $expected = ((Get-Content "mongodb-download/$name.zip.sha256" -Raw).Trim() -split '\s+')[0].ToLower()
-          $actual = (Get-FileHash "mongodb-download/$name.zip" -Algorithm SHA256).Hash.ToLower()
-          if ($expected -ne $actual) { throw "MongoDB download is damaged (checksum $actual, expected $expected)" }
-          Expand-Archive "mongodb-download/$name.zip" -DestinationPath mongodb-download -Force
-          $mongod = Get-ChildItem mongodb-download -Recurse -Filter mongod.exe | Select-Object -First 1
-          if (-not $mongod) { throw 'mongod.exe was not found in the MongoDB download' }
-          Copy-Item $mongod.FullName mongodb/
-          $top = $mongod.Directory.Parent.FullName
-          foreach ($file in 'LICENSE-Community.txt', 'THIRD-PARTY-NOTICES', 'MPL-2') {
-            if (Test-Path "$top/$file") { Copy-Item "$top/$file" mongodb/ }
-          }
-          # The Visual C++ runtime mongod.exe needs, next to it, so the laptop
-          # does not need it installed separately.
-          foreach ($dll in 'vcruntime140.dll', 'vcruntime140_1.dll', 'msvcp140.dll') {
-            if (Test-Path "C:\Windows\System32\$dll") { Copy-Item "C:\Windows\System32\$dll" mongodb/ }
-          }
-          # Windows 8.1 only has the Universal C runtime after Windows Update
-          # KB2999226; include Microsoft's redistributable copy (Windows 10
-          # and 11 ignore it and use their own).
-          $ucrt = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\Redist" -Recurse -Filter ucrtbase.dll -ErrorAction SilentlyContinue | Where-Object { $_.FullName -match '\\ucrt\\DLLs\\x64\\' } | Select-Object -First 1
-          if ($ucrt) { Copy-Item "$($ucrt.Directory.FullName)\*.dll" mongodb/ } else { Write-Warning 'Universal C runtime not found; Windows 8.1 laptops need Windows Update KB2999226' }
-          ./mongodb/mongod.exe --version
-          Get-ChildItem mongodb | Format-Table Name, Length
-
       - name: Build the installer
         working-directory: desktop
         run: |

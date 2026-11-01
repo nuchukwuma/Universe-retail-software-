@@ -1,7 +1,7 @@
 // The database queries behind the reports.
-// They use MongoDB "aggregation pipelines": a list of steps the database
-// runs one after another (filter -> reshape -> group -> sort), so even a
-// year of sales is added up quickly inside the database.
+// They use "aggregation pipelines" (the MongoDB style, run by the app's own
+// database with mingo): a list of steps run one after another
+// (filter -> reshape -> group -> sort).
 //
 // How the numbers are worked out:
 //   sales total = what customers paid after discounts (sale.total)
@@ -12,7 +12,9 @@ const Sale = require('../models/Sale');
 const { roundMoney } = require('./saleCalculations');
 const { mondayOf } = require('./dates');
 
-const TIMEZONE = 'Africa/Lagos';
+// Lagos time. Nigeria is always UTC+1 (no summer time), and the fixed
+// offset is about 25 times quicker to work out than the zone's name.
+const TIMEZONE = '+01:00';
 const MONEY_FIELDS = ['grossSales', 'discounts', 'netSales', 'refunds'];
 
 // Step that works out the useful numbers for each single sale.
@@ -80,7 +82,7 @@ async function dailySales(createdAt) {
 }
 
 // Sales totals for each week (Monday to Sunday), oldest first.
-// Built from the daily totals, so it works on MongoDB 4.2.
+// Built from the daily totals.
 async function weeklySales(createdAt) {
   const byWeek = new Map();
   (await dailySales(createdAt)).forEach((day) => {

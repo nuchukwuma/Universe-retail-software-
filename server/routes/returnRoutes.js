@@ -1,5 +1,5 @@
 const express = require('express');
-const mongoose = require('mongoose');
+const { isValidId } = require('../db');
 const Return = require('../models/Return');
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
@@ -33,7 +33,7 @@ async function addStockForReturn(ret, user) {
 router.get('/', async (req, res) => {
   try {
     const filter = {};
-    if (mongoose.isValidObjectId(req.query.saleId)) filter.sale = req.query.saleId;
+    if (isValidId(req.query.saleId)) filter.sale = req.query.saleId;
     const dateFilter = createdAtFilter(req.query.from, req.query.to);
     if (dateFilter) filter.createdAt = dateFilter;
 
@@ -59,7 +59,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Enter the reason for the return.' });
     }
 
-    const sale = mongoose.isValidObjectId(saleId) ? await Sale.findById(saleId) : null;
+    const sale = isValidId(saleId) ? await Sale.findById(saleId) : null;
     if (!sale) {
       return res.status(404).json({ message: 'Original sale not found.' });
     }

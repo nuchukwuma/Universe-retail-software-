@@ -19,7 +19,7 @@ function lagosDayRange(dateText) {
   return { start, end: new Date(start.getTime() + ONE_DAY_MS) };
 }
 
-// Builds a MongoDB filter for createdAt between two "YYYY-MM-DD" days
+// Builds a database filter for createdAt between two "YYYY-MM-DD" days
 // (both days included). Either day can be left empty.
 function createdAtFilter(fromText, toText) {
   const from = lagosDayRange(fromText);

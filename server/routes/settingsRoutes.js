@@ -2,14 +2,12 @@ const express = require('express');
 const { requireLogin, requireRole } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
 const { getSettings, EDITABLE_FIELDS } = require('../utils/settings');
-const { isLocalDatabase } = require('../config/db');
 
 const router = express.Router();
 
-// The settings as the app sees them, plus whether the data is being saved
-// online (MongoDB Atlas) instead of on this computer, so the app can warn.
+// The settings as the app sees them (secrets removed by the model).
 function forApp(settings) {
-  return { ...settings.toJSON(), dataSavedOnline: !isLocalDatabase() };
+  return settings.toJSON();
 }
 
 // GET /api/settings

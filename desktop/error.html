@@ -31,17 +31,15 @@
 <body>
   <div class="box">
     <h1>Universe POS could not start</h1>
-    <p>The app could not open the shop's database.</p>
+    <p>The app could not open the shop's data.</p>
     <div class="message" id="message"></div>
 
-    <p><strong>The app keeps the shop's data in its own database on this laptop. Try this:</strong></p>
+    <p><strong>The shop's data is kept in files on this laptop. Try this:</strong></p>
     <ol>
-      <li>Wait one minute and press <strong>Try again</strong>. After a power cut the database checks its files first, which can take a moment.</li>
+      <li>Make sure Universe POS is not already open in another window (only one can use the data at a time), then press <strong>Try again</strong>.</li>
       <li>Still not working? Restart the laptop and open Universe POS again.</li>
-      <li>If MongoDB was installed separately (older set-ups): press the Windows key, type <strong>services.msc</strong>
-        and press Enter. Find <strong>MongoDB Server</strong>, right-click it and choose <strong>Start</strong>.</li>
-      <li>Otherwise press <strong>Open log folder</strong> and send <strong>universe-pos.log</strong> and
-        <strong>mongod.log</strong> to whoever looks after the app.</li>
+      <li>Check the laptop's disk is not full (File Explorer, This PC).</li>
+      <li>Otherwise press <strong>Open log folder</strong> and send <strong>universe-pos.log</strong> to whoever looks after the app.</li>
     </ol>
 
     <p>
@@ -86,7 +84,7 @@
     window.desktop.appInfo().then((data) => {
       info = data;
       document.getElementById('info').textContent =
-        `Version ${data.version} - database ${data.mongoUri} - data folder ${data.dataDir}`;
+        `Version ${data.version} - data folder ${data.dataDir}`;
     });
     tick();
   </script>

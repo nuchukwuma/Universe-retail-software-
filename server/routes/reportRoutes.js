@@ -1,5 +1,5 @@
 const express = require('express');
-const mongoose = require('mongoose');
+const { isValidId } = require('../db');
 const Sale = require('../models/Sale');
 const Return = require('../models/Return');
 const { requireLogin } = require('../middleware/auth');
@@ -27,7 +27,7 @@ router.get('/end-of-day', async (req, res) => {
     let cashierId = null;
     if (req.user.role === 'cashier') {
       cashierId = req.user._id;
-    } else if (mongoose.isValidObjectId(req.query.cashier)) {
+    } else if (isValidId(req.query.cashier)) {
       cashierId = req.query.cashier;
     }
 

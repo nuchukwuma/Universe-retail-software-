@@ -1,5 +1,5 @@
 const express = require('express');
-const mongoose = require('mongoose');
+const { isValidId } = require('../db');
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
 const { requireLogin } = require('../middleware/auth');
@@ -79,7 +79,7 @@ router.post('/', async (req, res) => {
 
     // 1. Look up every product on the bill (badly formed ids are skipped,
     //    so they show up as "no longer exists" instead of a database error).
-    const productIds = (items || []).map((line) => line.productId).filter((id) => mongoose.isValidObjectId(id));
+    const productIds = (items || []).map((line) => line.productId).filter((id) => isValidId(id));
     const products = await Product.find({ _id: { $in: productIds } });
     const productsById = {};
     products.forEach((p) => {

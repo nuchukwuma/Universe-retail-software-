@@ -1,11 +1,11 @@
-const mongoose = require('mongoose');
+const db = require('../db');
 const bcrypt = require('bcryptjs');
 
 // The three staff roles. Owner can do everything, Manager handles
 // inventory and reports, Cashier can only use the checkout.
 const ROLES = ['owner', 'manager', 'cashier'];
 
-const userSchema = new mongoose.Schema(
+const userSchema = new db.Schema(
   {
     name: { type: String, required: true, trim: true },
     username: { type: String, required: true, unique: true, lowercase: true, trim: true },
@@ -35,7 +35,7 @@ userSchema.set('toJSON', {
   },
 });
 
-const User = mongoose.model('User', userSchema);
+const User = db.model('User', userSchema, 'users');
 
 module.exports = User;
 module.exports.ROLES = ROLES;

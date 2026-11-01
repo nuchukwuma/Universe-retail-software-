@@ -5,7 +5,7 @@ import { useSettings } from '../context/SettingsContext';
 
 // First-time setup, shown when the app has no staff accounts yet:
 // the owner names the shop and creates their own account.
-function SetupForm({ onDone }) {
+function SetupForm({ onDone, onRestore }) {
   const { startSession } = useAuth();
   const { reloadSettings } = useSettings();
   const [form, setForm] = useState({
@@ -47,6 +47,10 @@ function SetupForm({ onDone }) {
   return (
     <form className="entry-form" onSubmit={handleSubmit}>
       <h2>First-time setup</h2>
+      <p className="muted">
+        Moving from another computer or an older version?{' '}
+        <button type="button" className="btn btn-quiet" onClick={onRestore}>Restore from a backup</button>
+      </p>
       {error && <div className="notice notice-error" role="alert">{error}</div>}
 
       <div className="field">

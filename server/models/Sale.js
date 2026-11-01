@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
+const db = require('../db');
 
 // One line on the bill. Name and prices are copied from the product at
 // the time of sale, so old receipts stay correct if prices change later.
-const saleItemSchema = new mongoose.Schema(
+const saleItemSchema = new db.Schema(
   {
-    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+    product: { type: db.Schema.Types.ObjectId, ref: 'Product' },
     name: { type: String, required: true },
     barcode: { type: String, default: '' },
     unitPrice: { type: Number, required: true },
@@ -19,7 +19,7 @@ const saleItemSchema = new mongoose.Schema(
 );
 
 // A completed sale (one receipt).
-const saleSchema = new mongoose.Schema(
+const saleSchema = new db.Schema(
   {
     receiptNumber: { type: String, required: true, unique: true },
     items: [saleItemSchema],
@@ -30,7 +30,7 @@ const saleSchema = new mongoose.Schema(
     discountTotal: { type: Number, default: 0 }, // line discounts + bill discount
     discountApprovedBy: { type: String, default: '' }, // manager who approved a large discount
     total: { type: Number, required: true },
-    cashier: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    cashier: { type: db.Schema.Types.ObjectId, ref: 'User' },
     cashierName: { type: String, default: '' },
     status: { type: String, enum: ['completed', 'partly_returned', 'returned'], default: 'completed' },
     refundedTotal: { type: Number, default: 0 },
@@ -41,4 +41,4 @@ const saleSchema = new mongoose.Schema(
 
 saleSchema.index({ createdAt: -1 });
 
-module.exports = mongoose.model('Sale', saleSchema);
+module.exports = db.model('Sale', saleSchema, 'sales');

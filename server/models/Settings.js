@@ -1,9 +1,9 @@
-const mongoose = require('mongoose');
+const db = require('../db');
 
 // Store-wide settings. There is only ever ONE settings record.
 // The Telegram bot token and chat id are kept here too, but they are
 // removed whenever the settings are sent to the app (see toJSON below).
-const settingsSchema = new mongoose.Schema(
+const settingsSchema = new db.Schema(
   {
     storeName: { type: String, default: 'Universe Cosmetics and Beauty Skincare', trim: true },
     address: { type: String, default: '', trim: true },
@@ -46,4 +46,4 @@ settingsSchema.set('toJSON', {
   },
 });
 
-module.exports = mongoose.model('Settings', settingsSchema);
+module.exports = db.model('Settings', settingsSchema, 'settings');

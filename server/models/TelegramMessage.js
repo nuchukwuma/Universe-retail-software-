@@ -1,12 +1,12 @@
-const mongoose = require('mongoose');
+const db = require('../db');
 
 // A Telegram alert waiting to be sent (an "outbox").
 // Every alert is saved here FIRST, so if Telegram or the internet is down
 // the sale still completes and the alert is retried later.
-const telegramMessageSchema = new mongoose.Schema(
+const telegramMessageSchema = new db.Schema(
   {
     kind: { type: String, enum: ['sale', 'test'], default: 'sale' },
-    sale: { type: mongoose.Schema.Types.ObjectId, ref: 'Sale', default: null },
+    sale: { type: db.Schema.Types.ObjectId, ref: 'Sale', default: null },
     receiptNumber: { type: String, default: '' },
     text: { type: String, required: true },
     // pending -> sending -> sent, or back to pending to try again,
@@ -22,4 +22,4 @@ const telegramMessageSchema = new mongoose.Schema(
 
 telegramMessageSchema.index({ status: 1, nextAttemptAt: 1 });
 
-module.exports = mongoose.model('TelegramMessage', telegramMessageSchema);
+module.exports = db.model('TelegramMessage', telegramMessageSchema, 'telegrammessages');

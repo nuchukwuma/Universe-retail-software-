@@ -62,7 +62,7 @@ router.put('/:id', async (req, res) => {
     }
 
     const { name, role, isActive, password } = req.body;
-    const isSelf = user._id.equals(req.user._id);
+    const isSelf = String(user._id) === String(req.user._id);
 
     // Stop the owner from locking themselves out by mistake.
     if (isSelf && (role && role !== 'owner')) {
@@ -95,7 +95,7 @@ router.put('/:id', async (req, res) => {
 // Deletes a staff account (you cannot delete yourself).
 router.delete('/:id', async (req, res) => {
   try {
-    if (req.user._id.equals(req.params.id)) {
+    if (String(req.user._id) === String(req.params.id)) {
       return res.status(400).json({ message: 'You cannot delete your own account.' });
     }
 
