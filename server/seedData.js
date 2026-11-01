@@ -41,6 +41,7 @@ const products = [
   { name: 'Maybelline Lash Sensational Mascara', category: 'Make-up', barcode: makeEan13('615000300004'), sellingPrice: 11000, quantity: 0, reorderLevel: 4 },
   { name: 'Cantu Shea Butter Leave-In Conditioner 340g', category: 'Hair care', barcode: makeEan13('615000400001'), sellingPrice: 9800, quantity: 15, reorderLevel: 5 },
   { name: 'ORS Olive Oil Hair Lotion 250ml', category: 'Hair care', barcode: makeEan13('615000400002'), sellingPrice: 5200, quantity: 20, reorderLevel: 6 },
+  { name: 'Palm Kernel Oil 250ml', category: 'Hair care', barcode: makeEan13('615000400004'), sellingPrice: 3000, quantity: 18, reorderLevel: 6 },
   { name: 'Dark and Lovely Relaxer Kit', category: 'Hair care', barcode: makeEan13('615000400003'), sellingPrice: 4800, quantity: 24, reorderLevel: 6 },
   { name: 'Arabian Oud Perfume Oil 12ml', category: 'Fragrance', barcode: makeEan13('615000500001'), sellingPrice: 7500, quantity: 10, reorderLevel: 3 },
   { name: 'Vanilla Body Mist 250ml', category: 'Fragrance', barcode: makeEan13('615000500002'), sellingPrice: 12000, quantity: 6, reorderLevel: 3 },

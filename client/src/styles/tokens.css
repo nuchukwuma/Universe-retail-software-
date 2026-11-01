@@ -157,6 +157,9 @@
   --table-cell-padding-x: var(--space-4);
   --nav-width: 228px;
   --topbar-height: 60px;
+  --topbar-logo-size: 48px;
+  --entry-logo-size: 220px; /* the logo on the sign-in screen */
+  --entry-logo-size-small: 120px;
   --dialog-width: 560px;
   --dialog-width-wide: 880px;
   --page-max-width: 1280px;

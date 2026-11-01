@@ -1,16 +1,15 @@
 import { useMemo, useState } from 'react';
 import Modal from '../Modal';
 import { formatNaira } from '../../utils/formatNaira';
+import { searchProducts } from '../../utils/productSearch';
 
 const MAX_RESULTS = 60;
 
-// Returns the products matching the search text and category.
+// Returns the products in the category that match the search text (best
+// matches first), or the whole category when nothing is typed.
 function findProducts(products, text, categoryId) {
-  const query = text.trim().toLowerCase();
-  return products
-    .filter((p) => categoryId === 'all' || p.category?._id === categoryId)
-    .filter((p) => !query || p.name.toLowerCase().includes(query) || (p.barcode || '').startsWith(query))
-    .slice(0, MAX_RESULTS);
+  const inCategory = products.filter((p) => categoryId === 'all' || p.category?._id === categoryId);
+  return text.trim() ? searchProducts(inCategory, text, MAX_RESULTS) : inCategory.slice(0, MAX_RESULTS);
 }
 
 // Find a product by name or category and add it to the bill (for items

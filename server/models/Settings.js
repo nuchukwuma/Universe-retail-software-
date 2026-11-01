@@ -5,12 +5,13 @@ const mongoose = require('mongoose');
 // removed whenever the settings are sent to the app (see toJSON below).
 const settingsSchema = new mongoose.Schema(
   {
-    storeName: { type: String, default: 'Universe Cosmetics & Beauty Skincare', trim: true },
+    storeName: { type: String, default: 'Universe Cosmetics and Beauty Skincare', trim: true },
     address: { type: String, default: '', trim: true },
     phone: { type: String, default: '', trim: true },
     footerMessage: { type: String, default: 'Thank you for shopping with us!', trim: true },
     paperSize: { type: String, enum: ['58mm', '80mm', 'A4'], default: '80mm' },
     autoPrint: { type: Boolean, default: false },
+    receiptLogo: { type: Boolean, default: true }, // print the shop's logo at the top of receipts
     // Desktop app: the printer receipts go to. Empty = ask every time.
     printerName: { type: String, default: '' },
     // Cashiers can give discounts up to this % of the bill without a manager.

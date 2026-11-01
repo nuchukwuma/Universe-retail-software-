@@ -25,6 +25,18 @@
   font-size: 14px;
 }
 
+.receipt-logo {
+  display: block;
+  width: 26mm;
+  height: 26mm;
+  margin: 0 auto 2mm;
+}
+
+.receipt-58 .receipt-logo {
+  width: 20mm;
+  height: 20mm;
+}
+
 .receipt-store {
   text-align: center;
   font-size: 1.25em;

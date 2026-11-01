@@ -2,6 +2,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { ROLE_LABELS, canUseBackOffice } from '../utils/roles';
+import logo from '../assets/logo.png';
 
 // Turns an ISO date string into a short time like "8:05 AM".
 function formatLoginTime(isoString) {
@@ -28,7 +29,10 @@ function TopBar() {
 
   return (
     <header className="topbar">
-      <span className="topbar-store">{settings.storeName}</span>
+      <span className="topbar-brand">
+        <img src={logo} alt="" className="topbar-logo" width="44" height="44" />
+        <span className="topbar-store">{settings.storeName}</span>
+      </span>
 
       <nav className="topbar-nav" aria-label="Main">
         <NavLink to="/checkout" className="topbar-link">Sell</NavLink>

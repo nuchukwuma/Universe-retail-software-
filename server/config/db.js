@@ -10,6 +10,17 @@ const PUBLIC_DNS_SERVERS = ['1.1.1.1', '8.8.8.8'];
 
 const CONNECT_OPTIONS = { serverSelectionTimeoutMS: 10000 };
 
+// True if the database address is on this computer (so the shop's data
+// never leaves it). Atlas (mongodb+srv://) and other computers are online.
+function isLocalDatabase(uri = process.env.MONGO_URI || DEFAULT_URI) {
+  const match = /^mongodb:\/\/(?:[^@/]*@)?([^/?]+)/.exec(uri);
+  if (!match) return false;
+  return match[1].split(',').every((host) => {
+    const name = host.replace(/:\d+$/, '').replace(/^\[|\]$/g, '').toLowerCase();
+    return ['localhost', '127.0.0.1', '::1'].includes(name);
+  });
+}
+
 // Says what to check, depending on where the database is.
 function connectionHelp(uri) {
   if (uri.startsWith('mongodb+srv://')) {
@@ -40,6 +51,11 @@ async function connectDB() {
     }
   }
   console.log('Connected to MongoDB');
+  if (!isLocalDatabase(uri)) {
+    console.warn('WARNING: the shop\'s data is being saved ONLINE (MONGO_URI points to another computer or MongoDB Atlas), not on this computer.');
+    console.warn('To keep everything offline, install MongoDB on this computer and set MONGO_URI=mongodb://127.0.0.1:27017/universe_pos in server/.env');
+  }
 }
 
 module.exports = connectDB;
+module.exports.isLocalDatabase = isLocalDatabase;

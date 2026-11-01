@@ -2,7 +2,7 @@
 
 ## The brand
 
-**Universe Cosmetics & Beauty Skincare** sells skincare, make-up, hair care and
+**Universe Cosmetics and Beauty Skincare** sells skincare, make-up, hair care and
 fragrance. Its logo is a bright aqua star wrapped in a planet's ring, on true black,
 with the shop's name set around it in a sturdy slab-serif. Two colours and one kind
 of letter: that is the whole identity, and this design uses exactly those.
@@ -13,7 +13,10 @@ of letter: that is the whole identity, and this design uses exactly those.
 | Universe aqua | the star and lettering, `#30E0E0` | only ever on Night: the shop name, the total, Complete sale |
 | Slab-serif lettering | the name around the badge | **Bitter**: the shop name, page titles, headings, the total and big figures |
 
-The logo picture itself is not shown in the app (no pictures on screen).
+The logo itself appears in three places, always as the shop's signature and never as
+decoration: on the Night top bar (48px, its black melts into the bar), large on the
+sign-in screen, and in black on white at the top of receipts (`logo-receipt.png`, made
+for thermal printers; it can be switched off in Settings).
 
 ## Who it is for
 
@@ -35,7 +38,7 @@ screen.
   from the customer's side. Complete sale is the only aqua button.
 - **Everything else is quiet:** white panels on a pale mist floor, black text, deep
   aqua for links and the current choice.
-- **No icons, emoji, pictures, logos, gradients or shadows.** Hierarchy comes from the two
+- **No icons, emoji, pictures, gradients or shadows** (the shop's logo is the one picture). Hierarchy comes from the two
   typefaces, weight, size, colour and space. Every button says what it does in words.
 
 ## Colour
@@ -111,9 +114,9 @@ Two families, both bundled with the app because the shop laptop is offline
 
 ```
 +------------------------------------------------------------------------------+
-| Universe Cosmetics & Beauty Skincare   Sell  My sales        Amaka   Log out | Night bar,
+| Universe Cosmetics and Beauty Skincare   Sell  My sales        Amaka   Log out | Night bar,
 +---------------------------------------------------+--------------------------+ aqua name
-| Scan or type a barcode [_____________________][Add]| Total                    |
+| Scan a barcode or type a name [_______________][Add]| Total                  |
 | Scanner ready                                     | N30,225                  | aqua figures
 +---------------------------------------------------+ Items 6                  |
 | Item                      Qty              Amount | Before discount N30,500  |
@@ -131,6 +134,10 @@ Two families, both bundled with the app because the shop laptop is offline
 - The scan box is always focused. The scanner works the moment a page loads, after
   every sale, after any dialog closes, and after a click anywhere that is not
   another input.
+- **Scan or type.** Typing a name in the scan box opens a list of matching products under
+  it (a word starting with what was typed: "palm" finds Palm Kernel Oil and Palmer's). The
+  best match glows aqua with a deep aqua edge, like a just-scanned line, and Enter adds it.
+  The list waits for a 150ms pause in typing, so a scanner's burst never flashes it.
 - Keyboard first: F2 find, F6 hold, F7 recall, F8 discount, F9 cancel,
   F10 complete sale, F1 shortcut list. Every shortcut is printed on its button.
 - Tablet (under 900px wide): the counter's total and Complete sale sit at the top, the
@@ -140,7 +147,7 @@ Two families, both bundled with the app because the shop laptop is offline
 
 ```
 +------------------------------------------------------------------------------+
-| Universe Cosmetics & Beauty Skincare   Sell  Back office     Ngozi   Log out |
+| Universe Cosmetics and Beauty Skincare   Sell  Back office     Ngozi   Log out |
 +----------------+-------------------------------------------------------------+
 | [ Today      ] | Today                                         [All reports] |
 |                | How the shop is doing on 29 Oct 2026.                       |
@@ -253,6 +260,10 @@ surfaces, aqua on Night.
   is open is stopped and a message says to close the window first.
 
 ## Deliberate exceptions to "no images, no icons"
+
+- **The shop's logo** (top bar, sign in, receipts). It is the shop's identity, asked for by
+  the owner. Files: `client/src/assets/logo.png` (black background cleaned to pure black so
+  it sits on Night without a box) and `logo-receipt.png` (1-bit black on white).
 
 - **Barcode stripes** at the bottom of receipts. They are machine-readable data for the
   scanner (returns are found by scanning the receipt), not decoration.

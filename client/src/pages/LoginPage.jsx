@@ -4,6 +4,7 @@ import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import SetupForm from '../components/SetupForm';
+import logo from '../assets/logo.png';
 
 // The sign-in screen. Every staff member signs in here first.
 // On a brand-new install (no staff accounts yet) it shows the
@@ -49,6 +50,7 @@ function LoginPage() {
   return (
     <div className="entry">
       <div className="entry-sign">
+        <img src={logo} alt="" className="entry-logo" width="240" height="240" />
         <h1>{settings.storeName}</h1>
         <p>{needsSetup ? 'Set up the till. You only do this once.' : 'Sign in to start selling.'}</p>
       </div>

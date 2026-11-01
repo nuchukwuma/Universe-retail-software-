@@ -6,6 +6,8 @@
 // refund was paid; the shop logo.
 // Version 3 removed: customers (the customer page and the customer name on
 // sales and returns) and customer feedback.
+// Version 4 corrects the shop name to "Universe Cosmetics and Beauty
+// Skincare" if it is still one of the names the app used to fill in.
 // The app ignores those old fields anyway, so nothing breaks if they are
 // still there - this just removes them.
 //
@@ -17,7 +19,7 @@ const mongoose = require('mongoose');
 const { getSettings } = require('./settings');
 const { createBackup } = require('./backup');
 
-const CURRENT_DATA_VERSION = 3;
+const CURRENT_DATA_VERSION = 4;
 
 // Which old fields to remove from which database table.
 // "items.$[].costPrice" means: from every line of the sale.
@@ -30,6 +32,11 @@ const FIELDS_TO_REMOVE = [
   { collection: 'settings', fields: ['logo', 'showLogoOnReceipt'] },
 ];
 const TABLES_TO_DELETE = ['suppliers', 'customers', 'feedbacks'];
+
+// Shop names the app filled in by itself in earlier versions. A name the
+// owner typed is never changed.
+const SHOP_NAME = 'Universe Cosmetics and Beauty Skincare';
+const OLD_DEFAULT_SHOP_NAMES = ['Universe Cosmetics & Beauty', 'Universe Cosmetics & Beauty Skincare'];
 
 // The database filter "has at least one of these old fields".
 function hasAnyOf(fields) {
@@ -86,6 +93,10 @@ async function runMigrations() {
     }
 
     const fresh = await getSettings(); // the backup above saved the settings too
+    if (OLD_DEFAULT_SHOP_NAMES.includes(fresh.storeName)) {
+      fresh.storeName = SHOP_NAME;
+      console.log(`Data update: shop name changed to "${SHOP_NAME}".`);
+    }
     fresh.dataVersion = CURRENT_DATA_VERSION;
     await fresh.save();
   } catch (error) {

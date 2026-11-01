@@ -18,6 +18,21 @@
   outline-color: var(--color-brand);
 }
 
+/* The logo and the shop name. The logo's black is the bar's black, so it
+   sits on the bar without a box around it. */
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.topbar-logo {
+  flex: none;
+  width: var(--topbar-logo-size);
+  height: var(--topbar-logo-size);
+}
+
 .topbar-store {
   color: var(--color-brand);
   font-size: var(--text-brand);
@@ -351,6 +366,12 @@
   color: var(--color-on-night);
 }
 
+.entry-logo {
+  width: var(--entry-logo-size);
+  height: var(--entry-logo-size);
+  margin-bottom: var(--space-6);
+}
+
 .entry-sign h1 {
   max-width: 11ch;
   color: var(--color-brand);
@@ -382,6 +403,12 @@
 
   .entry-sign {
     padding: var(--space-6) var(--space-5);
+  }
+
+  .entry-logo {
+    width: var(--entry-logo-size-small);
+    height: var(--entry-logo-size-small);
+    margin-bottom: var(--space-4);
   }
 
   .entry-sign h1 {

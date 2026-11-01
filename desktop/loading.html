@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <title>Universe POS</title>
   <style>
+    /* The shop's colours: the logo's black and aqua. */
     body {
       display: flex;
       align-items: flex-end;
@@ -11,17 +12,19 @@
       margin: 0;
       padding: 48px;
       box-sizing: border-box;
-      background: #00665e;
+      background: #000000;
       color: #ffffff;
-      font-family: 'Arial Narrow', Arial, sans-serif;
+      font-family: Georgia, 'Times New Roman', serif;
     }
-    h1 { margin: 0; font-size: 56px; line-height: 1; }
-    p { margin: 16px 0 0; font-size: 21px; }
+    img { display: block; width: 180px; height: 180px; margin-bottom: 24px; }
+    h1 { margin: 0; color: #30e0e0; font-size: 56px; line-height: 1; }
+    p { margin: 16px 0 0; color: #9ba7a7; font-family: 'Segoe UI', Arial, sans-serif; font-size: 21px; }
   </style>
 </head>
 <body>
   <!-- Shown while the app connects to the database (a few seconds). -->
   <div>
+    <img src="build/icon.png" alt="" />
     <h1>Universe POS</h1>
     <p>Starting the till...</p>
   </div>
