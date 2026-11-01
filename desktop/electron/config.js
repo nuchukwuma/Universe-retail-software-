@@ -7,7 +7,6 @@ const crypto = require('crypto');
 
 const DEFAULTS = {
   port: 5757, // the address the app's screens are served on (127.0.0.1 only)
-  mongoUri: 'mongodb://127.0.0.1:27017/universe_pos', // MongoDB on this laptop
 };
 
 // Reads config.json, filling in anything missing, and saves it back.

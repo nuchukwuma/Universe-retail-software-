@@ -5,11 +5,12 @@
 // products instead.)
 require('dotenv').config();
 
-const mongoose = require('mongoose');
 const connectDB = require('./config/db');
+const { disconnectDB } = require('./config/db');
 const { seedSampleUsers, loadSampleCatalogue } = require('./utils/sampleData');
 
-// Connects to the database, adds the sample data, then disconnects.
+// Opens the shop's data, adds the sample data, then closes it.
+// (Stop the server first: the data can only be open in one place.)
 async function runSeed() {
   try {
     await connectDB();
@@ -20,7 +21,7 @@ async function runSeed() {
   } catch (error) {
     console.error('Seeding failed:', error.message);
   } finally {
-    await mongoose.disconnect();
+    await disconnectDB();
   }
 }
 

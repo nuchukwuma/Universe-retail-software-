@@ -4,7 +4,6 @@ import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import PageHeader from '../components/PageHeader';
-import OnlineDataNotice from '../components/OnlineDataNotice';
 import { formatDate, shiftDate, todayDateValue } from '../utils/dates';
 import { formatNaira } from '../utils/formatNaira';
 import { stockStatus } from '../utils/stock';
@@ -64,7 +63,6 @@ function DashboardPage() {
       <PageHeader title="Today" lead={`How the shop is doing on ${formatDate(today)}.`}>
         <Link to="/reports" className="btn">All reports</Link>
       </PageHeader>
-      <OnlineDataNotice />
 
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {backupWarning && (

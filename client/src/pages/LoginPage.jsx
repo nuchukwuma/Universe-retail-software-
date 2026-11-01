@@ -4,17 +4,20 @@ import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import SetupForm from '../components/SetupForm';
+import RestoreBackupForm from '../components/RestoreBackupForm';
 import logo from '../assets/logo.png';
 
 // The sign-in screen. Every staff member signs in here first.
 // On a brand-new install (no staff accounts yet) it shows the
-// first-time setup form instead.
+// first-time setup form instead, or restoring a backup.
 function LoginPage() {
   const { user, login } = useAuth();
-  const { settings } = useSettings();
+  const { settings, reloadSettings } = useSettings();
   const navigate = useNavigate();
 
   const [needsSetup, setNeedsSetup] = useState(false);
+  const [restoring, setRestoring] = useState(false); // first start: restore a backup instead
+  const [restoredMessage, setRestoredMessage] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -26,6 +29,14 @@ function LoginPage() {
       .then((data) => setNeedsSetup(data.needsSetup))
       .catch(() => setNeedsSetup(false));
   }, []);
+
+  // After a backup is restored on the first start: sign in as usual.
+  async function handleRestored(message) {
+    setRestoredMessage(message);
+    setRestoring(false);
+    setNeedsSetup(false);
+    await reloadSettings();
+  }
 
   // Already signed in? Go straight to the till.
   if (user) {
@@ -55,11 +66,12 @@ function LoginPage() {
         <p>{needsSetup ? 'Set up the till. You only do this once.' : 'Sign in to start selling.'}</p>
       </div>
 
-      {needsSetup ? (
-        <SetupForm onDone={() => navigate('/dashboard')} />
-      ) : (
+      {needsSetup && restoring && <RestoreBackupForm onDone={handleRestored} onCancel={() => setRestoring(false)} />}
+      {needsSetup && !restoring && <SetupForm onDone={() => navigate('/dashboard')} onRestore={() => setRestoring(true)} />}
+      {!needsSetup && (
         <form className="entry-form" onSubmit={handleSubmit}>
           <h2>Staff sign in</h2>
+          {restoredMessage && <div className="notice notice-success" role="status">{restoredMessage}</div>}
           {error && <div className="notice notice-error" role="alert">{error}</div>}
           <div className="field">
             <label className="field-label" htmlFor="login-username">Username</label>

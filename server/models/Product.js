@@ -1,13 +1,13 @@
-const mongoose = require('mongoose');
+const db = require('../db');
 
 // A product on the shelf. Prices are in Naira.
-const productSchema = new mongoose.Schema(
+const productSchema = new db.Schema(
   {
     name: { type: String, required: [true, 'Product name is required.'], trim: true },
     // "sparse" lets many products have no barcode while still keeping
     // every barcode that IS set unique.
     barcode: { type: String, trim: true, unique: true, sparse: true },
-    category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null },
+    category: { type: db.Schema.Types.ObjectId, ref: 'Category', default: null },
     sellingPrice: {
       type: Number,
       required: [true, 'Selling price is required.'],
@@ -26,4 +26,4 @@ productSchema.pre('validate', function () {
   if (!this.barcode) this.barcode = undefined;
 });
 
-module.exports = mongoose.model('Product', productSchema);
+module.exports = db.model('Product', productSchema, 'products');

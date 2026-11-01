@@ -1,6 +1,6 @@
 // Copies the server code and the built React app into desktop/app,
 // ready to be packed into the desktop app.
-//   desktop/app/server  <- server (without node_modules, .env, uploads...)
+//   desktop/app/server  <- server (without node_modules, .env, its development data...)
 //   desktop/app/client  <- client/dist (run "npm run build" in client first)
 const fs = require('fs');
 const path = require('path');
@@ -9,7 +9,7 @@ const ROOT = path.join(__dirname, '..', '..');
 const TARGET = path.join(__dirname, '..', 'app');
 
 // Files and folders of the server that must not go into the app.
-const SKIP = new Set(['node_modules', '.env', 'uploads', 'backups', 'logs', 'package-lock.json']);
+const SKIP = new Set(['node_modules', '.env', 'data', 'uploads', 'backups', 'logs', 'scripts', 'package-lock.json']);
 
 // Copies a folder, leaving out anything named in SKIP and any .log file.
 function copyFolder(from, to) {

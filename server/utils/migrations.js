@@ -15,7 +15,7 @@
 // only does work once: the version reached is saved in the settings.
 // A safety backup is made first, so the old data can always be restored.
 
-const mongoose = require('mongoose');
+const { getStore } = require('../db');
 const { getSettings } = require('./settings');
 const { createBackup } = require('./backup');
 
@@ -38,33 +38,52 @@ const TABLES_TO_DELETE = ['suppliers', 'customers', 'feedbacks'];
 const SHOP_NAME = 'Universe Cosmetics and Beauty Skincare';
 const OLD_DEFAULT_SHOP_NAMES = ['Universe Cosmetics & Beauty', 'Universe Cosmetics & Beauty Skincare'];
 
-// The database filter "has at least one of these old fields".
-function hasAnyOf(fields) {
-  return { $or: fields.map((field) => ({ [field.replace('.$[]', '')]: { $exists: true } })) };
+// True if a record has the old field "field". "items.$[].costPrice" means
+// "costPrice on any line of items".
+function hasField(record, field) {
+  const [first, rest] = field.split('.$[].');
+  if (rest === undefined) return record[first] !== undefined;
+  return Array.isArray(record[first]) && record[first].some((line) => line && line[rest] !== undefined);
 }
 
-// Returns true if any old field or old table is still in the database.
-async function hasOldData(db) {
+// Removes the old field from a copy of the record.
+function withoutField(record, field) {
+  const [first, rest] = field.split('.$[].');
+  if (rest === undefined) {
+    const { [first]: removed, ...others } = record;
+    return others;
+  }
+  if (!Array.isArray(record[first])) return record;
+  return { ...record, [first]: record[first].map((line) => {
+    if (!line || typeof line !== 'object') return line;
+    const { [rest]: removed, ...others } = line;
+    return others;
+  }) };
+}
+
+// Returns true if any old field or old table is still in the data.
+function hasOldData(store) {
   for (const { collection, fields } of FIELDS_TO_REMOVE) {
-    if (await db.collection(collection).countDocuments(hasAnyOf(fields), { limit: 1 })) return true;
+    if (store.all(collection).some((record) => fields.some((field) => hasField(record, field)))) return true;
   }
-  for (const name of TABLES_TO_DELETE) {
-    if ((await db.listCollections({ name }, { nameOnly: true }).toArray()).length) return true;
-  }
-  return false;
+  return TABLES_TO_DELETE.some((name) => store.has(name));
 }
 
 // Removes the old fields and tables. Returns a short summary.
-async function removeOldData(db) {
+function removeOldData(store) {
   const summary = [];
   for (const { collection, fields } of FIELDS_TO_REMOVE) {
-    const unset = Object.fromEntries(fields.map((field) => [field, '']));
-    const result = await db.collection(collection).updateMany(hasAnyOf(fields), { $unset: unset });
-    if (result.modifiedCount) summary.push(`${collection}: ${result.modifiedCount} tidied`);
+    let tidied = 0;
+    for (const record of store.all(collection)) {
+      if (!fields.some((field) => hasField(record, field))) continue;
+      store.put(collection, fields.reduce(withoutField, record));
+      tidied += 1;
+    }
+    if (tidied) summary.push(`${collection}: ${tidied} tidied`);
   }
   for (const name of TABLES_TO_DELETE) {
-    if ((await db.listCollections({ name }, { nameOnly: true }).toArray()).length) {
-      await db.collection(name).drop();
+    if (store.has(name)) {
+      store.drop(name);
       summary.push(`${name}: deleted`);
     }
   }
@@ -78,8 +97,8 @@ async function runMigrations() {
     const settings = await getSettings();
     if ((settings.dataVersion || 0) >= CURRENT_DATA_VERSION) return;
 
-    const db = mongoose.connection.db;
-    if (await hasOldData(db)) {
+    const store = getStore();
+    if (hasOldData(store)) {
       // Keep a copy of everything as it was, before removing anything.
       try {
         const backup = await createBackup('before-update');
@@ -88,7 +107,7 @@ async function runMigrations() {
         console.error(`Data update postponed: the safety backup failed (${error.message}). It will be tried again at the next start.`);
         return;
       }
-      const summary = await removeOldData(db);
+      const summary = removeOldData(store);
       console.log(`Data update: removed fields the app no longer uses (${summary.join(', ') || 'nothing to change'}).`);
     }
 

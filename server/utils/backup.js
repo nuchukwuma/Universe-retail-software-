@@ -10,22 +10,22 @@
 // (Backups from older versions also have an "uploads" folder of pictures;
 // the app no longer uses pictures, so it is ignored.)
 //
-// Records are saved as "Extended JSON" so ids and dates come back exactly.
+// Records are saved one per line with dates marked, so they come back
+// exactly. Backups made by older versions of the app (which used MongoDB)
+// can be restored too.
 
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 const { once } = require('events');
-const mongoose = require('mongoose');
+const { getStore, ejson } = require('../db');
 const { getSettings } = require('./settings');
 const { makeFolder, defaultBackupDir } = require('./paths');
 
-const { EJSON } = mongoose.mongo.BSON;
 const BACKUP_PREFIX = 'universe-pos-backup-';
 const KEEP_AUTOMATIC_BACKUPS = 30; // older automatic backups are deleted
 const CHECK_EVERY_MS = 60 * 60 * 1000; // check once an hour if a backup is due
 const BACKUP_EVERY_MS = 24 * 60 * 60 * 1000; // automatic backup once a day
-const INSERT_BATCH_SIZE = 500;
 
 // Returns the folder backups go into (chosen on the Backup page, or the default).
 function backupFolderFrom(settings) {
@@ -60,14 +60,14 @@ function folderSize(folder) {
   return total;
 }
 
-// Writes every record of one database table to a .jsonl file, one per line.
+// Writes every record of one table to a .jsonl file, one per line.
 // Returns how many records were written.
-async function exportCollection(db, collectionName, file) {
+async function exportCollection(collectionName, file) {
   const stream = fs.createWriteStream(file);
   let count = 0;
-  for await (const record of db.collection(collectionName).find()) {
-    if (!stream.write(EJSON.stringify(record, { relaxed: false }) + '\n')) {
-      await once(stream, 'drain'); // wait if the disk is slower than the database
+  for (const record of getStore().all(collectionName)) {
+    if (!stream.write(`${ejson.stringify(record)}\n`)) {
+      await once(stream, 'drain'); // wait if the disk is slow
     }
     count += 1;
   }
@@ -102,17 +102,14 @@ async function createBackup(reason = 'manual') {
   try {
     makeFolder(path.join(folder, 'collections'));
 
-    const db = mongoose.connection.db;
-    const collections = await db.listCollections({}, { nameOnly: true }).toArray();
     const counts = {};
-    for (const { name: collectionName } of collections) {
-      if (collectionName.startsWith('system.')) continue;
-      counts[collectionName] = await exportCollection(db, collectionName, path.join(folder, 'collections', `${collectionName}.jsonl`));
+    for (const collectionName of getStore().names()) {
+      counts[collectionName] = await exportCollection(collectionName, path.join(folder, 'collections', `${collectionName}.jsonl`));
     }
 
     const manifest = {
       app: 'Universe POS',
-      formatVersion: 1,
+      formatVersion: 2, // 2 = the app's own data files (1 = MongoDB, older versions)
       createdAt: new Date().toISOString(),
       reason,
       storeName: settings.storeName,
@@ -134,10 +131,10 @@ async function createBackup(reason = 'manual') {
   }
 }
 
-// Reads the manifest of every backup in the backup folder, newest first.
-async function listBackups() {
-  const settings = await getSettings();
-  const parent = backupFolderFrom(settings);
+// Reads the manifest of every backup in the backup folder (or in
+// "fromFolder", e.g. a USB drive picked on the first-run screen), newest first.
+async function listBackups(fromFolder) {
+  const parent = fromFolder || backupFolderFrom(await getSettings());
   if (!fs.existsSync(parent)) return [];
 
   return fs
@@ -179,33 +176,23 @@ function pruneOldBackups(parent) {
   });
 }
 
-// Reads a .jsonl file back into a database table, in batches.
-async function importCollection(db, collectionName, file) {
+// Reads a .jsonl backup file back into a list of records. Understands
+// both this app's backups and older ones made with MongoDB.
+async function readCollectionFile(file) {
   const lines = readline.createInterface({ input: fs.createReadStream(file), crlfDelay: Infinity });
-  let batch = [];
-  let count = 0;
+  const records = [];
   for await (const line of lines) {
-    if (!line.trim()) continue;
-    batch.push(EJSON.parse(line, { relaxed: false }));
-    if (batch.length >= INSERT_BATCH_SIZE) {
-      await db.collection(collectionName).insertMany(batch, { ordered: false });
-      count += batch.length;
-      batch = [];
-    }
+    if (line.trim()) records.push(ejson.parse(line));
   }
-  if (batch.length) {
-    await db.collection(collectionName).insertMany(batch, { ordered: false });
-    count += batch.length;
-  }
-  return count;
+  return records;
 }
 
-// Replaces ALL current data with the data in a backup.
+// Replaces ALL current data with the data in a backup. "fromFolder" is the
+// folder that holds the backup (default: the backup folder in Settings).
 // A "before-restore" backup of the current data is made first, so a
 // mistake can be undone.
-async function restoreBackup(name) {
-  const settings = await getSettings();
-  const parent = backupFolderFrom(settings);
+async function restoreBackup(name, fromFolder) {
+  const parent = fromFolder || backupFolderFrom(await getSettings());
   // Only a plain folder name is allowed (no "..\" tricks).
   if (path.basename(name) !== name || !name.startsWith(BACKUP_PREFIX)) {
     throw new Error('That is not a backup name.');
@@ -215,22 +202,27 @@ async function restoreBackup(name) {
     throw new Error('That backup could not be found or is incomplete.');
   }
 
-  await createBackup('before-restore');
-
-  const db = mongoose.connection.db;
+  // Read the whole backup first, so a damaged file stops the restore
+  // before anything is changed.
   const backupFiles = fs.readdirSync(path.join(folder, 'collections')).filter((f) => f.endsWith('.jsonl'));
-  const backupCollections = backupFiles.map((f) => f.replace(/\.jsonl$/, ''));
-
-  // Empty every table (including ones the backup does not have).
-  const current = await db.listCollections({}, { nameOnly: true }).toArray();
-  for (const { name: collectionName } of current) {
-    if (!collectionName.startsWith('system.')) await db.collection(collectionName).deleteMany({});
+  const tables = {};
+  for (const file of backupFiles) {
+    const collectionName = file.replace(/\.jsonl$/, '');
+    if (collectionName.startsWith('system.')) continue;
+    tables[collectionName] = await readCollectionFile(path.join(folder, 'collections', file));
   }
 
-  // Put the backup's records back.
+  await createBackup('before-restore');
+
+  // Empty the tables the backup does not have, then put the backup's records in.
+  const store = getStore();
+  for (const collectionName of store.names()) {
+    if (!(collectionName in tables)) store.replaceAll(collectionName, []);
+  }
   const counts = {};
-  for (const collectionName of backupCollections) {
-    counts[collectionName] = await importCollection(db, collectionName, path.join(folder, 'collections', `${collectionName}.jsonl`));
+  for (const [collectionName, records] of Object.entries(tables)) {
+    store.replaceAll(collectionName, records);
+    counts[collectionName] = records.length;
   }
   return { name, counts };
 }
@@ -265,9 +257,20 @@ async function backupIfDue() {
 
 // Starts checking (a minute after start-up, then every hour) whether
 // the daily automatic backup is due.
+let scheduleTimers = [];
+
 function startBackupSchedule() {
-  setTimeout(() => backupIfDue().catch(() => {}), 60 * 1000);
-  setInterval(() => backupIfDue().catch(() => {}), CHECK_EVERY_MS);
+  stopBackupSchedule();
+  scheduleTimers = [
+    setTimeout(() => backupIfDue().catch(() => {}), 60 * 1000),
+    setInterval(() => backupIfDue().catch(() => {}), CHECK_EVERY_MS),
+  ];
+}
+
+// Stops the automatic backup checks (when the server stops).
+function stopBackupSchedule() {
+  scheduleTimers.forEach((timer) => clearTimeout(timer));
+  scheduleTimers = [];
 }
 
 module.exports = {
@@ -277,5 +280,6 @@ module.exports = {
   checkFolderWritable,
   backupFolderFrom,
   startBackupSchedule,
+  stopBackupSchedule,
   backupIfDue,
 };

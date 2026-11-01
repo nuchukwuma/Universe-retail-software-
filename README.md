@@ -15,7 +15,8 @@ The only thing that uses the internet is the optional Telegram sales alert.
 - **Desktop app:** Electron, in `/desktop` (the window, printing, the installer)
 - **Screens:** React (built with Vite), in `/client`
 - **Server:** Node.js + Express, in `/server`, which runs inside the desktop app
-- **Database:** MongoDB, installed on the same laptop
+- **Data:** the app's own data files on the laptop (`/server/db`). No database program
+  needs to be installed.
 
 The only thing that ever goes online is the optional **Telegram sales alert**, and the
 owner can switch it off.
@@ -35,6 +36,7 @@ owner can switch it off.
 | 9 | Add stock by scanning (new products too), new typefaces, tidier menu | ✅ Done |
 | 10 | Redesign in the shop's own brand: the logo's black and aqua, its slab-serif lettering, skincare sample products | ✅ Done |
 | 11 | The logo on screen and on receipts, scan or type a product name with suggestions, offline check | ✅ Done |
+| 12 | No MongoDB: the app keeps the data in its own files; restore a backup on the first screen; import tool for old MongoDB/Atlas data | ✅ Done |
 
 Removed along the way: the public website (the app is offline), WhatsApp sharing, the
 camera scanner, product pictures, expiry dates, suppliers, cost prices and profit,
@@ -56,25 +58,23 @@ one of the names earlier versions filled in (a name you typed yourself is never 
 ### What the laptop needs
 
 - **Windows 8.1, 64-bit.** (Plain Windows 8 should first be updated to 8.1 for free
-  through the Windows Store. MongoDB does not support 32-bit Windows.)
+  through the Windows Store. The app is 64-bit only.)
   To check: press **Windows key + Pause/Break**. Under *System* you should see
   **Windows 8.1** and **64-bit Operating System**.
 - About **2 GB of free disk space**, plus room for backups.
 - A **USB flash drive** for backups (strongly recommended).
 - Windows 10 or 11 also work, with the same steps.
 
-### Step 1: the database comes with the app
+### Step 1: nothing to install first
 
-There is nothing to install for the database. The installer includes **MongoDB 4.2** (the
-newest MongoDB that runs on Windows 8.1), and Universe POS starts it by itself every time
-it opens and stops it when it closes. The shop's data is saved in
-`%APPDATA%\Universe POS\database` on the laptop.
+The app keeps the shop's data in its own files on the laptop, in
+`%APPDATA%\Universe POS\data`. There is no database program to install, start or look after.
 
-- **On Windows 8.1, run Windows Update first** until no updates are left. If the app says
-  "a Windows file it needs is missing", update **KB2999226** in particular.
-- **Laptops set up with an older version** of Universe POS already have MongoDB installed
-  separately (as a Windows service called *MongoDB Server*). Leave it installed: the app sees
-  it and keeps using it, so the shop's data stays where it is. Nothing to change.
+Laptops that ran an older version (1.2.0 or earlier) kept the shop's data in MongoDB.
+**Before installing this version on such a laptop**, open the old version, go to
+**Backup and restore** and click **Back up now** (to the USB drive). After installing, the
+first screen offers **Restore from a backup**: choose that USB drive and restore. If the data
+was in MongoDB Atlas, use the import tool instead (see *Bringing data from MongoDB or Atlas*).
 
 ### Step 2: get the Universe POS installer
 
@@ -105,8 +105,13 @@ on a Windows computer every time the code changes:
    - Tick **"Add sample products"** if you want practice products. You can delete them later.
 3. Click **Start using the app**. You are logged in as the owner.
 
-If you see **"Universe POS could not start"**, MongoDB is not running. The screen explains
-what to do and tries again by itself every 20 seconds.
+Moving to a new laptop, or bringing data from an older version? On that first screen,
+click **Restore from a backup**, choose the folder (for example the USB drive) that holds the
+`universe-pos-backup-...` folders and restore the newest one. Then sign in with your usual
+usernames and passwords.
+
+If you see **"Universe POS could not start"**, the screen explains what to do and tries
+again by itself every 20 seconds.
 
 ### Step 5: set up the shop
 
@@ -251,11 +256,10 @@ Anywhere in the app:
 
 | What | Where |
 |------|-------|
-| Sales, products, staff, settings | `%APPDATA%\Universe POS\database` (the database that comes with the app). Laptops set up with an older version that have MongoDB installed separately: MongoDB's own folder (`C:\Program Files\MongoDB\Server\4.2\data`) |
-| The database's own log | `%APPDATA%\Universe POS\logs\mongod.log` |
+| Sales, products, staff, settings | `%APPDATA%\Universe POS\data` (one file per kind of record, e.g. `sales.1.jsonl`) |
 | Backups (until you choose a USB drive) | `%APPDATA%\Universe POS\backups` |
 | Log file (for finding problems) | `%APPDATA%\Universe POS\logs\universe-pos.log` |
-| App settings (port, database address) | `%APPDATA%\Universe POS\config.json` |
+| App settings (port, sign-in secret) | `%APPDATA%\Universe POS\config.json` |
 
 (`%APPDATA%` is usually `C:\Users\<your name>\AppData\Roaming`. Type it into the
 Windows Explorer address bar to open it.)
@@ -265,9 +269,10 @@ Windows Explorer address bar to open it.)
 1. On the laptop, open Universe POS, go to **Backup and restore** and click **Back up now**
    (to the USB drive), just in case.
 2. Close Universe POS.
-3. Run the new `Universe-POS-Setup-x.y.z.exe` (for example `Universe-POS-Setup-1.2.0.exe`).
-   It replaces the old version. Your data is kept: it is in MongoDB on the laptop, not in
-   the app.
+3. Run the new `Universe-POS-Setup-x.y.z.exe` (for example `Universe-POS-Setup-1.3.0.exe`).
+   It replaces the old version. Your data is kept: it is in the data folder, not in the
+   app. (Coming from 1.2.0 or earlier, which used MongoDB: restore the backup from step 1
+   on the first screen, see Step 1 above.)
 4. Open Universe POS. On the first start it tidies data from older versions by itself
    (after making its own safety backup) and corrects the shop name if needed.
 
@@ -287,30 +292,40 @@ laptop itself and does not browse the web. To stay safe:
 
 ## For developers
 
-You need a computer with **Node.js 18 or newer** and **MongoDB** (any version from 4.2).
-(The development tools do not run on Windows 8. The finished app does.)
+You need a computer with **Node.js 18 or newer**. Nothing else: the server keeps the
+shop's data in its own files, in `server/data` (development) or the app's data folder
+(desktop app). (The development tools do not run on Windows 8. The finished app does.)
 
-**The shop's data is always saved on this computer**, in development too. Install
-MongoDB Community Server on your computer (one time):
+### How the data is kept (`server/db`)
 
-1. Go to <https://www.mongodb.com/try/download/community>, choose **Windows**, package
-   **msi**, and download it.
-2. Run it: **Complete**, and keep **Install MongoD as a Service** ticked. (MongoDB Compass,
-   offered at the end, is optional.)
-3. Start the server again (`npm run dev`).
+- Each kind of record (sales, products, users...) has one file, e.g. `sales.1.jsonl`: the
+  records, a line saying the list is complete, then one line per change since.
+- Every change is written to the file (and the disk is asked to confirm) before the app
+  carries on, so a power cut loses nothing that was saved. A change that was only half
+  written when the power went is ignored at the next start.
+- When a file holds many old changes, a fresh file with the next number is written and the
+  old one deleted. Files are never renamed (Windows antivirus can block renames).
+- Only one copy of the app can open the data at a time (`in-use.lock`).
+- The models (`server/models`) are written like Mongoose models (find, findById, create,
+  save, populate...), and filters and reports use MongoDB-style queries, run by
+  [mingo](https://github.com/kofrasa/mingo).
 
-If `MONGO_URI` in `server/.env` still points to MongoDB Atlas (`mongodb+srv://...`), you do
-not need to change it: the first time the server starts with MongoDB installed here, it
-**copies the whole shop (staff, products, sales, settings) from Atlas to this computer**,
-one time, and from then on saves everything here. The server shows
-"Done. The shop's data is now saved on this computer" when it has finished. That first
-start needs the internet; after that the app works offline. The copy in Atlas is left as
-it was (you can delete it in Atlas later, once you have checked everything is here).
+### Bringing data from MongoDB or Atlas (older versions)
 
-Until MongoDB is installed here, the server keeps using Atlas so the shop can still sell,
-prints a WARNING when it starts, and the owner sees a yellow notice on the Today and
-Backup pages. (To use an online database on purpose, add `ALLOW_ONLINE_DATABASE=true` to
-`server/.env`.)
+Versions 1.2.0 and earlier kept the data in MongoDB (on the laptop or in MongoDB Atlas). To
+bring it over once, with the internet on if it is in Atlas:
+
+```bash
+cd server
+npm install
+npm run import-mongodb                    # uses MONGO_URI from server/.env
+# or: npm run import-mongodb -- "mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/universe_pos"
+```
+
+It writes a normal backup folder into `server/backups` (nothing is changed in MongoDB).
+Then open the app and restore it: on the first screen **Restore from a backup**, or Back
+office → **Backup and restore** → choose the `server/backups` folder → **Restore**. Old fields
+are tidied, and everyone signs in with their usual username and password.
 
 ### Run in development (two terminals)
 
@@ -319,7 +334,7 @@ Backup pages. (To use an online database on purpose, add `ALLOW_ONLINE_DATABASE=
 cd server
 npm install
 cp .env.example .env          # Windows: copy .env.example .env
-npm run seed                  # optional: sample staff and products
+npm run seed                  # optional: sample staff and products (before npm run dev)
 npm run dev
 
 # Terminal 2: the screens, on http://localhost:5173
@@ -344,8 +359,7 @@ npm install
 npm start          # copies server + client into desktop/app, then opens the app
 ```
 
-It uses the MongoDB at `mongodb://127.0.0.1:27017/universe_pos`. To use another one, edit
-`mongoUri` in `config.json` in the app's data folder.
+Its data goes in the app's own data folder (on Windows `%APPDATA%\Universe POS\data`).
 
 ### Build the Windows installer
 
@@ -363,7 +377,7 @@ Actions tab ("Run workflow").
 
 The installer contains **Electron 22.3.27** (Chromium 108, Node 16.17), the last Electron
 that runs on Windows 7/8/8.1. Keep it at that version. The server code must therefore work
-on **Node 16**: no `fetch()` (use `server/utils/postJson.js`) and mongoose 7.
+on **Node 16**: no `fetch()` (use `server/utils/postJson.js`), and keep mingo at 6.7.2.
 
 ---
 
@@ -431,7 +445,7 @@ something to sell.
   main.js               starts the server inside the app and opens the window
   preload.js            the few extra powers the screens get (print, printers, folders)
   loading.html          "Starting Universe POS..." screen
-  error.html            shown when MongoDB is not running, with "Try again"
+  error.html            shown when the app cannot start, with "Try again"
   /electron             config.json + log file, printing and folder handlers, keyboard shortcuts
   /scripts/copy-app.js  copies /server and /client/dist into desktop/app before packing
   /build                the Windows program icon (taskbar and desktop shortcut only)
@@ -452,9 +466,10 @@ something to sell.
 /server                 Express API
   app.js                builds the app and starts it (used by the desktop app and server.js)
   server.js             starts the server in development
-  /config/db.js         connects to MongoDB
+  /config/db.js         opens the shop's data folder
+  /db                   the app's own data files (store, models, schema rules)
   /middleware/auth.js   checks the login token and the user's role
-  /models               MongoDB data shapes (User, Product, Sale, Return, Settings, ...)
+  /models               data shapes (User, Product, Sale, Return, Settings, ...)
   /routes               API endpoints
   /utils                shared helpers (sale maths, reports, Telegram, backups,
                         migrations = tidying data saved by older versions, ...)
@@ -499,28 +514,18 @@ something to sell.
 
 ## Common problems
 
-- **"Universe POS could not start"**: wait a minute and press **Try again** (after a power
-  cut the database checks its files first). Still not working: restart the laptop. If the
-  message says *a Windows file it needs is missing*, run Windows Update (KB2999226 on
-  Windows 8.1). On laptops with MongoDB installed separately (older set-ups): open
-  `services.msc`, right-click **MongoDB Server** → **Start**. Otherwise press **Open log
-  folder** and look at `mongod.log`.
-- **"The shop's data is still being saved online"** (yellow notice) or **WARNING** when
-  the server starts: MongoDB is not installed (or not running) on this computer. Install it
-  (see *The shop's data is always saved on this computer* under **For developers**), then
-  start the server again: the data is copied here automatically.
-- **"...could not be copied to this computer, because the online database could not be
-  reached"**: the one-time copy from Atlas needs the internet. Connect, and start again.
-- **"querySrv ECONNREFUSED" (or ETIMEOUT) with MongoDB Atlas** (development): your
-  router or network refused the special DNS lookup that `mongodb+srv://` addresses need. The
-  server tries again by itself through public DNS (1.1.1.1 and 8.8.8.8). If it still fails:
-  1. In Atlas, **Network Access** → **Add IP Address** → **Add Current IP Address**.
-  2. Change your computer's DNS to `1.1.1.1` and `8.8.8.8` (Windows: Control Panel →
-     Network and Sharing Center → your connection → Properties → Internet Protocol
-     Version 4 → "Use the following DNS server addresses").
-  3. Or use Atlas's older-style address, which needs no special lookup: in Atlas click
-     **Connect → Drivers**, choose **Node.js version 2.2.12 or later**, and copy the
-     `mongodb://...:27017,...` address into `MONGO_URI`.
+- **"Universe POS could not start"**: make sure the app is not already open in another
+  window (only one copy can use the data), then press **Try again**. Still not working:
+  restart the laptop. Check the disk is not full. Otherwise press **Open log folder** and look
+  at `universe-pos.log`.
+- **"...already open in another copy of the app"** (development): stop the other server
+  (for example `npm run dev` in another terminal) before running `npm run seed`.
+- **"querySrv ECONNREFUSED" (or ETIMEOUT)** when running `npm run import-mongodb` with an
+  Atlas address: your router refused the special DNS lookup that `mongodb+srv://`
+  addresses need. The tool tries again through public DNS (1.1.1.1 and 8.8.8.8) by itself.
+  If it still fails, allow your IP in Atlas (**Network Access** → **Add Current IP
+  Address**), or use Atlas's older-style address (**Connect → Drivers → Node.js 2.2.12 or
+  later**).
 - **Receipts do not print**: check the printer is on and has paper, and that Settings →
   **Receipt printer** shows the right printer (it says *(not found)* if Windows cannot see it).
   Install the printer's Windows driver from its CD or the maker's website first.

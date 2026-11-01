@@ -4,10 +4,10 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
 const connectDB = require('./config/db');
-const { startTelegramWorker } = require('./utils/telegramQueue');
-const { startBackupSchedule } = require('./utils/backup');
+const { disconnectDB } = require('./config/db');
+const { startTelegramWorker, stopTelegramWorker } = require('./utils/telegramQueue');
+const { startBackupSchedule, stopBackupSchedule } = require('./utils/backup');
 const { runMigrations } = require('./utils/migrations');
 
 const authRoutes = require('./routes/authRoutes');
@@ -72,8 +72,8 @@ function createApp({ clientDir } = {}) {
   return app;
 }
 
-// Connects to the database, starts the background jobs and starts
-// listening. Throws if the database cannot be reached.
+// Opens the shop's data, starts the background jobs and starts
+// listening. Throws if the data cannot be opened.
 // Options: { port, host, clientDir }
 async function startServer({ port = 5000, host, clientDir } = {}) {
   if (!process.env.JWT_SECRET) {
@@ -96,11 +96,13 @@ async function startServer({ port = 5000, host, clientDir } = {}) {
   return server;
 }
 
-// Stops the server and closes the database connection (used when the
+// Stops the server and closes the shop's data files (used when the
 // desktop app closes).
 async function stopServer(server) {
   if (server) await new Promise((resolve) => server.close(resolve));
-  await mongoose.disconnect();
+  stopTelegramWorker();
+  stopBackupSchedule();
+  await disconnectDB();
 }
 
 module.exports = { createApp, startServer, stopServer };

@@ -1,15 +1,14 @@
 // Universe POS desktop app (Electron).
 // It runs the server (Express) inside the app, on this laptop only
 // (127.0.0.1), and shows the app's screens in a window. All the shop's
-// information stays in MongoDB on this laptop: the MongoDB that comes with
-// the app (see electron/database.js), or one installed separately.
+// information stays in data files on this laptop (in the app's data folder);
+// no database program is needed.
 const path = require('path');
 const net = require('net');
 const { app, BrowserWindow, Menu, session, shell } = require('electron');
 const { loadConfig, startLogFile } = require('./electron/config');
 const { registerIpcHandlers } = require('./electron/ipc');
 const { buildMenu } = require('./electron/menu');
-const { ensureDatabase, stopDatabase } = require('./electron/database');
 
 const APP_DIR = path.join(__dirname, 'app'); // server + built client (see scripts/copy-app.js)
 const ALLOWED_PERMISSIONS = ['clipboard-sanitized-write', 'fullscreen'];
@@ -35,23 +34,9 @@ function findFreePort(port, triesLeft = 20) {
   });
 }
 
-// The port of the database address if it is on this laptop
-// (e.g. mongodb://127.0.0.1:27017/universe_pos -> 27017), otherwise null.
-function localDatabasePort(uri) {
-  const match = /^mongodb:\/\/(?:127\.0\.0\.1|localhost)(?::(\d+))?\//.exec(uri);
-  return match ? Number(match[1] || 27017) : null;
-}
-
-// The folder with the MongoDB that comes with the app.
-function mongodDir() {
-  return app.isPackaged ? path.join(process.resourcesPath, 'mongodb') : path.join(__dirname, 'mongodb');
-}
-
 // Starts the server (once) and answers with its port.
 async function startBackend() {
   if (server) return server.address().port;
-  const dbPort = localDatabasePort(config.mongoUri);
-  if (dbPort) await ensureDatabase({ port: dbPort, mongodDir: mongodDir(), dataDir });
   const { startServer } = require(path.join(APP_DIR, 'server', 'app.js'));
   const port = await findFreePort(config.port);
   server = await startServer({ port, host: '127.0.0.1', clientDir: path.join(APP_DIR, 'client') });
@@ -59,7 +44,7 @@ async function startBackend() {
 }
 
 // Starts the server and shows the app. If that fails (usually because
-// MongoDB is not running), shows error.html with a "Try again" button.
+// the shop's data could not be opened), shows error.html with a "Try again" button.
 function openApp() {
   if (!starting) {
     starting = (async () => {
@@ -82,10 +67,6 @@ async function shutDown() {
   if (server) {
     const { stopServer } = require(path.join(APP_DIR, 'server', 'app.js'));
     await stopServer(server).catch((error) => console.error('Could not stop the server cleanly:', error));
-  }
-  if (config) {
-    const { MongoClient } = require('mongoose').mongo;
-    await stopDatabase(config.mongoUri, MongoClient).catch((error) => console.error('Could not stop the database cleanly:', error));
   }
 }
 
@@ -143,7 +124,6 @@ async function onReady() {
   // Settings the server reads (see server/utils/paths.js and config/db.js).
   process.env.DATA_DIR = dataDir;
   process.env.JWT_SECRET = config.jwtSecret;
-  process.env.MONGO_URI = config.mongoUri;
 
   // Only allow copying and full screen. (No camera: barcodes come from a
   // USB or Bluetooth scanner, which works like a keyboard.)
@@ -153,7 +133,7 @@ async function onReady() {
 
   registerIpcHandlers({
     'retry-start': () => openApp(),
-    'app-info': () => ({ version: app.getVersion(), dataDir, logFolder, mongoUri: config.mongoUri }),
+    'app-info': () => ({ version: app.getVersion(), dataDir, logFolder }),
   });
   Menu.setApplicationMenu(buildMenu({ openDataFolder: () => shell.openPath(dataDir) }));
 
