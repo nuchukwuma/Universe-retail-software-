@@ -1,13 +1,15 @@
 // Universe POS desktop app (Electron).
 // It runs the server (Express) inside the app, on this laptop only
 // (127.0.0.1), and shows the app's screens in a window. All the shop's
-// information stays in MongoDB on this laptop.
+// information stays in MongoDB on this laptop: the MongoDB that comes with
+// the app (see electron/database.js), or one installed separately.
 const path = require('path');
 const net = require('net');
 const { app, BrowserWindow, Menu, session, shell } = require('electron');
 const { loadConfig, startLogFile } = require('./electron/config');
 const { registerIpcHandlers } = require('./electron/ipc');
 const { buildMenu } = require('./electron/menu');
+const { ensureDatabase, stopDatabase } = require('./electron/database');
 
 const APP_DIR = path.join(__dirname, 'app'); // server + built client (see scripts/copy-app.js)
 const ALLOWED_PERMISSIONS = ['clipboard-sanitized-write', 'fullscreen'];
@@ -33,9 +35,23 @@ function findFreePort(port, triesLeft = 20) {
   });
 }
 
+// The port of the database address if it is on this laptop
+// (e.g. mongodb://127.0.0.1:27017/universe_pos -> 27017), otherwise null.
+function localDatabasePort(uri) {
+  const match = /^mongodb:\/\/(?:127\.0\.0\.1|localhost)(?::(\d+))?\//.exec(uri);
+  return match ? Number(match[1] || 27017) : null;
+}
+
+// The folder with the MongoDB that comes with the app.
+function mongodDir() {
+  return app.isPackaged ? path.join(process.resourcesPath, 'mongodb') : path.join(__dirname, 'mongodb');
+}
+
 // Starts the server (once) and answers with its port.
 async function startBackend() {
   if (server) return server.address().port;
+  const dbPort = localDatabasePort(config.mongoUri);
+  if (dbPort) await ensureDatabase({ port: dbPort, mongodDir: mongodDir(), dataDir });
   const { startServer } = require(path.join(APP_DIR, 'server', 'app.js'));
   const port = await findFreePort(config.port);
   server = await startServer({ port, host: '127.0.0.1', clientDir: path.join(APP_DIR, 'client') });
@@ -59,6 +75,18 @@ function openApp() {
     })();
   }
   return starting;
+}
+
+// Stops everything this app started, in order.
+async function shutDown() {
+  if (server) {
+    const { stopServer } = require(path.join(APP_DIR, 'server', 'app.js'));
+    await stopServer(server).catch((error) => console.error('Could not stop the server cleanly:', error));
+  }
+  if (config) {
+    const { MongoClient } = require('mongoose').mongo;
+    await stopDatabase(config.mongoUri, MongoClient).catch((error) => console.error('Could not stop the database cleanly:', error));
+  }
 }
 
 // Keeps the window on the app's own screens. Web links open in the
@@ -148,14 +176,12 @@ if (!app.requestSingleInstanceLock()) {
 
   app.on('window-all-closed', () => app.quit());
 
-  // Close the server and the database connection before the app exits.
+  // Close the server, the database connection and the app's own database
+  // (if it started one) before the app exits.
   app.on('will-quit', (event) => {
-    if (quitting || !server) return;
+    if (quitting) return;
     event.preventDefault();
     quitting = true;
-    const { stopServer } = require(path.join(APP_DIR, 'server', 'app.js'));
-    stopServer(server)
-      .catch((error) => console.error('Could not stop the server cleanly:', error))
-      .finally(() => app.quit());
+    shutDown().finally(() => app.quit());
   });
 }

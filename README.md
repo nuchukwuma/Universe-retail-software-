@@ -63,28 +63,22 @@ one of the names earlier versions filled in (a name you typed yourself is never 
 - A **USB flash drive** for backups (strongly recommended).
 - Windows 10 or 11 also work, with the same steps.
 
-### Step 1: install MongoDB 4.2 (the database), one time only
+### Step 1: the database comes with the app
 
-MongoDB 4.2 is the newest MongoDB that runs on Windows 8.1. Newer versions do not.
+There is nothing to install for the database. The installer includes **MongoDB 4.2** (the
+newest MongoDB that runs on Windows 8.1), and Universe POS starts it by itself every time
+it opens and stops it when it closes. The shop's data is saved in
+`%APPDATA%\Universe POS\database` on the laptop.
 
-1. Open the MongoDB download archive:
-   <https://www.mongodb.com/try/download/community-edition/releases/archive>
-2. Find **4.2.25** (the last 4.2 version), *Windows x64*, and download the **.msi** file.
-3. Run it and choose:
-   - **Complete** setup.
-   - Keep **"Install MongoD as a Service"** ticked, with **"Run service as Network Service user"**.
-     This makes MongoDB start by itself every time the laptop is switched on.
-   - **Untick "Install MongoDB Compass"**. It is not needed.
-4. Check it worked: press the Windows key, type `services.msc` and press Enter.
-   **MongoDB Server** should say *Running*.
-
-> If the installer says a file such as `VCRUNTIME140.dll` or `api-ms-win-crt` is missing,
-> run **Windows Update** until no updates are left (in particular update **KB2999226**),
-> install the **Microsoft Visual C++ Redistributable (x64)**, then run the MongoDB installer again.
+- **On Windows 8.1, run Windows Update first** until no updates are left. If the app says
+  "a Windows file it needs is missing", update **KB2999226** in particular.
+- **Laptops set up with an older version** of Universe POS already have MongoDB installed
+  separately (as a Windows service called *MongoDB Server*). Leave it installed: the app sees
+  it and keeps using it, so the shop's data stays where it is. Nothing to change.
 
 ### Step 2: get the Universe POS installer
 
-The installer is a file called `Universe-POS-Setup-1.1.0.exe`. GitHub builds it for you
+The installer is a file called `Universe-POS-Setup-1.2.0.exe`. GitHub builds it for you
 on a Windows computer every time the code changes:
 
 1. On GitHub, open this repository and click the **Actions** tab.
@@ -96,7 +90,7 @@ on a Windows computer every time the code changes:
 
 ### Step 3: install Universe POS
 
-1. Double-click `Universe-POS-Setup-1.1.0.exe`.
+1. Double-click `Universe-POS-Setup-1.2.0.exe`.
 2. Windows may say *"Windows protected your PC"*, because the app is not signed by a
    paid certificate. Click **More info → Run anyway**.
 3. Follow the steps. A **Universe POS** icon appears on the desktop.
@@ -153,7 +147,7 @@ Because the data is only on this laptop, a broken or stolen laptop would lose ev
 
 **Restoring** (for example on a new laptop):
 
-1. Install MongoDB and Universe POS on the new laptop (Steps 1 to 4).
+1. Install Universe POS on the new laptop (Steps 1 to 4).
 2. Back Office → Backup & Restore → **Choose folder…** → pick the folder that *contains*
    the `universe-pos-backup-...` folders → **Save folder**.
 3. Click **Restore…** next to the backup you want and type `RESTORE`.
@@ -257,7 +251,8 @@ Anywhere in the app:
 
 | What | Where |
 |------|-------|
-| Sales, products, staff, settings | MongoDB's own folder (`C:\Program Files\MongoDB\Server\4.2\data`) |
+| Sales, products, staff, settings | `%APPDATA%\Universe POS\database` (the database that comes with the app). Laptops set up with an older version that have MongoDB installed separately: MongoDB's own folder (`C:\Program Files\MongoDB\Server\4.2\data`) |
+| The database's own log | `%APPDATA%\Universe POS\logs\mongod.log` |
 | Backups (until you choose a USB drive) | `%APPDATA%\Universe POS\backups` |
 | Log file (for finding problems) | `%APPDATA%\Universe POS\logs\universe-pos.log` |
 | App settings (port, database address) | `%APPDATA%\Universe POS\config.json` |
@@ -270,7 +265,7 @@ Windows Explorer address bar to open it.)
 1. On the laptop, open Universe POS, go to **Backup and restore** and click **Back up now**
    (to the USB drive), just in case.
 2. Close Universe POS.
-3. Run the new `Universe-POS-Setup-x.y.z.exe` (for example `Universe-POS-Setup-1.1.0.exe`).
+3. Run the new `Universe-POS-Setup-x.y.z.exe` (for example `Universe-POS-Setup-1.2.0.exe`).
    It replaces the old version. Your data is kept: it is in MongoDB on the laptop, not in
    the app.
 4. Open Universe POS. On the first start it tidies data from older versions by itself
@@ -359,7 +354,7 @@ On a **Windows** computer:
 ```bash
 cd desktop
 npm install
-npm run dist       # builds the client, then makes desktop/dist/Universe-POS-Setup-1.1.0.exe
+npm run dist       # builds the client, then makes desktop/dist/Universe-POS-Setup-1.2.0.exe
 ```
 
 Or push to GitHub: `.github/workflows/build-windows.yml` builds it on a Windows machine
@@ -504,10 +499,12 @@ something to sell.
 
 ## Common problems
 
-- **"Universe POS could not start" / "Could not connect to MongoDB"**: MongoDB is not
-  running. Wait a minute after switching the laptop on, then **Try again**. Otherwise open
-  `services.msc`, right-click **MongoDB Server** → **Start**. If it is not in the list,
-  install MongoDB (Step 1).
+- **"Universe POS could not start"**: wait a minute and press **Try again** (after a power
+  cut the database checks its files first). Still not working: restart the laptop. If the
+  message says *a Windows file it needs is missing*, run Windows Update (KB2999226 on
+  Windows 8.1). On laptops with MongoDB installed separately (older set-ups): open
+  `services.msc`, right-click **MongoDB Server** → **Start**. Otherwise press **Open log
+  folder** and look at `mongod.log`.
 - **"The shop's data is still being saved online"** (yellow notice) or **WARNING** when
   the server starts: MongoDB is not installed (or not running) on this computer. Install it
   (see *The shop's data is always saved on this computer* under **For developers**), then

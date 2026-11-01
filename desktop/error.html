@@ -34,13 +34,14 @@
     <p>The app could not open the shop's database.</p>
     <div class="message" id="message"></div>
 
-    <p><strong>Usually this means MongoDB is not running. Try this:</strong></p>
+    <p><strong>The app keeps the shop's data in its own database on this laptop. Try this:</strong></p>
     <ol>
-      <li>Wait one minute. Just after the laptop is switched on, MongoDB can take a moment to start.</li>
-      <li>Press <strong>Try again</strong>.</li>
-      <li>Still not working? Press the Windows key, type <strong>services.msc</strong> and press Enter.
-        Find <strong>MongoDB Server</strong>, right-click it and choose <strong>Start</strong>.</li>
-      <li>If MongoDB Server is not in the list, MongoDB is not installed. See the install guide (README).</li>
+      <li>Wait one minute and press <strong>Try again</strong>. After a power cut the database checks its files first, which can take a moment.</li>
+      <li>Still not working? Restart the laptop and open Universe POS again.</li>
+      <li>If MongoDB was installed separately (older set-ups): press the Windows key, type <strong>services.msc</strong>
+        and press Enter. Find <strong>MongoDB Server</strong>, right-click it and choose <strong>Start</strong>.</li>
+      <li>Otherwise press <strong>Open log folder</strong> and send <strong>universe-pos.log</strong> and
+        <strong>mongod.log</strong> to whoever looks after the app.</li>
     </ol>
 
     <p>

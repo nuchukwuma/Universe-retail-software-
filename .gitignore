@@ -7,3 +7,5 @@ server/uploads/
 desktop/app/
 desktop/dist/
 server/backups/
+desktop/mongodb/
+desktop/mongodb-download/
