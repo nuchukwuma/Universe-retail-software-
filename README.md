@@ -1,12 +1,16 @@
 # Universe POS
 
-A point-of-sale and shop management app for **Universe Cosmetics & Beauty Skincare**, made to be
+A point-of-sale and shop management app for **Universe Cosmetics and Beauty Skincare**, made to be
 installed on **one Windows laptop** next to a USB or Bluetooth barcode scanner.
 Everything (sales, products, staff, backups) is saved **on that laptop only**.
 Nothing is stored online.
 
-The screens are text, tables and colour only: no icons, pictures or logos. The design
-rules (typeface, colours, spacing, the till layout) are in [DESIGN.md](DESIGN.md).
+The screens are text, tables and colour only: no icons or pictures, except the shop's own
+logo (on the top bar, the sign-in screen and receipts). The design rules (typeface,
+colours, spacing, the till layout) are in [DESIGN.md](DESIGN.md).
+
+**Everything works offline.** The data, the screens and the fonts are all on the laptop.
+The only thing that uses the internet is the optional Telegram sales alert.
 
 - **Desktop app:** Electron, in `/desktop` (the window, printing, the installer)
 - **Screens:** React (built with Vite), in `/client`
@@ -30,9 +34,10 @@ owner can switch it off.
 | 8 | Redesign: new look, keyboard-wedge scanner, simpler products and sales | ✅ Done |
 | 9 | Add stock by scanning (new products too), new typefaces, tidier menu | ✅ Done |
 | 10 | Redesign in the shop's own brand: the logo's black and aqua, its slab-serif lettering, skincare sample products | ✅ Done |
+| 11 | The logo on screen and on receipts, scan or type a product name with suggestions, offline check | ✅ Done |
 
 Removed along the way: the public website (the app is offline), WhatsApp sharing, the
-camera scanner, pictures and logos, expiry dates, suppliers, cost prices and profit,
+camera scanner, product pictures, expiry dates, suppliers, cost prices and profit,
 wholesale prices, payment methods (a sale is just a sale), customers and customer
 feedback, staff names on receipts, end-of-day printing and barcode label printing.
 The only thing the app prints is the customer's receipt (and the return slip, which is
@@ -41,6 +46,8 @@ the customer's refund receipt).
 When the updated app first starts on a computer that has data from an older version, it
 makes a **safety backup** (reason "before-update") and then removes the old fields and
 tables (customers, feedback, suppliers, ...). No sale, total or stock figure is lost.
+It also corrects the shop name to **Universe Cosmetics and Beauty Skincare** if it is still
+one of the names earlier versions filled in (a name you typed yourself is never changed).
 
 ---
 
@@ -120,6 +127,8 @@ All of these are in **Back Office** (button at the top), logged in as the owner:
      if you want to pick the printer every time.) Click **Save Settings**, then
      **Print test receipt**.
    - **Print the receipt as soon as a sale is completed:** skips the receipt preview.
+   - **Print the shop's logo at the top of receipts:** on by default (printed in black).
+     Untick it if your printer prints it too dark or too slowly.
 3. **Backup and restore:** see below. Do this on day one.
 4. **Categories, then Add stock:** enter your stock with the scanner (see
    *Adding stock with the scanner* below).
@@ -157,7 +166,7 @@ Because the data is only on this laptop, a broken or stolen laptop would lose ev
 After every sale, the app can send a message like this to a Telegram group:
 
 ```
-New sale at Universe Cosmetics & Beauty Skincare
+New sale at Universe Cosmetics and Beauty Skincare
 Receipt: 261027-0001
 Time: 27 Oct 2026, 9:13
 Cashier: Amaka Cashier
@@ -192,8 +201,14 @@ on nearly every scanner.
 - **On the till (Sell):** the barcode box at the top is always ready. The line under it
   says **Scanner ready**. Scan, and the product is added to the bill (scanning it again
   adds 1 more). An unknown barcode shows **Product not found** and nothing is added.
-- **Typing instead of scanning:** type the barcode in the box and press Enter. If you type
-  a word instead (for example "nivea"), the Find product window opens with that word.
+- **Typing a product name instead of scanning:** start typing in the same box. As you
+  type, a list of matching products opens under it, with price and stock. Typing `palm`
+  lists everything with a word starting with "palm" (Palm Kernel Oil, Palmer's Cocoa
+  Butter...); typing more words narrows it (`cocoa but`). The best match is highlighted:
+  press **Enter** to add it, **Up/Down** to choose another, or click one. **Esc** closes
+  the list (Enter then opens the full Find product window with what you typed).
+- **Typing a barcode by hand:** type the digits and press Enter. The list shows products
+  whose barcode starts with those digits, but Enter looks up the barcode you typed.
 - **The app tells scanner from typing** by speed: a scanner types a whole code in a few
   milliseconds. So a scan still works when the cursor is in another box (for example a
   quantity), and the code is never left behind in that box.
@@ -273,6 +288,20 @@ laptop itself and does not browse the web. To stay safe:
 You need a computer with **Node.js 18 or newer** and **MongoDB** (any version from 4.2).
 (The development tools do not run on Windows 8. The finished app does.)
 
+**Keep the data offline in development too.** Install MongoDB Community Server on your
+computer (<https://www.mongodb.com/try/download/community>, choose "Install MongoD as a
+Service") and keep this line in `server/.env`:
+
+```
+MONGO_URI=mongodb://127.0.0.1:27017/universe_pos
+```
+
+If `MONGO_URI` points to MongoDB Atlas (`mongodb+srv://...`), the data is saved online and
+the app needs the internet: the server prints a WARNING when it starts, and the owner sees
+a yellow notice on the Today and Backup pages. To move data from Atlas to your computer:
+make a backup in the app (Backup and restore → **Back up now**), change `MONGO_URI` to the
+line above, restart the server, then restore that backup.
+
 ### Run in development (two terminals)
 
 ```bash
@@ -337,22 +366,24 @@ something to sell.
 ### The till (Sell)
 
 1. **Scan:** just scan. There is no need to click first. Scanning the same item again adds
-   1. The line that was just scanned turns yellow. No scanner? Type a sample barcode and
+   1. The line that was just scanned glows aqua. No scanner? Type a sample barcode and
    press Enter: CeraVe Hydrating Cleanser 236ml = `6150001000012`, Nivea Body Lotion 400ml =
    `6150002000011`, House of Tara Lip Gloss = `6150003000034`. Try `9999999999999` to see
    **Product not found**.
-2. **Find product (F2):** for items without a barcode. Type part of the name, choose with
+2. **Or type the name** in the same box: `palm`, `nivea`, `cocoa but`. Matching products
+   appear as you type; Enter adds the highlighted one, Up/Down choose, or click.
+3. **Find product (F2):** to browse by category. Type part of the name, choose with
    the arrow keys, Enter adds it. Category buttons narrow the list.
-3. **Change the bill** with **-** and **+**, type a quantity, or **Remove** a line.
-4. **Complete sale (F10, then Enter):** the sale is saved and the receipt is shown (or
+4. **Change the bill** with **-** and **+**, type a quantity, or **Remove** a line.
+5. **Complete sale (F10, then Enter):** the sale is saved and the receipt is shown (or
    printed straight away if Settings says so). The first print is the original; later
    prints from Sales history say **\*\*\* DUPLICATE COPY \*\*\***.
-5. **Discount (F8):** up to 10% (changeable in Settings) a cashier can give alone. Above
+6. **Discount (F8):** up to 10% (changeable in Settings) a cashier can give alone. Above
    that, a manager types their username and password on the till.
-6. **Hold (F6) / Recall (F7):** park a bill (with a note if you like), serve the next customer, bring it back later.
-7. **Return:** scan the barcode at the bottom of a receipt, choose the items and the
+7. **Hold (F6) / Recall (F7):** park a bill (with a note if you like), serve the next customer, bring it back later.
+8. **Return:** scan the barcode at the bottom of a receipt, choose the items and the
    reason, and a manager approves. A return slip prints and the items go back into stock.
-8. **Sales history** and **End of day** (the day's sales, refunds and takings, on screen).
+9. **Sales history** and **End of day** (the day's sales, refunds and takings, on screen).
 
 ### Stock (manager / owner)
 
@@ -462,6 +493,9 @@ something to sell.
   running. Wait a minute after switching the laptop on, then **Try again**. Otherwise open
   `services.msc`, right-click **MongoDB Server** → **Start**. If it is not in the list,
   install MongoDB (Step 1).
+- **"The shop's data is being saved online"** (yellow notice) or **WARNING** when the
+  server starts: `MONGO_URI` in `server/.env` points to MongoDB Atlas. See *Keep the data
+  offline in development too* under **For developers**.
 - **"querySrv ECONNREFUSED" (or ETIMEOUT) with MongoDB Atlas** (development): your
   router or network refused the special DNS lookup that `mongodb+srv://` addresses need. The
   server tries again by itself through public DNS (1.1.1.1 and 8.8.8.8). If it still fails:

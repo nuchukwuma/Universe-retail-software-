@@ -319,7 +319,7 @@ function CheckoutPage() {
 
       <main className="till-main">
         <section className="till-bill" aria-label="Bill">
-          <ScanBox ref={scanRef} onSubmit={handleCode} paused={modal !== null}>
+          <ScanBox ref={scanRef} products={products} onSubmit={handleCode} onPick={addToBill} paused={modal !== null}>
             {scanResult?.kind === 'added' && <p className="scan-result success-text">{scanResult.text}</p>}
             {scanResult?.kind === 'info' && <p className="scan-result">{scanResult.text}</p>}
           </ScanBox>

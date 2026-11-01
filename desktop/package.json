@@ -3,8 +3,8 @@
   "productName": "Universe POS",
   "version": "1.0.0",
   "private": true,
-  "description": "Universe Cosmetics & Beauty - shop till and back office (desktop app for Windows)",
-  "author": "Universe Cosmetics & Beauty",
+  "description": "Universe Cosmetics and Beauty Skincare - shop till and back office (desktop app for Windows)",
+  "author": "Universe Cosmetics and Beauty Skincare",
   "main": "main.js",
   "scripts": {
     "copy-app": "node scripts/copy-app.js",
@@ -27,7 +27,7 @@
   "build": {
     "appId": "ng.universe.pos",
     "productName": "Universe POS",
-    "copyright": "Universe Cosmetics & Beauty",
+    "copyright": "Universe Cosmetics and Beauty Skincare",
     "directories": {
       "output": "dist",
       "buildResources": "build"

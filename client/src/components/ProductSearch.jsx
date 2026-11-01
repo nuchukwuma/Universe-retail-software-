@@ -1,14 +1,6 @@
 import { useState } from 'react';
 import { formatNaira } from '../utils/formatNaira';
-
-// Returns up to "limit" products whose name or barcode matches the text.
-export function searchProducts(products, text, limit = 8) {
-  const query = text.trim().toLowerCase();
-  if (!query) return [];
-  return products
-    .filter((p) => p.name.toLowerCase().includes(query) || (p.barcode || '').startsWith(query))
-    .slice(0, limit);
-}
+import { searchProducts } from '../utils/productSearch';
 
 // A search box that lists matching products as you type.
 // Clicking a result (or pressing Enter for the first one) calls onSelect(product).

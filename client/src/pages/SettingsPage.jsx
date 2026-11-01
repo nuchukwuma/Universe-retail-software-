@@ -101,6 +101,10 @@ function SettingsPage() {
           </div>
           <PrinterPicker value={form.printerName} onChange={(name) => setField('printerName', name)} />
           <label className="check span-all">
+            <input type="checkbox" checked={form.receiptLogo !== false} onChange={(e) => setField('receiptLogo', e.target.checked)} />
+            Print the shop's logo at the top of receipts
+          </label>
+          <label className="check span-all">
             <input type="checkbox" checked={form.autoPrint} onChange={(e) => setField('autoPrint', e.target.checked)} />
             Print the receipt as soon as a sale is completed, without showing it first
           </label>

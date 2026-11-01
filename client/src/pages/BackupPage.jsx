@@ -3,6 +3,7 @@ import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
 import PageHeader from '../components/PageHeader';
+import OnlineDataNotice from '../components/OnlineDataNotice';
 import { formatDateTime } from '../utils/dates';
 import { desktop } from '../utils/desktop';
 
@@ -92,6 +93,7 @@ function BackupPage() {
           {working === 'backup' ? 'Backing up...' : 'Back up now'}
         </button>
       </PageHeader>
+      <OnlineDataNotice />
 
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {message && <div className="notice notice-success" role="status">{message}</div>}

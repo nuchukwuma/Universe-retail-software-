@@ -23,7 +23,6 @@
   flex-direction: column;
   min-height: 0;
   margin: var(--gutter);
-  overflow: hidden;
   border-radius: var(--corner-panel);
   background: var(--color-surface);
 }
@@ -72,6 +71,73 @@
   min-height: var(--button-height-large);
 }
 
+/* The box and its list of matching products. */
+.scan-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.scan-suggestions {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  right: 0;
+  z-index: 30;
+  max-height: 60vh;
+  overflow-y: auto;
+  border: var(--line-strong) solid var(--color-text);
+  border-radius: var(--corner-control);
+  background: var(--color-surface);
+}
+
+.scan-suggestions ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scan-suggestions li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-5);
+  min-height: var(--bill-row-height);
+  padding: var(--space-2) var(--space-5);
+  border-bottom: var(--line-thin) solid var(--color-rule);
+  cursor: pointer;
+}
+
+/* The one Enter will add: aqua glow with a deep aqua edge, like a just-scanned line. */
+.scan-suggestions li.is-active {
+  background: var(--color-highlight);
+  box-shadow: inset var(--current-bar) 0 0 var(--color-accent);
+}
+
+.scan-suggestion-name {
+  font-weight: 700;
+}
+
+.scan-suggestion-sub {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+  font-weight: 400;
+}
+
+.scan-suggestions-hint,
+.scan-suggestions-empty {
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+}
+
+.scan-suggestions-empty {
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--text-body);
+}
+
 .scan-feedback {
   display: flex;
   flex-wrap: wrap;
@@ -100,6 +166,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  border-radius: 0 0 var(--corner-panel) var(--corner-panel);
 }
 
 .bill-table {
@@ -179,6 +246,7 @@
   gap: var(--space-5);
   padding: var(--space-3) var(--panel-padding);
   border-top: var(--line-thin) solid var(--color-rule);
+  border-radius: 0 0 var(--corner-panel) var(--corner-panel);
   background: var(--color-surface-sunken);
 }
 

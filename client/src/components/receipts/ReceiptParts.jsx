@@ -1,4 +1,5 @@
 import { formatNaira } from '../../utils/formatNaira';
+import receiptLogo from '../../assets/logo-receipt.png';
 
 // Small building blocks shared by every printed slip (sale receipt,
 // return receipt, end-of-day report, test receipt).
@@ -29,11 +30,13 @@ export function money(amount) {
   return formatNaira(amount);
 }
 
-// The top and bottom of every slip: store details and footer (text only).
+// The top and bottom of every slip: the logo (black on white, unless it is
+// switched off in Settings), store details and footer.
 // "title" (e.g. RETURN RECEIPT) and "duplicate" are shown under the header.
 export function ReceiptFrame({ settings, paper, title, duplicate, footer, children }) {
   return (
     <div className={`receipt ${paperClass(paper || settings.paperSize)}`}>
+      {settings.receiptLogo !== false && <img src={receiptLogo} alt="" className="receipt-logo" />}
       <div className="receipt-store">{settings.storeName}</div>
       {settings.address && <div className="receipt-center">{settings.address}</div>}
       {settings.phone && <div className="receipt-center">Tel: {settings.phone}</div>}
