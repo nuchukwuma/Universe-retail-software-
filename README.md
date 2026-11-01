@@ -288,19 +288,27 @@ laptop itself and does not browse the web. To stay safe:
 You need a computer with **Node.js 18 or newer** and **MongoDB** (any version from 4.2).
 (The development tools do not run on Windows 8. The finished app does.)
 
-**Keep the data offline in development too.** Install MongoDB Community Server on your
-computer (<https://www.mongodb.com/try/download/community>, choose "Install MongoD as a
-Service") and keep this line in `server/.env`:
+**The shop's data is always saved on this computer**, in development too. Install
+MongoDB Community Server on your computer (one time):
 
-```
-MONGO_URI=mongodb://127.0.0.1:27017/universe_pos
-```
+1. Go to <https://www.mongodb.com/try/download/community>, choose **Windows**, package
+   **msi**, and download it.
+2. Run it: **Complete**, and keep **Install MongoD as a Service** ticked. (MongoDB Compass,
+   offered at the end, is optional.)
+3. Start the server again (`npm run dev`).
 
-If `MONGO_URI` points to MongoDB Atlas (`mongodb+srv://...`), the data is saved online and
-the app needs the internet: the server prints a WARNING when it starts, and the owner sees
-a yellow notice on the Today and Backup pages. To move data from Atlas to your computer:
-make a backup in the app (Backup and restore → **Back up now**), change `MONGO_URI` to the
-line above, restart the server, then restore that backup.
+If `MONGO_URI` in `server/.env` still points to MongoDB Atlas (`mongodb+srv://...`), you do
+not need to change it: the first time the server starts with MongoDB installed here, it
+**copies the whole shop (staff, products, sales, settings) from Atlas to this computer**,
+one time, and from then on saves everything here. The server shows
+"Done. The shop's data is now saved on this computer" when it has finished. That first
+start needs the internet; after that the app works offline. The copy in Atlas is left as
+it was (you can delete it in Atlas later, once you have checked everything is here).
+
+Until MongoDB is installed here, the server keeps using Atlas so the shop can still sell,
+prints a WARNING when it starts, and the owner sees a yellow notice on the Today and
+Backup pages. (To use an online database on purpose, add `ALLOW_ONLINE_DATABASE=true` to
+`server/.env`.)
 
 ### Run in development (two terminals)
 
@@ -493,9 +501,12 @@ something to sell.
   running. Wait a minute after switching the laptop on, then **Try again**. Otherwise open
   `services.msc`, right-click **MongoDB Server** → **Start**. If it is not in the list,
   install MongoDB (Step 1).
-- **"The shop's data is being saved online"** (yellow notice) or **WARNING** when the
-  server starts: `MONGO_URI` in `server/.env` points to MongoDB Atlas. See *Keep the data
-  offline in development too* under **For developers**.
+- **"The shop's data is still being saved online"** (yellow notice) or **WARNING** when
+  the server starts: MongoDB is not installed (or not running) on this computer. Install it
+  (see *The shop's data is always saved on this computer* under **For developers**), then
+  start the server again: the data is copied here automatically.
+- **"...could not be copied to this computer, because the online database could not be
+  reached"**: the one-time copy from Atlas needs the internet. Connect, and start again.
 - **"querySrv ECONNREFUSED" (or ETIMEOUT) with MongoDB Atlas** (development): your
   router or network refused the special DNS lookup that `mongodb+srv://` addresses need. The
   server tries again by itself through public DNS (1.1.1.1 and 8.8.8.8). If it still fails:
