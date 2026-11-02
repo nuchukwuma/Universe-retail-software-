@@ -1,20 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api/api';
 import PageHeader from '../components/PageHeader';
-import BarcodeInput from '../components/BarcodeInput';
-import ProductSearch from '../components/ProductSearch';
+import StockLookupBox from '../components/StockLookupBox';
 import ScannerStatus from '../components/ScannerStatus';
 import { useGlobalScanner } from '../hooks/useScanner';
 import { formatNaira } from '../utils/formatNaira';
 import { formatDateTime } from '../utils/dates';
 
-const EMPTY_NEW_PRODUCT = { name: '', category: '', sellingPrice: '', reorderLevel: '5' };
+const EMPTY_NEW_PRODUCT = { name: '', barcode: '', category: '', sellingPrice: '', reorderLevel: '5' };
 
-// Add stock with the barcode scanner.
-// - Scan a product the shop already has: it is chosen with quantity 1.
-//   Scanning it again adds 1; or type the number that arrived.
+// Add stock with the barcode scanner, or by typing the product's name.
+// - Scan (or type the name of) a product the shop already has: it is chosen
+//   with quantity 1. Scanning it again adds 1; or type the number that arrived.
 // - Scan a barcode nobody has yet: a "New product" form opens with the
 //   barcode filled in. Saving creates the product and adds the stock.
+// - Type a name nothing matches: the same form opens with the name filled
+//   in and no barcode (for barcodes that will not scan; one can be typed).
 function AddStockPage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -23,7 +24,6 @@ function AddStockPage() {
   const [current, setCurrent] = useState(null);
   const [quantity, setQuantity] = useState('1');
   const [newProduct, setNewProduct] = useState(EMPTY_NEW_PRODUCT);
-  const [barcode, setBarcode] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -31,6 +31,7 @@ function AddStockPage() {
   const scanRef = useRef(null);
   const quantityRef = useRef(null);
   const nameRef = useRef(null);
+  const priceRef = useRef(null);
 
   // Load products, categories and recent deliveries when the page opens.
   useEffect(() => {
@@ -84,11 +85,21 @@ function AddStockPage() {
     setTimeout(() => nameRef.current?.focus(), 0);
   }
 
-  // Every scan (in the barcode box or anywhere on the page) comes here.
+  // Opens the "New product" form for a typed name, with no barcode.
+  function startNewProductByName(name) {
+    setError('');
+    setMessage('');
+    setCurrent({ kind: 'new', barcode: '' });
+    setNewProduct({ ...EMPTY_NEW_PRODUCT, name });
+    setQuantity('1');
+    setTimeout(() => priceRef.current?.focus(), 0);
+  }
+
+  // Every scan (in the box or anywhere on the page) comes here.
   function handleScan(code) {
-    setBarcode('');
     const product = products.find((p) => p.barcode === code);
     if (product) chooseExisting(product);
+    else if (current?.kind === 'new' && !current.barcode) setNewProduct((p) => ({ ...p, barcode: code })); // the typed-in product's barcode
     else startNewProduct(code);
   }
   useGlobalScanner(handleScan, !loading);
@@ -133,7 +144,7 @@ function AddStockPage() {
         if (newProduct.sellingPrice === '' || Number(newProduct.sellingPrice) < 0) throw new Error('Enter the selling price.');
         const created = await api.post('/products', {
           name: newProduct.name.trim(),
-          barcode: current.barcode,
+          barcode: current.barcode || newProduct.barcode.trim(),
           category: newProduct.category,
           sellingPrice: Number(newProduct.sellingPrice),
           quantity: 0,
@@ -158,20 +169,23 @@ function AddStockPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Add stock" lead="Scan each product as it arrives. A barcode the shop does not have yet becomes a new product." />
+      <PageHeader title="Add stock" lead="Scan each product as it arrives, or type its name if the barcode will not scan. A product the shop does not have yet becomes a new product." />
 
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {message && <div className="notice notice-success" role="status">{message}</div>}
 
-      <section className="panel form-grid" aria-label="Scan">
+      <section className="panel" aria-label="Scan or type">
         <div className="field">
-          <label className="field-label" htmlFor="stock-barcode">Scan the barcode</label>
-          <BarcodeInput id="stock-barcode" value={barcode} onChange={setBarcode} onEnter={handleScan} inputRef={scanRef} autoFocus />
-          <ScannerStatus readyText="Scanner ready: scan a product to add it to stock." />
-        </div>
-        <div className="field">
-          <label className="field-label" htmlFor="stock-search">No barcode? Find it by name</label>
-          <ProductSearch id="stock-search" products={products} onSelect={chooseExisting} />
+          <label className="field-label" htmlFor="stock-barcode">Scan a barcode or type a product name</label>
+          <StockLookupBox
+            id="stock-barcode"
+            products={products}
+            onBarcode={handleScan}
+            onPick={chooseExisting}
+            onNewProduct={startNewProductByName}
+            inputRef={scanRef}
+          />
+          <ScannerStatus readyText="Scanner ready: scan a product, or type part of its name (e.g. nivea) and press Enter." />
         </div>
       </section>
 
@@ -201,7 +215,9 @@ function AddStockPage() {
         <form className="panel form-grid" onSubmit={handleSubmit} aria-labelledby="new-heading">
           <div className="span-all">
             <h2 id="new-heading">New product</h2>
-            <p className="muted">No product has the barcode <strong>{current.barcode}</strong> yet. Fill in its details to add it.</p>
+            {current.barcode
+              ? <p className="muted">No product has the barcode <strong>{current.barcode}</strong> yet. Fill in its details to add it.</p>
+              : <p className="muted">A product without a barcode. It can be found by typing its name, here and at the till.</p>}
           </div>
           <div className="field span-all">
             <label className="field-label" htmlFor="new-name">Name</label>
@@ -209,7 +225,7 @@ function AddStockPage() {
           </div>
           <div className="field">
             <label className="field-label" htmlFor="new-price">Selling price (₦)</label>
-            <input id="new-price" type="number" min="0" step="any" inputMode="decimal" value={newProduct.sellingPrice} onChange={(e) => setField('sellingPrice', e.target.value)} required />
+            <input id="new-price" ref={priceRef} type="number" min="0" step="any" inputMode="decimal" value={newProduct.sellingPrice} onChange={(e) => setField('sellingPrice', e.target.value)} required />
           </div>
           <div className="field">
             <label className="field-label" htmlFor="new-category">Category</label>
@@ -221,8 +237,15 @@ function AddStockPage() {
           <div className="field">
             <label className="field-label" htmlFor="stock-quantity">How many arrived</label>
             <input id="stock-quantity" ref={quantityRef} type="number" min="1" step="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
-            <span className="field-help">Scan the same barcode again to add 1 more.</span>
+            <span className="field-help">{current.barcode ? 'Scan the same barcode again to add 1 more.' : 'Type the number that arrived.'}</span>
           </div>
+          {!current.barcode && (
+            <div className="field">
+              <label className="field-label" htmlFor="new-barcode">Barcode (optional)</label>
+              <input id="new-barcode" inputMode="numeric" value={newProduct.barcode} onChange={(e) => setField('barcode', e.target.value)} placeholder="Type the digits, or scan" />
+              <span className="field-help">Leave empty if the product has none.</span>
+            </div>
+          )}
           <div className="field">
             <label className="field-label" htmlFor="new-low">Low-stock level</label>
             <input id="new-low" type="number" min="0" step="1" value={newProduct.reorderLevel} onChange={(e) => setField('reorderLevel', e.target.value)} />
@@ -236,7 +259,7 @@ function AddStockPage() {
         </form>
       )}
 
-      {!current && <p className="muted">Waiting for a scan.</p>}
+      {!current && <p className="muted">Waiting for a scan or a product name.</p>}
 
       <section className="panel panel-flush" aria-labelledby="recent-heading">
         <div className="panel-head"><h2 id="recent-heading">Recently added</h2></div>

@@ -74,6 +74,13 @@ function DashboardPage() {
           <div className="btn-row"><Link to="/backup" className="btn btn-small">Open Backup and restore</Link></div>
         </div>
       )}
+      {user.role === 'owner' && !user.hasSecurityQuestions && (
+        <div className="notice notice-warning">
+          <span className="notice-title">Set your security questions</span>
+          If you ever forget your password, answering three questions lets you choose a new one. Without them, a forgotten owner password cannot be reset.
+          <div className="btn-row"><Link to="/settings#recovery" className="btn btn-small">Set them in Settings</Link></div>
+        </div>
+      )}
 
       {loading && <p className="loading">Loading today's figures...</p>}
 

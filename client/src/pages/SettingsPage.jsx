@@ -5,6 +5,7 @@ import { usePrinter } from '../context/PrintContext';
 import PageHeader from '../components/PageHeader';
 import SaleReceipt from '../components/receipts/SaleReceipt';
 import TelegramSettings from '../components/settings/TelegramSettings';
+import SecurityQuestionsSettings from '../components/settings/SecurityQuestionsSettings';
 import PrinterPicker from '../components/settings/PrinterPicker';
 
 // A made-up sale used for the preview and the "Print test receipt" button.
@@ -134,6 +135,8 @@ function SettingsPage() {
           </div>
         </section>
       </div>
+
+      <SecurityQuestionsSettings />
 
       <TelegramSettings />
     </div>

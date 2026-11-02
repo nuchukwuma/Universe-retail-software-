@@ -262,6 +262,52 @@ input[type='date'] {
   cursor: pointer;
 }
 
+/* A group of fields with its own heading (e.g. the security questions). */
+.form-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-5) 0 0;
+  border: none;
+  border-top: var(--line-thin) solid var(--color-rule);
+}
+
+.form-fieldset legend {
+  padding: 0 var(--space-3) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: 600;
+}
+
+/* The three "question + answer" rows. */
+.security-questions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.security-question {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--space-3) var(--space-4);
+}
+
+/* Stacked in the narrow first-run form, and on smaller screens. */
+.entry-form .security-question {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 1000px) {
+  .security-question {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.field-narrow {
+  max-width: var(--field-max-width);
+}
+
 /* Forms laid out on a grid: two columns on wide screens. */
 .form-grid {
   display: grid;

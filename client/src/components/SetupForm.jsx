@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import SecurityQuestionsFields from './SecurityQuestionsFields';
+import { emptySecurityAnswers, securityAnswersProblem } from '../utils/securityQuestions';
 
 // First-time setup, shown when the app has no staff accounts yet:
-// the owner names the shop and creates their own account.
+// the owner names the shop and creates their own account, with three
+// security questions for "Forgot your password?".
 function SetupForm({ onDone, onRestore }) {
   const { startSession } = useAuth();
   const { reloadSettings } = useSettings();
@@ -16,6 +19,7 @@ function SetupForm({ onDone, onRestore }) {
     confirm: '',
     loadSampleData: false,
   });
+  const [questions, setQuestions] = useState(emptySecurityAnswers);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -31,11 +35,16 @@ function SetupForm({ onDone, onRestore }) {
       setError('The two passwords are not the same. Type them again.');
       return;
     }
+    const questionsProblem = securityAnswersProblem(questions);
+    if (questionsProblem) {
+      setError(questionsProblem);
+      return;
+    }
     setSaving(true);
     setError('');
     try {
       const { confirm, ...details } = form;
-      startSession(await api.post('/setup', details));
+      startSession(await api.post('/setup', { ...details, securityQuestions: questions }));
       await reloadSettings();
       onDone();
     } catch (err) {
@@ -74,6 +83,11 @@ function SetupForm({ onDone, onRestore }) {
         <label className="field-label" htmlFor="setup-confirm">Type the password again</label>
         <input id="setup-confirm" type="password" minLength={6} value={form.confirm} onChange={(e) => setField('confirm', e.target.value)} required autoComplete="new-password" />
       </div>
+      <fieldset className="form-fieldset">
+        <legend>If you forget your password</legend>
+        <p className="muted small">Choose three questions only you can answer. If you ever forget your password, answering them lets you choose a new one.</p>
+        <SecurityQuestionsFields idPrefix="setup" rows={questions} onChange={setQuestions} />
+      </fieldset>
       <label className="check">
         <input type="checkbox" checked={form.loadSampleData} onChange={(e) => setField('loadSampleData', e.target.checked)} />
         Add sample products to practise with (you can delete them later)
