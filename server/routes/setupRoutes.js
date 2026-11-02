@@ -8,6 +8,7 @@ const { getSettings } = require('../utils/settings');
 const { loadSampleCatalogue } = require('../utils/sampleData');
 const { listBackups, restoreBackup } = require('../utils/backup');
 const { runMigrations } = require('../utils/migrations');
+const { securityQuestionsProblem } = require('../utils/securityQuestions');
 
 const router = express.Router();
 
@@ -24,23 +25,29 @@ router.get('/status', async (req, res) => {
 // POST /api/setup
 // First-time setup: creates the owner account and saves the store name.
 // Only works while there are NO staff accounts, so nobody can use it later.
-// Body: { storeName, ownerName, username, password, loadSampleData }
+// Body: { storeName, ownerName, username, password, securityQuestions, loadSampleData }
+// securityQuestions: three { question, answer }, for "Forgot your password?".
 router.post('/', async (req, res) => {
   try {
     if ((await User.countDocuments()) > 0) {
       return res.status(403).json({ message: 'This app is already set up. Please log in.' });
     }
 
-    const { storeName, ownerName, username, password, loadSampleData } = req.body;
+    const { storeName, ownerName, username, password, securityQuestions, loadSampleData } = req.body;
     if (!ownerName || !username || !password) {
       return res.status(400).json({ message: 'Enter your name, a username and a password.' });
     }
     if (password.length < 6) {
       return res.status(400).json({ message: 'The password must be at least 6 characters.' });
     }
+    const questionsProblem = securityQuestionsProblem(securityQuestions);
+    if (questionsProblem) {
+      return res.status(400).json({ message: questionsProblem });
+    }
 
     const owner = new User({ name: ownerName, username, role: 'owner' });
     await owner.setPassword(password);
+    await owner.setSecurityQuestions(securityQuestions);
     await owner.save();
 
     if (storeName && storeName.trim()) {

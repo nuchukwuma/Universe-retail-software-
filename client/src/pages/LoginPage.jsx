@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import SetupForm from '../components/SetupForm';
 import RestoreBackupForm from '../components/RestoreBackupForm';
+import ForgotPasswordForm from '../components/ForgotPasswordForm';
 import logo from '../assets/logo.png';
 
 // The sign-in screen. Every staff member signs in here first.
@@ -18,6 +19,7 @@ function LoginPage() {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [restoring, setRestoring] = useState(false); // first start: restore a backup instead
   const [restoredMessage, setRestoredMessage] = useState('');
+  const [forgotPassword, setForgotPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -68,7 +70,8 @@ function LoginPage() {
 
       {needsSetup && restoring && <RestoreBackupForm onDone={handleRestored} onCancel={() => setRestoring(false)} />}
       {needsSetup && !restoring && <SetupForm onDone={() => navigate('/dashboard')} onRestore={() => setRestoring(true)} />}
-      {!needsSetup && (
+      {!needsSetup && forgotPassword && <ForgotPasswordForm onDone={() => navigate('/dashboard')} onCancel={() => setForgotPassword(false)} />}
+      {!needsSetup && !forgotPassword && (
         <form className="entry-form" onSubmit={handleSubmit}>
           <h2>Staff sign in</h2>
           {restoredMessage && <div className="notice notice-success" role="status">{restoredMessage}</div>}
@@ -84,7 +87,7 @@ function LoginPage() {
           <button type="submit" className="btn btn-primary btn-large btn-block" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
-          <p className="muted small">Forgot your password? Ask the owner to reset it on the Staff page.</p>
+          <button type="button" className="btn btn-quiet" onClick={() => setForgotPassword(true)}>Forgot your password?</button>
         </form>
       )}
     </div>

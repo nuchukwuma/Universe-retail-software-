@@ -60,7 +60,12 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
-  const value = { user, loginTime, checkingSession, login, startSession, logout: clearSession };
+  // Replaces the signed-in user's details (e.g. after setting security questions).
+  function updateUser(newUser) {
+    setUser(newUser);
+  }
+
+  const value = { user, loginTime, checkingSession, login, startSession, updateUser, logout: clearSession };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

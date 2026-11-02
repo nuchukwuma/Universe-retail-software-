@@ -356,8 +356,12 @@
   grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
 }
 
-/* The shop's sign: the name in aqua slab on Night, like the logo. */
+/* The shop's sign: the name in aqua slab on Night, like the logo. It stays
+   in view while a long form (first-time setup) scrolls. */
 .entry-sign {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -420,6 +424,8 @@
   }
 
   .entry-sign {
+    position: static;
+    height: auto;
     padding: var(--space-6) var(--space-5);
   }
 

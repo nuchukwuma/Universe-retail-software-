@@ -37,6 +37,7 @@ owner can switch it off.
 | 10 | Redesign in the shop's own brand: the logo's black and aqua, its slab-serif lettering, skincare sample products | ✅ Done |
 | 11 | The logo on screen and on receipts, scan or type a product name with suggestions, offline check | ✅ Done |
 | 12 | No MongoDB: the app keeps the data in its own files; restore a backup on the first screen; import tool for old MongoDB/Atlas data | ✅ Done |
+| 13 | Add stock by typing a product's name (and new products without a barcode); owner security questions for "Forgot your password?" | ✅ Done |
 
 Removed along the way: the public website (the app is offline), WhatsApp sharing, the
 camera scanner, product pictures, expiry dates, suppliers, cost prices and profit,
@@ -98,12 +99,15 @@ on a Windows computer every time the code changes:
 ### Step 4: first start
 
 1. Open **Universe POS** from the desktop icon. It opens full-size.
-2. The first time, it shows **Welcome! Let's set up the shop**:
+2. The first time, it shows **First-time setup**:
    - the shop name (printed on receipts),
    - your name, a **username** and a **password** for the owner account.
      *Write them down and keep them somewhere safe.*
+   - **If you forget your password:** choose **three security questions** and answer them
+     (for example your mother's first name, the town you were born in, your favourite food).
+     If you ever forget the password, answering them lets you choose a new one.
    - Tick **"Add sample products"** if you want practice products. You can delete them later.
-3. Click **Start using the app**. You are logged in as the owner.
+3. Click **Finish setup**. You are logged in as the owner.
 
 Moving to a new laptop, or bringing data from an older version? On that first screen,
 click **Restore from a backup**, choose the folder (for example the USB drive) that holds the
@@ -220,7 +224,8 @@ on nearly every scanner.
 
 ### Adding stock with the scanner
 
-Back office → **Stock → Add stock**. No need to click anything first: just scan.
+Back office → **Stock → Add stock**. No need to click anything first: just scan, or type
+part of the product's name if its barcode will not scan.
 
 - **A product the shop already has:** it appears with **How many arrived: 1**. Scan it
   again for each extra one, or type the number, then press **Enter** (Add to stock).
@@ -229,7 +234,14 @@ Back office → **Stock → Add stock**. No need to click anything first: just s
   scan the same item again for each extra one or type how many arrived, then press
   **Enter** (Save product and add to stock). Next time it is scanned, at the till or here,
   the app knows it.
-- **No barcode on the item:** use **No barcode? Find it by name**.
+- **A barcode that will not scan, or no barcode:** type part of the name in the same box
+  (for example `nivea`). Matching products are listed under it; **Enter** (or a click) picks
+  the highlighted one, **Up/Down** choose another. Then type how many arrived and press Enter.
+- **A new product without a barcode:** type its name. When nothing matches, the list offers
+  **Add "..." as a new product**; press Enter or click it. The **New product** form opens with
+  the name filled in: type the price and how many arrived. A barcode can be typed in
+  **Barcode (optional)**, or left empty; the product is then found by typing its name, here
+  and at the till.
 - **Recently added** at the bottom shows the last deliveries and who added them.
 
 **Testing a scanner:** open Notepad, scan a barcode. The digits should appear and the
@@ -269,12 +281,24 @@ Windows Explorer address bar to open it.)
 1. On the laptop, open Universe POS, go to **Backup and restore** and click **Back up now**
    (to the USB drive), just in case.
 2. Close Universe POS.
-3. Run the new `Universe-POS-Setup-x.y.z.exe` (for example `Universe-POS-Setup-1.3.0.exe`).
+3. Run the new `Universe-POS-Setup-x.y.z.exe` (for example `Universe-POS-Setup-1.4.0.exe`).
    It replaces the old version. Your data is kept: it is in the data folder, not in the
    app. (Coming from 1.2.0 or earlier, which used MongoDB: restore the backup from step 1
    on the first screen, see Step 1 above.)
 4. Open Universe POS. On the first start it tidies data from older versions by itself
    (after making its own safety backup) and corrects the shop name if needed.
+
+### Forgot your password?
+
+- **The owner:** on the sign-in screen, click **Forgot your password?**, type your username
+  and press **Next**. Answer your three security questions (capital letters and extra spaces
+  do not matter), choose a new password, and click **Change password and sign in**. After 5
+  wrong tries in a row, answering is paused for 15 minutes.
+- **Set or change the questions:** Back office → **Settings** → *If you forget your password*.
+  Your current password is needed. Shops set up before version 1.4.0 have no questions yet:
+  the **Today** page reminds the owner until they are set.
+- **Managers and cashiers:** ask the owner to reset the password on the **Staff** page.
+- The answers are stored scrambled (like passwords), never as text.
 
 ### A note on security
 
@@ -482,10 +506,15 @@ something to sell.
 | Method | Address | Who | What it does |
 |--------|---------|-----|--------------|
 | GET | `/api/setup/status` | anyone | Is this the very first start (no staff yet)? |
-| POST | `/api/setup` | anyone, only before any staff exist | First-run setup: owner account and shop name |
+| POST | `/api/setup` | anyone, only before any staff exist | First-run setup: owner account, three security questions, shop name |
+| GET | `/api/setup/backups?folder=` | anyone, only before any staff exist | Backups in a folder (first-run "Restore from a backup") |
+| POST | `/api/setup/restore` | anyone, only before any staff exist | Restore a backup on a brand-new install |
 | POST | `/api/auth/login` | anyone | Log in, returns a token |
 | GET | `/api/auth/me` | logged in | The current user |
 | PUT | `/api/auth/change-password` | logged in | Change your own password |
+| GET | `/api/auth/recovery-questions?username=` | anyone | The owner's three security questions (never the answers) |
+| POST | `/api/auth/recover` | anyone | Right answers + new password: password changed, signed in (5 wrong = 15-minute wait) |
+| PUT | `/api/auth/security-questions` | owner (current password needed) | Set or change the security questions |
 | POST | `/api/auth/approve` | logged in | A manager's password check on a cashier's till (30-minute approval) |
 | GET / POST / PUT / DELETE | `/api/users(/:id)` | owner | Staff accounts |
 | GET | `/api/categories` | logged in | Categories with product counts |
@@ -543,7 +572,8 @@ something to sell.
   (`/mybots` → your bot → API Token) and save it in Settings.
 - **Telegram: "chat not found"**: the bot is not in the group, or the chat id is wrong. Use
   **Find my chat id** again. Group ids start with `-100`.
-- **Forgot the owner password**: another owner can reset it on the Staff page. If there is no
-  other owner, restore a backup from when you knew the password, or ask a developer to reset it.
+- **Forgot the owner password**: use **Forgot your password?** on the sign-in screen and answer
+  your three security questions. If they were never set, another owner can reset it on the
+  Staff page; otherwise restore a backup from when you knew the password.
 - **Something else**: press **Ctrl + Shift + D**, open the `logs` folder, and send
   `universe-pos.log` to whoever looks after the app.
