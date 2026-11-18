@@ -2,8 +2,9 @@
 // dated folder, and can put it all back.
 //
 // A backup folder looks like:
-//   universe-pos-backup-2026-10-27-1830/
+//   hordedesk-backup-2026-10-27-1830/
 //     collections/sales.jsonl  <- one record per line (one file per table)
+//     images/                  <- product photos and the shop's logo
 //     manifest.json            <- what is inside, and when it was made.
 //                                 Written LAST: a folder without it is an
 //                                 unfinished backup and is ignored.
@@ -21,8 +22,16 @@ const { once } = require('events');
 const { getStore, ejson } = require('../db');
 const { getSettings } = require('./settings');
 const { makeFolder, defaultBackupDir } = require('./paths');
+const { imagesFolder } = require('./images');
 
-const BACKUP_PREFIX = 'universe-pos-backup-';
+const BACKUP_PREFIX = 'hordedesk-backup-';
+// Backup folders made by earlier versions of the app can be restored too.
+const ALL_PREFIXES = [BACKUP_PREFIX, 'universe-pos-backup-'];
+
+// True if a folder name is a backup's name.
+function isBackupName(name) {
+  return ALL_PREFIXES.some((prefix) => name.startsWith(prefix));
+}
 const KEEP_AUTOMATIC_BACKUPS = 30; // older automatic backups are deleted
 const CHECK_EVERY_MS = 60 * 60 * 1000; // check once an hour if a backup is due
 const BACKUP_EVERY_MS = 24 * 60 * 60 * 1000; // automatic backup once a day
@@ -32,7 +41,7 @@ function backupFolderFrom(settings) {
   return settings.backupFolder || defaultBackupDir();
 }
 
-// Makes a folder name from the date and time, e.g. universe-pos-backup-2026-10-27-1830.
+// Makes a folder name from the date and time, e.g. hordedesk-backup-2026-10-27-1830.
 function backupName(date = new Date()) {
   const pad = (n) => String(n).padStart(2, '0');
   const stamp = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
@@ -76,6 +85,16 @@ async function exportCollection(collectionName, file) {
   return count;
 }
 
+// Copies every file of one folder into another (pictures). A missing
+// "from" folder is fine: there is nothing to copy.
+function copyFiles(from, to) {
+  if (!fs.existsSync(from)) return 0;
+  const files = fs.readdirSync(from, { withFileTypes: true }).filter((entry) => entry.isFile());
+  if (files.length) makeFolder(to);
+  files.forEach((entry) => fs.copyFileSync(path.join(from, entry.name), path.join(to, entry.name)));
+  return files.length;
+}
+
 // Deletes an unfinished backup folder. On Windows, antivirus can still be
 // reading a new file, so this may fail; that is harmless, because a folder
 // without manifest.json is ignored anyway.
@@ -106,14 +125,16 @@ async function createBackup(reason = 'manual') {
     for (const collectionName of getStore().names()) {
       counts[collectionName] = await exportCollection(collectionName, path.join(folder, 'collections', `${collectionName}.jsonl`));
     }
+    const pictures = copyFiles(imagesFolder(), path.join(folder, 'images'));
 
     const manifest = {
-      app: 'Universe POS',
+      app: 'HordeDesk',
       formatVersion: 2, // 2 = the app's own data files (1 = MongoDB, older versions)
       createdAt: new Date().toISOString(),
       reason,
       storeName: settings.storeName,
       counts,
+      pictures,
     };
     fs.writeFileSync(path.join(folder, 'manifest.json'), JSON.stringify(manifest, null, 2));
 
@@ -139,7 +160,7 @@ async function listBackups(fromFolder) {
 
   return fs
     .readdirSync(parent, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && entry.name.startsWith(BACKUP_PREFIX) && !entry.name.endsWith('.partial'))
+    .filter((entry) => entry.isDirectory() && isBackupName(entry.name) && !entry.name.endsWith('.partial'))
     .map((entry) => {
       const folder = path.join(parent, entry.name);
       try {
@@ -159,7 +180,7 @@ async function listBackups(fromFolder) {
 function pruneOldBackups(parent) {
   const automatic = fs
     .readdirSync(parent)
-    .filter((name) => name.startsWith(BACKUP_PREFIX) && !name.endsWith('.partial'))
+    .filter((name) => isBackupName(name) && !name.endsWith('.partial'))
     .map((name) => {
       try {
         const manifest = JSON.parse(fs.readFileSync(path.join(parent, name, 'manifest.json'), 'utf8'));
@@ -194,7 +215,7 @@ async function readCollectionFile(file) {
 async function restoreBackup(name, fromFolder) {
   const parent = fromFolder || backupFolderFrom(await getSettings());
   // Only a plain folder name is allowed (no "..\" tricks).
-  if (path.basename(name) !== name || !name.startsWith(BACKUP_PREFIX)) {
+  if (path.basename(name) !== name || !isBackupName(name)) {
     throw new Error('That is not a backup name.');
   }
   const folder = path.join(parent, name);
@@ -224,6 +245,7 @@ async function restoreBackup(name, fromFolder) {
     store.replaceAll(collectionName, records);
     counts[collectionName] = records.length;
   }
+  copyFiles(path.join(folder, 'images'), imagesFolder()); // the pictures the records refer to
   return { name, counts };
 }
 

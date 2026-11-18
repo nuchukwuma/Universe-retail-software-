@@ -4,6 +4,7 @@ const StockMovement = require('../models/StockMovement');
 const { requireLogin, requireRole } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
 const { logStockMovement } = require('../utils/stockHelpers');
+const { isValidId } = require('../db');
 
 const router = express.Router();
 
@@ -11,8 +12,9 @@ const router = express.Router();
 router.use(requireLogin, requireRole('owner', 'manager'));
 
 // POST /api/stock/receive
-// Adds delivered stock to a product.
-// Body: { productId, quantity, note? }
+// Adds delivered stock to a product. If the cost of one is given, it
+// becomes the product's cost price (for profit).
+// Body: { productId, quantity, unitCost?, supplierId?, note? }
 router.post('/receive', async (req, res) => {
   try {
     const { productId, note } = req.body;
@@ -24,15 +26,23 @@ router.post('/receive', async (req, res) => {
     if (!Number.isInteger(quantity) || quantity <= 0) {
       return res.status(400).json({ message: 'Quantity must be a whole number above 0.' });
     }
+    const hasCost = req.body.unitCost !== undefined && req.body.unitCost !== null && req.body.unitCost !== '';
+    const unitCost = hasCost ? Number(req.body.unitCost) : null;
+    if (hasCost && (!Number.isFinite(unitCost) || unitCost < 0)) {
+      return res.status(400).json({ message: 'The cost must be a number, 0 or more.' });
+    }
+    const supplier = isValidId(req.body.supplierId) ? req.body.supplierId : null;
 
     // $inc adds to the quantity in one step, so two people receiving
     // stock at the same time cannot overwrite each other.
-    const product = await Product.findByIdAndUpdate(productId, { $inc: { quantity } }, { new: true });
+    const change = { $inc: { quantity } };
+    if (hasCost || supplier) change.$set = { ...(hasCost ? { costPrice: unitCost } : {}), ...(supplier ? { supplier } : {}) };
+    const product = await Product.findByIdAndUpdate(productId, change, { new: true });
     if (!product) {
       return res.status(404).json({ message: 'Product not found.' });
     }
 
-    await logStockMovement({ product, type: 'receive', change: quantity, user: req.user, note });
+    await logStockMovement({ product, type: 'receive', change: quantity, user: req.user, note, unitCost, supplier });
 
     res.json({ message: `Added ${quantity} to ${product.name}. New stock: ${product.quantity}.`, product });
   } catch (error) {

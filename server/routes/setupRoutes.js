@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const handleError = require('../utils/handleError');
 const { getSettings } = require('../utils/settings');
-const { loadSampleCatalogue } = require('../utils/sampleData');
+const { loadSampleCatalogue, sampleCatalogueChoices } = require('../utils/sampleData');
 const { listBackups, restoreBackup } = require('../utils/backup');
 const { runMigrations } = require('../utils/migrations');
 const { securityQuestionsProblem } = require('../utils/securityQuestions');
@@ -16,7 +16,7 @@ const router = express.Router();
 // Tells the app whether this is the very first start (no staff accounts yet).
 router.get('/status', async (req, res) => {
   try {
-    res.json({ needsSetup: (await User.countDocuments()) === 0 });
+    res.json({ needsSetup: (await User.countDocuments()) === 0, sampleCatalogues: sampleCatalogueChoices() });
   } catch (error) {
     handleError(res, error, 'Could not check setup.');
   }
@@ -26,6 +26,7 @@ router.get('/status', async (req, res) => {
 // First-time setup: creates the owner account and saves the store name.
 // Only works while there are NO staff accounts, so nobody can use it later.
 // Body: { storeName, ownerName, username, password, securityQuestions, loadSampleData }
+// loadSampleData: '' (none) or a sample set: 'general' or 'beauty'.
 // securityQuestions: three { question, answer }, for "Forgot your password?".
 router.post('/', async (req, res) => {
   try {
@@ -57,7 +58,7 @@ router.post('/', async (req, res) => {
     }
 
     if (loadSampleData) {
-      await loadSampleCatalogue(() => {});
+      await loadSampleCatalogue(typeof loadSampleData === 'string' ? loadSampleData : 'general', () => {});
     }
 
     // Log the owner straight in.

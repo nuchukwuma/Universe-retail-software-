@@ -15,10 +15,10 @@ const path = require('path');
 
 const PUBLIC_DNS_SERVERS = ['1.1.1.1', '8.8.8.8'];
 
-// Makes a backup folder name like universe-pos-backup-2026-11-02-091500-from-mongodb.
+// Makes a backup folder name like hordedesk-backup-2026-11-02-091500-from-mongodb.
 function folderName(date = new Date()) {
   const pad = (n) => String(n).padStart(2, '0');
-  return `universe-pos-backup-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}-from-mongodb`;
+  return `hordedesk-backup-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}-from-mongodb`;
 }
 
 // Connects, trying public DNS once if the router refuses Atlas's special lookup.
@@ -69,12 +69,12 @@ async function main() {
       counts[name] = lines.length;
       console.log(`  ${name}: ${lines.length}`);
     }
-    if (!counts.users) throw new Error('This database has no staff accounts, so it is not a Universe POS shop. Check the database name in the address.');
+    if (!counts.users) throw new Error('This database has no staff accounts, so it is not a shop made with this app. Check the database name in the address.');
 
     const settings = await db.collection('settings').findOne();
     // Written last: a folder without it is never mistaken for a complete backup.
     fs.writeFileSync(path.join(folder, 'manifest.json'), JSON.stringify({
-      app: 'Universe POS',
+      app: 'HordeDesk',
       formatVersion: 1,
       createdAt: new Date().toISOString(),
       reason: 'import',
@@ -83,7 +83,7 @@ async function main() {
     }, null, 2));
 
     console.log(`\nDone. The shop's data is in:\n  ${folder}`);
-    console.log(`\nNow open Universe POS and restore it:\n  - first start: "Restore from a backup", folder: ${parent}\n  - or Back office -> Backup and restore -> choose the folder ${parent} -> Restore`);
+    console.log(`\nNow open HordeDesk and restore it:\n  - first start: "Restore from a backup", folder: ${parent}\n  - or Back office -> Backup and restore -> choose the folder ${parent} -> Restore`);
   } finally {
     await client.close();
   }

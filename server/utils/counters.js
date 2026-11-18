@@ -40,4 +40,11 @@ async function nextReturnNumber() {
   return `R${dateCode}-${String(number).padStart(4, '0')}`;
 }
 
-module.exports = { nextCounterValue, nextReceiptNumber, nextReturnNumber, lagosDateCode };
+// Returns the next purchase order number, e.g. "P261118-0002".
+async function nextPurchaseNumber() {
+  const dateCode = lagosDateCode();
+  const number = await nextCounterValue(`purchase-${dateCode}`);
+  return `P${dateCode}-${String(number).padStart(4, '0')}`;
+}
+
+module.exports = { nextCounterValue, nextReceiptNumber, nextReturnNumber, nextPurchaseNumber, lagosDateCode };

@@ -16,7 +16,7 @@ async function runSeed() {
     await connectDB();
     console.log('Seeding...');
     await seedSampleUsers();
-    await loadSampleCatalogue();
+    await loadSampleCatalogue(process.argv[2] || 'general'); // npm run seed -- beauty
     console.log('Seeding finished.');
   } catch (error) {
     console.error('Seeding failed:', error.message);

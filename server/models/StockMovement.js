@@ -13,6 +13,9 @@ const stockMovementSchema = new db.Schema(
     quantityChange: { type: Number, required: true },
     quantityAfter: { type: Number, required: true },
     note: { type: String, default: '' },
+    unitCost: { type: Number, default: null }, // what one cost, when stock was bought
+    supplier: { type: db.Schema.Types.ObjectId, ref: 'Supplier', default: null },
+    purchase: { type: db.Schema.Types.ObjectId, ref: 'Purchase', default: null },
     user: { type: db.Schema.Types.ObjectId, ref: 'User' },
     userName: { type: String, default: '' },
   },

@@ -15,7 +15,10 @@ const { mondayOf } = require('./dates');
 // Lagos time. Nigeria is always UTC+1 (no summer time), and the fixed
 // offset is about 25 times quicker to work out than the zone's name.
 const TIMEZONE = '+01:00';
-const MONEY_FIELDS = ['grossSales', 'discounts', 'netSales', 'refunds'];
+const MONEY_FIELDS = ['grossSales', 'discounts', 'netSales', 'refunds', 'costOfGoods'];
+
+// How many of a sale line the customer kept (sold minus returned).
+const KEPT = { $subtract: ['$$line.quantity', { $ifNull: ['$$line.returnedQuantity', 0] }] };
 
 // Step that works out the useful numbers for each single sale.
 const SALE_NUMBERS_STEP = {
@@ -28,6 +31,10 @@ const SALE_NUMBERS_STEP = {
     total: 1,
     refunds: { $ifNull: ['$refundedTotal', 0] },
     itemsSold: { $sum: '$items.quantity' },
+    // What the kept items cost the shop (cost price when sold x kept).
+    costOfGoods: { $sum: { $map: { input: '$items', as: 'line', in: { $multiply: [{ $ifNull: ['$$line.costPrice', 0] }, KEPT] } } } },
+    // Kept items whose cost was not known (their profit is overstated).
+    itemsWithoutCost: { $sum: { $map: { input: '$items', as: 'line', in: { $cond: [{ $gt: [{ $ifNull: ['$$line.costPrice', 0] }, 0] }, 0, KEPT] } } } },
   },
 };
 
@@ -39,9 +46,13 @@ const GROUP_TOTALS = {
   discounts: { $sum: '$discountTotal' },
   netSales: { $sum: '$total' },
   refunds: { $sum: '$refunds' },
+  costOfGoods: { $sum: '$costOfGoods' },
+  itemsWithoutCost: { $sum: '$itemsWithoutCost' },
 };
 
-// Rounds every money field and adds takings and the average sale.
+// Rounds every money field and adds takings, profit and the average sale.
+//   takings = sales total - refunds
+//   profit  = takings - what the kept items cost the shop
 function finishRow(row) {
   const rounded = { ...row };
   MONEY_FIELDS.forEach((key) => {
@@ -49,7 +60,9 @@ function finishRow(row) {
   });
   rounded.transactions = row.transactions || 0;
   rounded.itemsSold = row.itemsSold || 0;
+  rounded.itemsWithoutCost = row.itemsWithoutCost || 0;
   rounded.takings = roundMoney(rounded.netSales - rounded.refunds);
+  rounded.profit = roundMoney(rounded.takings - rounded.costOfGoods);
   rounded.averageSale = rounded.transactions ? Math.round(rounded.netSales / rounded.transactions) : 0;
   return rounded;
 }
@@ -60,9 +73,11 @@ function addRows(rows, extra = {}) {
   MONEY_FIELDS.forEach((key) => {
     total[key] = 0;
   });
+  total.itemsWithoutCost = 0;
   rows.forEach((row) => {
     total.transactions += row.transactions;
     total.itemsSold += row.itemsSold;
+    total.itemsWithoutCost += row.itemsWithoutCost || 0;
     MONEY_FIELDS.forEach((key) => {
       total[key] += row[key];
     });
@@ -134,6 +149,7 @@ async function productSales(createdAt) {
         kept: { $subtract: ['$items.quantity', { $ifNull: ['$items.returnedQuantity', 0] }] },
         lineTotal: '$items.lineTotal',
         quantity: '$items.quantity',
+        costPrice: { $ifNull: ['$items.costPrice', 0] },
         paidShare: 1,
       },
     },
@@ -143,13 +159,21 @@ async function productSales(createdAt) {
         name: 1,
         kept: 1,
         revenue: { $multiply: ['$lineTotal', '$paidShare', { $divide: ['$kept', '$quantity'] }] },
+        cost: { $multiply: ['$costPrice', '$kept'] },
       },
     },
-    { $group: { _id: '$product', name: { $last: '$name' }, quantity: { $sum: '$kept' }, revenue: { $sum: '$revenue' } } },
+    { $group: { _id: '$product', name: { $last: '$name' }, quantity: { $sum: '$kept' }, revenue: { $sum: '$revenue' }, cost: { $sum: '$cost' } } },
     { $sort: { quantity: -1, revenue: -1 } },
   ]);
 
-  return rows.map((row) => ({ product: row._id, name: row.name, quantity: row.quantity, revenue: Math.round(row.revenue) }));
+  return rows.map((row) => ({
+    product: row._id,
+    name: row.name,
+    quantity: row.quantity,
+    revenue: Math.round(row.revenue),
+    cost: Math.round(row.cost),
+    profit: Math.round(row.revenue) - Math.round(row.cost),
+  }));
 }
 
 module.exports = { dailySales, weeklySales, salesByCashier, salesSummary, productSales, addRows };

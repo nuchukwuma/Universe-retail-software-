@@ -6,6 +6,7 @@
 const User = require('../models/User');
 const Category = require('../models/Category');
 const Product = require('../models/Product');
+const Supplier = require('../models/Supplier');
 const sample = require('../seedData');
 
 // Creates each sample staff account if that username does not exist yet.
@@ -26,40 +27,58 @@ async function seedSampleUsers(log = console.log) {
 
 // Creates each sample category if it does not exist yet.
 // Returns an object that maps category name -> category id.
-async function seedCategories(log) {
+async function seedCategories(names, log) {
   const idByName = {};
-  for (const item of sample.categories) {
-    let category = await Category.findOne({ name: item.name });
+  for (const name of names) {
+    let category = await Category.findOne({ name });
     if (!category) {
-      category = await Category.create(item);
-      log(`+ Created category "${item.name}"`);
+      category = await Category.create({ name });
+      log(`+ Created category "${name}"`);
     }
-    idByName[item.name] = category._id;
+    idByName[name] = category._id;
+  }
+  return idByName;
+}
+
+// Creates each sample supplier if it does not exist yet.
+// Returns an object that maps supplier name -> supplier id.
+async function seedSuppliers(list, log) {
+  const idByName = {};
+  for (const item of list) {
+    let supplier = await Supplier.findOne({ name: item.name });
+    if (!supplier) {
+      supplier = await Supplier.create(item);
+      log(`+ Created supplier "${item.name}"`);
+    }
+    idByName[item.name] = supplier._id;
   }
   return idByName;
 }
 
 // Creates each sample product if a product with that name does not exist.
-async function seedProducts(categoryIdByName, log) {
+async function seedProducts(products, categoryIds, supplierIds, log) {
   let created = 0;
-
-  for (const item of sample.products) {
-    const exists = await Product.findOne({ name: item.name });
-    if (!exists) {
-      const { category, ...fields } = item;
-      await Product.create({ ...fields, category: categoryIdByName[category] });
-      created += 1;
-    }
+  for (const item of products) {
+    if (await Product.findOne({ name: item.name })) continue;
+    const { category, supplier, ...fields } = item;
+    await Product.create({ ...fields, category: categoryIds[category], supplier: supplier ? supplierIds[supplier] : null });
+    created += 1;
   }
-
-  log(`+ Created ${created} product(s), ${sample.products.length - created} already existed`);
+  log(`+ Created ${created} product(s), ${products.length - created} already existed`);
 }
 
-// Adds the sample categories and products
-// (but NOT the sample staff accounts).
-async function loadSampleCatalogue(log = console.log) {
-  const categoryIds = await seedCategories(log);
-  await seedProducts(categoryIds, log);
+// The sample sets a shop can choose from: [{ key, label }].
+function sampleCatalogueChoices() {
+  return Object.entries(sample.catalogues).map(([key, catalogue]) => ({ key, label: catalogue.label }));
 }
 
-module.exports = { seedSampleUsers, loadSampleCatalogue };
+// Adds one sample set's suppliers, categories and products
+// (but NOT the sample staff accounts). "key" is 'general' or 'beauty'.
+async function loadSampleCatalogue(key = 'general', log = console.log) {
+  const catalogue = sample.catalogues[key] || sample.catalogues.general;
+  const supplierIds = await seedSuppliers(catalogue.suppliers, log);
+  const categoryIds = await seedCategories(catalogue.categories, log);
+  await seedProducts(catalogue.products, categoryIds, supplierIds, log);
+}
+
+module.exports = { seedSampleUsers, loadSampleCatalogue, sampleCatalogueChoices };

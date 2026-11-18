@@ -4,7 +4,7 @@ const fs = require('fs');
 // Where the app keeps its files on this computer.
 // - In development: inside the server folder.
 // - In the desktop app: DATA_DIR is set to the user's AppData folder,
-//   e.g. C:\Users\Ada\AppData\Roaming\Universe POS
+//   e.g. C:\Users\Ada\AppData\Roaming\HordeDesk
 function dataDir() {
   return process.env.DATA_DIR || path.join(__dirname, '..');
 }

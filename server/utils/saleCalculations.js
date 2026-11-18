@@ -50,6 +50,7 @@ function buildSaleItems(requestItems, productsById) {
       name: product.name,
       barcode: product.barcode || '',
       unitPrice,
+      costPrice: product.costPrice || 0, // for profit reports
       quantity,
       discountType: discount > 0 ? discountType : '',
       discountValue: discount > 0 ? Number(line.discountValue) : 0,
