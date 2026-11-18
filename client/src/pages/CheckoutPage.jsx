@@ -254,8 +254,8 @@ function CheckoutPage() {
   // Puts the current bill on hold and empties the till.
   async function saveHeld(label) {
     await api.post('/held-bills', {
-      label: label || `Bill ${new Date().toLocaleTimeString('en-NG', { hour: 'numeric', minute: '2-digit' })}`,
-      bill,
+      label: label || bill.label || `Bill ${new Date().toLocaleTimeString('en-NG', { hour: 'numeric', minute: '2-digit' })}`,
+      bill: { ...bill, label: undefined },
       itemCount: totals.quantityCount,
       total: totals.total,
     });
@@ -311,7 +311,7 @@ function CheckoutPage() {
     // Products deleted while the bill was on hold cannot be sold.
     const items = held.bill.items.filter((item) => productsById[item.productId]);
     const removed = held.bill.items.length - items.length;
-    loadBill({ ...held.bill, items });
+    loadBill({ ...held.bill, items, label: held.label });
     closeModal();
     showToast(removed > 0 ? `Bill recalled. ${removed} deleted product(s) were taken off.` : 'Bill recalled', 'success');
     loadProducts();
@@ -352,7 +352,7 @@ function CheckoutPage() {
   return (
     <div className="till">
       <section className="till-bill" aria-label="Bill">
-        <HeldBillTabs heldBills={heldBills} currentCount={totals.quantityCount} onSwitch={switchToHeld} onDelete={deleteHeld} />
+        <HeldBillTabs heldBills={heldBills} currentLabel={bill.label} currentCount={totals.quantityCount} onSwitch={switchToHeld} onDelete={deleteHeld} />
 
         <ScanBox ref={scanRef} products={products} onSubmit={handleCode} onPick={addToBill} paused={modal !== null}>
           {scanResult?.kind === 'added' && <p className="scan-result success-text">{scanResult.text}</p>}
