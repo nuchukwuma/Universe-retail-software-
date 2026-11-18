@@ -78,9 +78,9 @@ function SalesHistoryPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Sales history" lead="Find a sale to print a copy of its receipt or to return items." />
+      <PageHeader title="Sales history" />
 
-      <ScannerStatus readyText="Scanner ready: scan the barcode on a receipt to find that sale." paused={modal !== null} pausedText="Scanner paused while a window is open." />
+      <ScannerStatus paused={modal !== null} />
       {error && <div className="notice notice-error" role="alert">{error}</div>}
 
       <div className="panel toolbar">
@@ -97,7 +97,6 @@ function SalesHistoryPage() {
           <DateInput id="history-to" value={to} onChange={(e) => setTo(e.target.value)} disabled={searching} />
         </div>
       </div>
-      {searching && <p className="muted small">Searching every date. Clear the search to filter by date again.</p>}
 
       <section className="panel panel-flush" aria-label="Sales">
         <div className="panel-head">

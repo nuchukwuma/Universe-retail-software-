@@ -33,7 +33,7 @@ function WeeklySalesReport({ from, to }) {
       />
       <ReportTable
         title="Weekly sales"
-        subtitle={`${formatDate(from)} to ${formatDate(to)}. Weeks run Monday to Sunday; the first and last week may be part weeks.`}
+        subtitle={`${formatDate(from)} to ${formatDate(to)}`}
         fileName={`weekly-sales-${from}-to-${to}.xlsx`}
         columns={COLUMNS}
         rows={data.rows.map((row) => ({ ...row, _key: row.weekStart }))}

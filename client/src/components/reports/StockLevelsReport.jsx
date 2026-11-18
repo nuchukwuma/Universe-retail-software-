@@ -33,8 +33,8 @@ function StockLevelsReport({ from, to }) {
     <>
       <ReportFigures
         figures={[
-          { label: 'Stock value', value: totals.stockValue, type: 'money', note: 'everything in stock at its selling price' },
-          { label: 'Low stock', value: totals.lowCount, type: 'number', note: 'at or below their low-stock level' },
+          { label: 'Stock value', value: totals.stockValue, type: 'money', note: 'at selling price' },
+          { label: 'Low stock', value: totals.lowCount, type: 'number' },
           { label: 'Out of stock', value: totals.outCount, type: 'number' },
         ]}
       />
@@ -51,7 +51,7 @@ function StockLevelsReport({ from, to }) {
       </div>
       <ReportTable
         title="Stock levels"
-        subtitle={`Stock now. Sales from ${formatDate(from)} to ${formatDate(to)}. "Days of stock left" assumes it keeps selling at the same speed.`}
+        subtitle={`Sales from ${formatDate(from)} to ${formatDate(to)}`}
         fileName={`stock-levels-${to}.xlsx`}
         columns={COLUMNS}
         rows={rows}

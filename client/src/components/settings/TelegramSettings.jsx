@@ -95,7 +95,6 @@ function TelegramSettings() {
     <section className="panel stack" aria-labelledby="telegram-heading">
       <div>
         <h2 id="telegram-heading">Telegram sales alerts</h2>
-        <p className="muted">A message to your Telegram group after every sale. This is the only thing the app sends over the internet.</p>
       </div>
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {message && <div className="notice notice-success" role="status">{message}</div>}
@@ -225,9 +224,6 @@ function TelegramSettings() {
           </table>
         </div>
       )}
-      <p className="muted small">
-        If the internet is down, sales still complete. Alerts wait and are sent again by themselves after 1, 2, 5, 10 and 30 minutes, then every hour.
-      </p>
     </section>
   );
 }

@@ -516,7 +516,7 @@ input[type='date'] {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   margin: 0;
-  border-top: var(--line-strong) solid var(--color-rule-strong);
+  border-top: var(--line-thin) solid var(--color-rule);
 }
 
 .figure {
@@ -563,7 +563,7 @@ a.figure-link:hover dd {
   display: flex;
   flex-wrap: wrap;
   gap: 0;
-  border-bottom: var(--line-strong) solid var(--color-rule-strong);
+  border-bottom: var(--line-thin) solid var(--color-rule);
 }
 
 .tab {
@@ -676,7 +676,7 @@ a.figure-link:hover dd {
    says what kind of message it is. */
 .toast {
   position: fixed;
-  top: calc(var(--topbar-height) + var(--space-4));
+  bottom: var(--space-6);
   left: 50%;
   z-index: 60;
   max-width: calc(100vw - 32px);
@@ -690,7 +690,7 @@ a.figure-link:hover dd {
 }
 
 .toast-success {
-  border-left-color: var(--color-brand);
+  border-left-color: #4ade80;
 }
 
 .toast-error {
@@ -777,4 +777,23 @@ a.figure-link:hover dd {
 .product-search-empty {
   padding: var(--space-4);
   color: var(--color-text-muted);
+}
+
+/* ---------- Product picture, or initials on the category colour ---------- */
+
+.thumb {
+  display: block;
+  flex: none;
+  object-fit: cover;
+  background: var(--color-surface-sunken);
+}
+
+.thumb-initials {
+  display: grid;
+  place-items: center;
+  background: var(--tone, var(--tile-8));
+  color: var(--tone-text, var(--tile-8-text));
+  font-size: var(--font-size-5);
+  font-weight: 750;
+  letter-spacing: 0.02em;
 }

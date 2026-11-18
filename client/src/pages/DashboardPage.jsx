@@ -60,7 +60,7 @@ function DashboardPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Today" lead={`How the shop is doing on ${formatDate(today)}.`}>
+      <PageHeader title="Today">
         <Link to="/reports" className="btn">All reports</Link>
       </PageHeader>
 

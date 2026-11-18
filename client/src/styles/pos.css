@@ -1,20 +1,13 @@
 /* ==========================================================================
-   The till (sales screen). See DESIGN.md "Sales screen".
-   Left: the white bill on the Mist floor. Right: the Night counter with the
-   total, Complete sale and the other actions. The Night top bar and the
-   counter make one black frame, like the counter under the shop's sign.
+   The till (sales screen). See DESIGN.md "The till".
+   Left: the bill (tabs, scan box, lines, actions, total, Complete sale).
+   Right: category buttons and product tiles.
    ========================================================================== */
 
 .till {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
-.till-main {
   display: grid;
-  flex: 1;
-  grid-template-columns: minmax(0, 1fr) var(--ticket-width);
+  grid-template-columns: var(--bill-width) minmax(0, 1fr);
+  height: 100%;
   min-height: 0;
 }
 
@@ -22,36 +15,101 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  margin: var(--gutter);
-  border-radius: var(--corner-panel);
+  border-right: var(--line-thin) solid var(--color-rule);
   background: var(--color-surface);
 }
 
-.till-side {
+/* ---------- Bill tabs: the current bill and bills on hold ---------- */
+
+.bill-tabs {
   display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow-y: auto;
-  background: var(--color-night);
-  color: var(--color-on-night);
+  flex: none;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) 0;
+  overflow-x: auto;
+  border-bottom: var(--line-thin) solid var(--color-rule);
+  background: var(--color-surface-sunken);
+  scrollbar-width: thin;
 }
 
-/* On Night, the keyboard outline is aqua. */
-.till-side :focus-visible {
-  outline-color: var(--color-brand);
+.bill-tab-wrap {
+  position: relative;
+  display: flex;
+  flex: none;
+}
+
+.bill-tab {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 104px;
+  max-width: 160px;
+  padding: var(--space-3) var(--space-4);
+  border: var(--line-thin) solid transparent;
+  border-bottom: none;
+  border-radius: var(--radius-8) var(--radius-8) 0 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.bill-tab-wrap .bill-tab {
+  padding-right: var(--space-6);
+}
+
+.bill-tab:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.bill-tab[aria-selected='true'] {
+  margin-bottom: -1px;
+  border-color: var(--color-rule);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: inset 0 var(--current-bar) 0 var(--color-accent);
+}
+
+.bill-tab-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--text-small);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bill-tab-sub {
+  font-size: var(--text-small);
+}
+
+.bill-tab-delete {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--radius-6);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.bill-tab-delete:hover {
+  background: var(--color-danger-surface);
+  color: var(--color-danger-text);
 }
 
 /* ---------- Scan box ---------- */
 
 .scan {
-  padding: var(--space-5) var(--panel-padding) var(--space-4);
-  border-bottom: var(--line-thin) solid var(--color-rule);
-}
-
-.scan-label {
-  display: block;
-  margin-bottom: var(--space-2);
-  font-weight: 700;
+  flex: none;
+  padding: var(--space-4) var(--space-4) var(--space-2);
 }
 
 .scan-row {
@@ -59,19 +117,28 @@
   gap: var(--space-3);
 }
 
+.scan-icon {
+  position: absolute;
+  top: 50%;
+  left: var(--space-4);
+  color: var(--color-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
 .scan-row input.scan-input {
   min-height: var(--button-height-large);
-  border: var(--line-strong) solid var(--color-text);
-  font-size: var(--scan-font-size);
-  font-weight: 650;
-  letter-spacing: 0.02em;
+  padding-left: 44px;
+  border-width: var(--line-strong);
+  font-size: var(--font-size-3);
+  font-weight: 600;
 }
 
 .scan-row .btn {
   min-height: var(--button-height-large);
 }
 
-/* The box and its list of matching products. */
+/* The box and its list of matching products (also on Add stock). */
 .scan-field {
   position: relative;
   flex: 1;
@@ -85,10 +152,12 @@
   right: 0;
   z-index: 30;
   max-height: 60vh;
+  min-width: 320px;
   overflow-y: auto;
-  border: var(--line-strong) solid var(--color-text);
+  border: var(--line-thin) solid var(--color-control-border);
   border-radius: var(--corner-control);
   background: var(--color-surface);
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.16);
 }
 
 .scan-suggestions ul {
@@ -101,14 +170,13 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-4);
   min-height: var(--bill-row-height);
-  padding: var(--space-2) var(--space-5);
+  padding: var(--space-2) var(--space-4);
   border-bottom: var(--line-thin) solid var(--color-rule);
   cursor: pointer;
 }
 
-/* The one Enter will add: aqua glow with a deep aqua edge, like a just-scanned line. */
 .scan-suggestions li.is-active {
   background: var(--color-highlight);
   box-shadow: inset var(--current-bar) 0 0 var(--color-accent);
@@ -127,14 +195,14 @@
 
 .scan-suggestions-hint,
 .scan-suggestions-empty {
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-4);
   background: var(--color-surface-sunken);
   color: var(--color-text-muted);
   font-size: var(--text-small);
 }
 
 .scan-suggestions-empty {
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-4);
   font-size: var(--text-body);
 }
 
@@ -142,60 +210,72 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--space-2) var(--space-5);
-  min-height: var(--space-6);
-  margin-top: var(--space-3);
+  gap: var(--space-1) var(--space-4);
+  min-height: 22px;
+  margin-top: var(--space-2);
+  font-size: var(--text-small);
 }
 
 .scan-result {
+  overflow: hidden;
   font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* "Product not found" and other messages under the scan box. */
-.till-bill > .notice {
-  margin: var(--space-4) var(--panel-padding) 0;
+.till-notice {
+  flex: none;
+  margin: var(--space-2) var(--space-4);
 }
 
-.till > .notice {
-  margin: var(--gutter) var(--gutter) 0;
-}
-
-/* ---------- Bill ---------- */
+/* ---------- Bill lines ---------- */
 
 .bill-lines {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  border-radius: 0 0 var(--corner-panel) var(--corner-panel);
+  border-top: var(--line-thin) solid var(--color-rule);
 }
 
-.bill-table {
-  font-size: var(--text-body);
+.bill-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.bill-table th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--color-surface);
+.bill-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--bill-row-height);
+  padding: var(--space-3) var(--space-2) var(--space-3) var(--space-4);
+  border-bottom: var(--line-thin) solid var(--color-rule);
 }
 
-.bill-table th:first-child,
-.bill-table td:first-child {
-  padding-left: var(--panel-padding);
+.bill-line.is-just-scanned {
+  background: var(--color-highlight-soft);
+  box-shadow: inset var(--current-bar) 0 0 var(--color-accent);
+  animation: just-scanned 600ms ease-out;
 }
 
-.bill-table th:last-child,
-.bill-table td:last-child {
-  padding-right: var(--panel-padding);
+@keyframes just-scanned {
+  from {
+    background: var(--color-highlight);
+  }
 }
 
-.bill-table td {
-  height: var(--bill-row-height);
+.bill-line-main {
+  min-width: 0;
 }
 
 .bill-item-name {
-  font-weight: 700;
+  display: block;
+  overflow: hidden;
+  font-size: var(--font-size-2);
+  font-weight: 650;
+  line-height: 1.3;
+  text-overflow: ellipsis;
 }
 
 .bill-item-note {
@@ -203,94 +283,148 @@
   font-size: var(--text-small);
 }
 
-.bill-table tr.is-just-scanned,
-.bill-table tr.is-just-scanned:hover {
-  background: var(--color-highlight);
-  animation: just-scanned 600ms ease-out;
+.bill-line .qty .btn {
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
 }
 
-/* A deep aqua edge too, so the line stands out without relying on colour alone. */
-.bill-table tr.is-just-scanned td:first-child {
-  box-shadow: inset var(--current-bar) 0 0 var(--color-accent);
-}
-
-@keyframes just-scanned {
-  from {
-    background: var(--color-surface);
-  }
+.bill-line .qty input {
+  width: 44px;
+  min-height: 32px;
+  padding: 0 var(--space-1);
 }
 
 .bill-amount {
-  font-weight: 750;
-  font-size: var(--text-heading);
+  min-width: 76px;
+  font-size: var(--font-size-2);
+  font-weight: 700;
+}
+
+.bill-remove {
+  width: 36px;
+  height: 36px;
+  color: var(--color-text-muted);
+}
+
+.bill-remove:hover {
+  background: var(--color-danger-surface);
+  color: var(--color-danger-text);
 }
 
 .bill-empty {
-  max-width: 46ch;
-  padding: var(--space-8) var(--panel-padding);
-}
-
-.bill-empty h2 {
-  font-size: var(--text-heading);
-}
-
-.bill-empty p {
-  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  height: 100%;
+  min-height: 120px;
   color: var(--color-text-muted);
+}
+
+.bill-empty svg {
+  color: var(--color-control-border);
 }
 
 .bill-discount {
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-5);
-  padding: var(--space-3) var(--panel-padding);
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
   border-top: var(--line-thin) solid var(--color-rule);
-  border-radius: 0 0 var(--corner-panel) var(--corner-panel);
-  background: var(--color-surface-sunken);
+  background: var(--color-success-surface);
+  font-size: var(--text-small);
 }
 
-/* ---------- The counter: the total ---------- */
+/* ---------- Till actions ---------- */
 
-.ticket {
-  /* The total is sized from the counter's width (container units), so it
-     always stays on one line, however many digits it has. */
-  container-type: inline-size;
+.till-actions {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--line-thin) solid var(--color-rule);
+}
+
+.till-action {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-6) var(--space-6) var(--space-6);
-  background: var(--color-night);
-  color: var(--color-on-night);
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border: var(--line-thin) solid var(--color-control-border);
+  border-radius: var(--corner-control);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-small);
+  font-weight: 650;
+  cursor: pointer;
 }
 
-.ticket-label {
-  color: var(--color-on-night-muted);
-  font-size: var(--text-body);
+.till-action svg {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.till-action:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-tint);
+}
+
+.till-action:hover:not(:disabled) svg {
+  color: var(--color-accent);
+}
+
+.till-action-key {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-size: 11px;
   font-weight: 600;
 }
 
-/* --chars is set by PriceTicket.jsx: the number of characters in the total.
-   Each figure of Bitter bold is at most about 0.62em wide. */
-.ticket-total {
-  color: var(--color-brand);
-  font-size: min(var(--ticket-font-size), calc(100cqi / (var(--chars, 8) * 0.62)));
-  font-family: var(--font-display);
-  font-variant-numeric: lining-nums;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
+.till-action.btn-danger {
+  color: var(--color-danger-text);
+}
+
+.till-action.btn-danger svg {
+  color: var(--color-danger-text);
+}
+
+.till-action.btn-danger:hover:not(:disabled) {
+  border-color: var(--color-danger-text);
+  background: var(--color-danger-surface);
+}
+
+.till-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------- Total and Complete sale ---------- */
+
+.ticket {
+  /* The total is sized from the column's width (container units), so it
+     always stays on one line, however many digits it has. */
+  container-type: inline-size;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-top: var(--line-thin) solid var(--color-rule);
 }
 
 .ticket-lines {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: var(--space-1) var(--space-5);
+  gap: 0 var(--space-5);
   margin: 0;
-  padding-top: var(--space-4);
-  border-top: var(--line-thin) solid var(--color-night-line);
-  color: var(--color-on-night-muted);
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
 }
 
 .ticket-lines dt,
@@ -299,96 +433,199 @@
 }
 
 .ticket-lines dd {
-  color: var(--color-on-night);
-  font-weight: 700;
+  font-weight: 650;
   text-align: right;
 }
 
-/* The one aqua button in the app. */
-.ticket .btn-complete {
-  min-height: var(--button-height-complete);
-  margin-top: var(--space-4);
-  border: var(--line-strong) solid var(--color-brand);
-  background: var(--color-brand);
-  color: var(--color-night);
-  font-size: var(--text-heading);
-  font-weight: 800;
+.ticket-total-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
 }
 
-.ticket .btn-complete:hover {
-  border-color: var(--color-brand-hover);
-  background: var(--color-brand-hover);
-  color: var(--color-night);
+.ticket-label {
+  font-size: var(--font-size-4);
+  font-weight: 700;
+}
+
+/* --chars is set by PriceTicket.jsx: the number of characters in the total. */
+.ticket-total {
+  font-size: min(var(--ticket-font-size), calc(70cqi / (var(--chars, 8) * 0.62)));
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.ticket .btn-complete {
+  min-height: var(--button-height-complete);
+  border: none;
+  background: var(--color-go);
+  color: var(--white);
+  font-size: var(--font-size-5);
+  font-weight: 750;
+}
+
+.ticket .btn-complete:hover:not(:disabled) {
+  background: var(--color-go-hover);
+  color: var(--white);
 }
 
 .ticket .btn-complete:active:not(:disabled) {
-  border-color: var(--color-brand-pressed);
-  background: var(--color-brand-pressed);
+  background: var(--color-go-pressed);
+}
+
+.ticket .btn-complete .key {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: var(--white);
 }
 
 .ticket .btn-complete:disabled {
-  border-color: var(--color-night-line);
-  background: transparent;
-  color: var(--color-on-night-faint);
+  background: var(--color-surface-pressed);
+  color: var(--color-text-muted);
 }
 
-/* ---------- The counter: the other actions, outlined on Night ---------- */
+/* ---------- Catalogue: category buttons and product tiles ---------- */
 
-.till-tools {
-  border-top: var(--line-thin) solid var(--color-night-line);
-  background: var(--color-night);
+.catalogue {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
-.till-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.category-bar {
+  display: flex;
+  flex: none;
   gap: var(--space-3);
-  padding: var(--space-5) var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  overflow-x: auto;
+  border-bottom: var(--line-thin) solid var(--color-rule);
+  background: var(--color-surface);
+  scrollbar-width: thin;
 }
 
-.till-actions .btn {
-  justify-content: space-between;
-  min-height: var(--button-height-large);
-  padding: 0 var(--space-4);
-  border: var(--line-thin) solid var(--color-night-line);
-  background: transparent;
-  color: var(--color-on-night);
+.category-chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: 0 var(--space-5);
+  border: var(--line-thin) solid var(--color-control-border);
+  border-radius: var(--corner-chip);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-2);
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.category-chip:hover {
+  background: var(--color-surface-hover);
+}
+
+.category-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-round);
+  background: var(--tone-text);
+}
+
+.category-chip[aria-selected='true'] {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--white);
+}
+
+.category-chip[aria-selected='true'] .category-dot {
+  background: var(--tone);
+}
+
+.tiles {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-width), 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: var(--space-4);
+  min-height: 0;
+  padding: var(--space-5);
+  overflow-y: auto;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: var(--line-thin) solid var(--color-rule);
+  border-radius: var(--corner-tile);
+  background: var(--color-surface);
+  color: var(--color-text);
   text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s ease, transform 0.08s ease;
 }
 
-.till-actions .btn:hover {
-  border-color: var(--color-brand);
-  background: var(--color-night-hover);
-  color: var(--color-on-night);
+.tile:hover {
+  border-color: var(--color-accent);
 }
 
-.till-actions .btn:active:not(:disabled) {
-  background: var(--color-night);
+.tile:active {
+  transform: scale(0.97);
 }
 
-.till-actions .btn-danger,
-.till-actions .btn-danger:hover {
-  color: var(--color-danger-on-night);
+.tile.is-out .tile-picture {
+  opacity: 0.45;
 }
 
-.till-actions .btn-danger:hover {
-  border-color: var(--color-danger-on-night);
+.tile-picture {
+  width: 100%;
+  height: var(--tile-picture-height);
+  border-radius: var(--radius-8);
 }
 
-.till-actions .btn:disabled {
-  border-color: var(--color-night-line);
-  background: transparent;
-  color: var(--color-on-night-faint);
-}
-
-.till-actions .span-all {
-  grid-column: 1 / -1;
-}
-
-.till-hint {
-  padding: 0 var(--space-6) var(--space-5);
-  color: var(--color-on-night-muted);
+.tile-name {
+  display: -webkit-box;
+  min-height: 2.6em;
+  overflow: hidden;
   font-size: var(--text-small);
+  font-weight: 650;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.tile-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.tile-price {
+  font-size: var(--font-size-2);
+  font-weight: 750;
+}
+
+.tile-stock {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tiles-empty {
+  grid-column: 1 / -1;
+  padding: var(--space-8) 0;
+  text-align: center;
+}
+
+.tiles-more {
+  padding: 0 var(--space-5) var(--space-4);
+  text-align: right;
 }
 
 /* ---------- Find product dialog ---------- */
@@ -407,56 +644,42 @@
 
 .confirm-total {
   font-size: var(--font-size-8);
-  font-family: var(--font-display);
-  font-variant-numeric: lining-nums;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
-/* ---------- Tablet: ticket on top, bill below ---------- */
+/* ---------- Narrow screens: bill above the tiles ---------- */
 
-@media (max-width: 900px) {
+@media (max-width: 960px) {
   .till {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .till {
+    display: flex;
+    flex-direction: column;
     height: auto;
-    min-height: 100vh;
-  }
-
-  .till-main {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .till-bill {
-    margin: var(--gutter);
-  }
-
-  /* Total first, then the barcode box and bill, then the other actions. */
-  .till-side {
-    display: contents;
-  }
-
-  .ticket {
-    order: 1;
-  }
-
-  .till-bill {
-    order: 2;
-  }
-
-  .till-tools {
-    order: 3;
-  }
-
-  .till-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-right: none;
+    border-bottom: var(--line-thin) solid var(--color-rule);
   }
 
   .bill-lines {
-    max-height: none;
+    max-height: 50vh;
   }
-}
 
-@media (max-width: 600px) {
-  .till-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .catalogue {
+    min-height: 60vh;
+  }
+
+  .tiles {
+    --tile-min-width: 108px;
+    --tile-picture-height: 64px;
+    overflow: visible;
   }
 }

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Design tokens - see DESIGN.md ("the night counter")
+   Design tokens - see DESIGN.md
    Three layers:
      1. Primitive  - raw values. Only used in this file.
      2. Semantic   - what a value means. Screens use these.
@@ -9,47 +9,48 @@
 :root {
   /* ---------- 1. Primitive ---------- */
 
-  /* Colours. Night and aqua are the logo's own colours. */
-  --night: #000000;
-  --night-800: #141c1c; /* hover on the counter */
-  --night-700: #2a3434; /* outlines on the counter */
+  --ink-900: #111827; /* the sidebar */
+  --ink-800: #1c2536; /* hover on the sidebar */
+  --ink-700: #2c3649; /* lines on the sidebar */
+  --ink-300: #a3acbd; /* muted text on the sidebar */
+  --ink-100: #e7eaf0; /* text on the sidebar */
   --white: #ffffff;
-  --mist-100: #f5f8f8;
-  --mist-200: #eef3f3; /* floor */
-  --mist-300: #dde6e6;
-  --mist-400: #c5d1d1;
-  --grey-500: #9ba7a7; /* muted text on Night */
-  --grey-600: #6b7778; /* faint text on Night */
-  --graphite: #4f5b5c;
-  --aqua-100: #e3fafa;
-  --aqua-200: #bff4f4; /* glow */
-  --aqua-400: #30e0e0; /* Universe aqua */
-  --aqua-500: #1fc4c4;
-  --aqua-700: #00676d; /* deep aqua: aqua that works on white */
-  --aqua-800: #004f54;
-  --aqua-900: #003a3e;
-  --green-700: #17733a;
-  --green-50: #e2f3e7;
+  --grey-50: #f8f9fb;
+  --grey-100: #f2f4f7; /* floor */
+  --grey-200: #e4e7ec;
+  --grey-300: #cfd4dc;
+  --grey-600: #545e6e;
+  --grey-900: #111827;
+  --blue-50: #eef1fe;
+  --blue-100: #dde3fd;
+  --blue-300: #9aa8f5;
+  --blue-600: #3346d3; /* the HordeDesk blue */
+  --blue-700: #2838b0;
+  --blue-800: #1f2b8c;
+  --green-50: #e5f4ea;
+  --green-700: #15703c;
+  --green-800: #105a30;
+  --green-900: #0c4625;
+  --amber-50: #fff2cc;
   --amber-800: #7a4b00;
-  --amber-50: #fff0c7;
-  --red-300: #ff8a80; /* red that works on Night */
-  --red-700: #b3261e;
-  --red-800: #8f1d17;
-  --red-900: #6e1611;
-  --red-50: #fce7e5;
+  --red-50: #fce8e6;
+  --red-300: #ff9b91;
+  --red-700: #b42318;
+  --red-800: #912018;
+  --red-900: #6f1a13;
 
-  /* Type: the logo's slab-serif (Bitter) for display, a clear sans for text. */
-  --font-display: 'Bitter Variable', 'Bitter', Rockwell, Georgia, serif;
+  /* One typeface, bundled with the app (shops are often offline). */
   --font-text: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
-  --font-size-1: 14px;
-  --font-size-2: 16px;
-  --font-size-3: 17px;
-  --font-size-4: 21px;
-  --font-size-5: 22px;
-  --font-size-6: 26px;
-  --font-size-7: 36px;
-  --font-size-8: 56px;
-  --font-size-9: 80px;
+  --font-display: var(--font-text);
+  --font-size-1: 13px;
+  --font-size-2: 15px;
+  --font-size-3: 16px;
+  --font-size-4: 18px;
+  --font-size-5: 20px;
+  --font-size-6: 24px;
+  --font-size-7: 30px;
+  --font-size-8: 44px;
+  --font-size-9: 56px;
 
   /* Space (4px base) */
   --space-1: 2px;
@@ -62,53 +63,57 @@
   --space-8: 48px;
   --space-9: 64px;
 
-  /* Lines and corners */
   --line-thin: 1px;
   --line-strong: 2px;
   --line-focus: 3px;
+  --radius-6: 6px;
   --radius-8: 8px;
-  --radius-10: 10px;
   --radius-12: 12px;
   --radius-round: 999px;
 
   /* ---------- 2. Semantic ---------- */
 
-  --color-floor: var(--mist-200);
+  --color-floor: var(--grey-100);
   --color-surface: var(--white);
-  --color-surface-sunken: var(--mist-100);
-  --color-surface-hover: var(--mist-200);
-  --color-surface-pressed: var(--mist-300);
-  --color-text: var(--night);
-  --color-text-muted: var(--graphite);
+  --color-surface-sunken: var(--grey-50);
+  --color-surface-hover: var(--grey-100);
+  --color-surface-pressed: var(--grey-200);
+  --color-text: var(--grey-900);
+  --color-text-muted: var(--grey-600);
   --color-text-on-action: var(--white);
-  --color-rule: var(--mist-300);
-  --color-rule-strong: var(--night);
-  --color-control-border: var(--mist-400);
+  --color-rule: var(--grey-200);
+  --color-rule-strong: var(--grey-900);
+  --color-control-border: var(--grey-300);
 
-  /* The main action on a light page: Night, turning deep aqua. */
-  --color-action: var(--night);
-  --color-action-hover: var(--aqua-700);
-  --color-action-pressed: var(--aqua-900);
+  /* The main action on a page. */
+  --color-action: var(--blue-600);
+  --color-action-hover: var(--blue-700);
+  --color-action-pressed: var(--blue-800);
   /* Links, the current tab, selected choices. */
-  --color-accent: var(--aqua-700);
-  --color-accent-hover: var(--aqua-800);
-  --color-accent-pressed: var(--aqua-900);
-  --color-accent-tint: var(--aqua-100);
-  --color-highlight: var(--aqua-200); /* the just-scanned line, selected rows */
-  --color-highlight-soft: var(--aqua-100);
-  --color-focus: var(--night);
-  --color-backdrop: rgba(0, 0, 0, 0.6); /* behind dialogs */
+  --color-accent: var(--blue-600);
+  --color-accent-hover: var(--blue-700);
+  --color-accent-pressed: var(--blue-800);
+  --color-accent-tint: var(--blue-50);
+  --color-highlight: var(--blue-100); /* the just-added line, selected rows */
+  --color-highlight-soft: var(--blue-50);
+  --color-focus: var(--blue-600);
+  --color-backdrop: rgba(17, 24, 39, 0.55); /* behind dialogs */
 
-  /* Night surfaces: the top bar, the till counter, sign in, the current page. */
-  --color-night: var(--night);
-  --color-night-hover: var(--night-800);
-  --color-night-line: var(--night-700);
-  --color-on-night: var(--white);
-  --color-on-night-muted: var(--grey-500);
-  --color-on-night-faint: var(--grey-600);
-  --color-brand: var(--aqua-400); /* only ever on Night */
+  /* Taking the money: Complete sale. */
+  --color-go: var(--green-700);
+  --color-go-hover: var(--green-800);
+  --color-go-pressed: var(--green-900);
+
+  /* The sidebar (and the dark toast). */
+  --color-night: var(--ink-900);
+  --color-night-hover: var(--ink-800);
+  --color-night-line: var(--ink-700);
+  --color-on-night: var(--ink-100);
+  --color-on-night-muted: var(--ink-300);
+  --color-on-night-faint: var(--ink-300);
+  --color-brand: var(--blue-300); /* the accent on the sidebar */
   --color-brand-hover: var(--white);
-  --color-brand-pressed: var(--aqua-500);
+  --color-brand-pressed: var(--blue-300);
   --color-danger-on-night: var(--red-300);
 
   --color-success-text: var(--green-700);
@@ -120,61 +125,89 @@
   --color-danger-pressed: var(--red-900);
   --color-danger-surface: var(--red-50);
 
+  /* Category colours for till tiles: a soft fill with dark text (each 7:1 or
+     better). A category gets one by its position. */
+  --tile-1: #dde3fd;
+  --tile-1-text: #1f2b8c;
+  --tile-2: #d8f0e1;
+  --tile-2-text: #0c4625;
+  --tile-3: #ffe9bf;
+  --tile-3-text: #5c3800;
+  --tile-4: #fde0e3;
+  --tile-4-text: #7a1724;
+  --tile-5: #ece1fb;
+  --tile-5-text: #4a1f86;
+  --tile-6: #d4f1f1;
+  --tile-6-text: #0b4a4d;
+  --tile-7: #ffe2cf;
+  --tile-7-text: #6b2a05;
+  --tile-8: #e4e7ec;
+  --tile-8-text: #262f3d;
+
   --text-small: var(--font-size-1);
   --text-table: var(--font-size-2);
   --text-body: var(--font-size-3);
   --text-heading: var(--font-size-4);
-  --text-brand: var(--font-size-5);
-  --text-title: var(--font-size-7);
+  --text-brand: var(--font-size-3);
+  --text-title: var(--font-size-6);
   --text-figure: var(--font-size-7);
   --leading-body: 1.45;
-  --leading-tight: 1.1;
+  --leading-tight: 1.15;
 
-  --gap-inline: var(--space-3); /* between buttons in a row */
-  --gap-stack: var(--space-5); /* between stacked blocks */
-  --gutter: var(--space-5); /* floor between panels */
+  --gap-inline: var(--space-3);
+  --gap-stack: var(--space-5);
+  --gutter: var(--space-5);
   --panel-padding: var(--space-6);
 
   /* ---------- 3. Component ---------- */
 
-  --corner-control: var(--radius-8); /* buttons, inputs */
-  --corner-panel: var(--radius-10); /* white panels on the floor */
+  --corner-control: var(--radius-8);
+  --corner-panel: var(--radius-12);
   --corner-dialog: var(--radius-12);
-  --corner-chip: var(--radius-round); /* on/off choice buttons */
+  --corner-tile: var(--radius-12);
+  --corner-chip: var(--radius-round);
 
-  --control-height: 44px; /* inputs, normal buttons: finger-sized */
-  --control-height-small: 36px; /* quiet buttons in tables, choice buttons */
-  --button-height-large: 56px; /* till actions */
-  --button-height-complete: 64px; /* Complete sale on the counter */
-  --check-size: 22px; /* tick boxes and round choices */
+  --control-height: 44px;
+  --control-height-small: 36px;
+  --button-height-large: 52px;
+  --button-height-complete: 64px;
+  --check-size: 20px;
   --textarea-min-height: 88px;
   --number-input-width: 96px;
-  --qty-input-width: 64px;
-  --field-max-width: 360px; /* one box in a filter toolbar */
+  --qty-input-width: 56px;
+  --field-max-width: 360px;
   --button-padding-x: var(--space-5);
   --table-row-height: 44px;
-  --bill-row-height: 56px; /* a line on the till bill */
+  --bill-row-height: 52px;
   --table-cell-padding-x: var(--space-4);
-  --nav-width: 228px;
-  --topbar-height: 60px;
-  --topbar-logo-size: 48px;
-  --entry-logo-size: 220px; /* the logo on the sign-in screen */
-  --entry-logo-size-small: 120px;
+  --icon-size: 20px;
+  --icon-size-small: 16px;
+  --sidebar-width: 232px;
+  --sidebar-width-collapsed: 68px;
+  --sidebar-logo-size: 36px;
+  --entry-logo-size: 72px;
   --dialog-width: 560px;
   --dialog-width-wide: 880px;
   --page-max-width: 1280px;
-  --ticket-font-size: var(--font-size-9); /* the bill total */
-  --ticket-width: 360px; /* the till counter column */
+  --ticket-font-size: var(--font-size-8); /* the bill total */
+  --bill-width: 420px; /* the till's bill column */
+  --tile-min-width: 136px;
+  --tile-picture-height: 88px;
   --scan-font-size: var(--font-size-4);
-  --notice-bar: 6px; /* the coloured edge of a notice or toast */
-  --current-bar: 4px; /* the line under the current tab */
+  --notice-bar: 4px;
+  --current-bar: 3px;
 }
 
-/* Tablet: slightly smaller total, narrower counter */
+@media (max-width: 1280px) {
+  :root {
+    --bill-width: 380px;
+    --tile-min-width: 124px;
+  }
+}
+
 @media (max-width: 1100px) {
   :root {
-    --ticket-font-size: var(--font-size-8);
-    --ticket-width: 320px;
+    --ticket-font-size: var(--font-size-7);
     --panel-padding: var(--space-5);
   }
 }

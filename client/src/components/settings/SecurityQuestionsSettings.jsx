@@ -48,12 +48,8 @@ function SecurityQuestionsSettings() {
     <section className="panel" id="recovery" aria-labelledby="recovery-heading">
       <form className="stack" onSubmit={handleSubmit}>
         <div>
-          <h2 id="recovery-heading">If you forget your password</h2>
-          <p className="muted">
-            {user?.hasSecurityQuestions
-              ? 'Your security questions are set. If you forget your password, choose "Forgot your password?" on the sign-in screen and answer them. You can change them here.'
-              : 'Your security questions are not set yet. Set them now, so that a forgotten password never locks you out of the shop.'}
-          </p>
+          <h2 id="recovery-heading">Password recovery questions</h2>
+          {!user?.hasSecurityQuestions && <p className="warning-text">Not set</p>}
         </div>
         {error && <div className="notice notice-error" role="alert">{error}</div>}
         {message && <div className="notice notice-success" role="status">{message}</div>}

@@ -92,7 +92,7 @@ function StaffPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Staff" lead="Everyone who can sign in to the till, and what they are allowed to do." />
+      <PageHeader title="Staff" />
 
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {message && <div className="notice notice-success" role="status">{message}</div>}

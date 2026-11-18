@@ -106,7 +106,7 @@ function ProductFormPage() {
 
   return (
     <div className="page">
-      <PageHeader title={isEditing ? `Edit ${form.name || 'product'}` : 'Add product'} lead="A product needs a name and a selling price. Everything else can be filled in later.">
+      <PageHeader title={isEditing ? `Edit ${form.name || 'product'}` : 'Add product'}>
         <Link to={backTo} className="btn">{backTo === '/checkout' ? 'Back to the till' : 'Back to products'}</Link>
       </PageHeader>
 
@@ -121,7 +121,7 @@ function ProductFormPage() {
         <div className="field">
           <label className="field-label" htmlFor="product-barcode">Barcode</label>
           <BarcodeInput id="product-barcode" value={form.barcode} onChange={(code) => setField('barcode', code)} placeholder="Scan it, type it, or leave it empty" />
-          <ScannerStatus readyText={scanned ? `Scanned ${scanned}` : 'Scanner ready: scan the product and the code fills in here.'} />
+          <ScannerStatus readyText={scanned ? `Scanned ${scanned}` : 'Scanner ready'} />
         </div>
         <div className="field">
           <label className="field-label" htmlFor="product-category">Category</label>

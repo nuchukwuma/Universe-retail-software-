@@ -27,7 +27,7 @@ function DailySalesReport({ from, to }) {
     <>
       <ReportFigures
         figures={[
-          { label: 'Takings', value: totals.takings, type: 'money', note: 'sales total minus refunds' },
+          { label: 'Takings', value: totals.takings, type: 'money' },
           { label: 'Sales', value: totals.transactions, type: 'number', note: `${totals.itemsSold.toLocaleString('en-NG')} items sold` },
           { label: 'Average sale', value: totals.averageSale, type: 'money' },
           { label: 'Discounts given', value: totals.discounts, type: 'money', note: totals.grossSales ? `on ${formatNaira(totals.grossSales)} of sales` : undefined },
@@ -35,7 +35,7 @@ function DailySalesReport({ from, to }) {
       />
       <ReportTable
         title="Daily sales"
-        subtitle={`${formatDate(from)} to ${formatDate(to)}. Refunds are counted on the day of the original sale.`}
+        subtitle={`${formatDate(from)} to ${formatDate(to)}`}
         fileName={`daily-sales-${from}-to-${to}.xlsx`}
         columns={COLUMNS}
         rows={data.rows}

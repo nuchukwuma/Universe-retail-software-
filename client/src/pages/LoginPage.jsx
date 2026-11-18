@@ -6,7 +6,7 @@ import { useSettings } from '../context/SettingsContext';
 import SetupForm from '../components/SetupForm';
 import RestoreBackupForm from '../components/RestoreBackupForm';
 import ForgotPasswordForm from '../components/ForgotPasswordForm';
-import logo from '../assets/logo.png';
+import BrandMark from '../components/BrandMark';
 
 // The sign-in screen. Every staff member signs in here first.
 // On a brand-new install (no staff accounts yet) it shows the
@@ -17,6 +17,7 @@ function LoginPage() {
   const navigate = useNavigate();
 
   const [needsSetup, setNeedsSetup] = useState(false);
+  const [sampleCatalogues, setSampleCatalogues] = useState([]);
   const [restoring, setRestoring] = useState(false); // first start: restore a backup instead
   const [restoredMessage, setRestoredMessage] = useState('');
   const [forgotPassword, setForgotPassword] = useState(false);
@@ -28,7 +29,10 @@ function LoginPage() {
   // Ask the server if this is the first start.
   useEffect(() => {
     api.get('/setup/status')
-      .then((data) => setNeedsSetup(data.needsSetup))
+      .then((data) => {
+        setNeedsSetup(data.needsSetup);
+        setSampleCatalogues(data.sampleCatalogues || []);
+      })
       .catch(() => setNeedsSetup(false));
   }, []);
 
@@ -62,18 +66,21 @@ function LoginPage() {
 
   return (
     <div className="entry">
-      <div className="entry-sign">
-        <img src={logo} alt="" className="entry-logo" width="240" height="240" />
-        <h1>{settings.storeName}</h1>
-        <p>{needsSetup ? 'Set up the till. You only do this once.' : 'Sign in to start selling.'}</p>
-      </div>
+      <div className="entry-card">
+        <div className="entry-brand">
+          {settings.logoUrl ? <img src={settings.logoUrl} alt="" className="entry-logo" /> : <BrandMark className="entry-logo" size={56} />}
+          <div>
+            <div className="entry-store">{settings.storeName}</div>
+            <div className="entry-product">HordeDesk</div>
+          </div>
+        </div>
 
       {needsSetup && restoring && <RestoreBackupForm onDone={handleRestored} onCancel={() => setRestoring(false)} />}
-      {needsSetup && !restoring && <SetupForm onDone={() => navigate('/dashboard')} onRestore={() => setRestoring(true)} />}
+      {needsSetup && !restoring && <SetupForm sampleCatalogues={sampleCatalogues} onDone={() => navigate('/dashboard')} onRestore={() => setRestoring(true)} />}
       {!needsSetup && forgotPassword && <ForgotPasswordForm onDone={() => navigate('/dashboard')} onCancel={() => setForgotPassword(false)} />}
       {!needsSetup && !forgotPassword && (
         <form className="entry-form" onSubmit={handleSubmit}>
-          <h2>Staff sign in</h2>
+          <h1>Sign in</h1>
           {restoredMessage && <div className="notice notice-success" role="status">{restoredMessage}</div>}
           {error && <div className="notice notice-error" role="alert">{error}</div>}
           <div className="field">
@@ -90,6 +97,7 @@ function LoginPage() {
           <button type="button" className="btn btn-quiet" onClick={() => setForgotPassword(true)}>Forgot your password?</button>
         </form>
       )}
+      </div>
     </div>
   );
 }

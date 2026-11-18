@@ -37,7 +37,7 @@ function ReportsPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Reports" lead="Sales and stock for any dates. Every table can be saved as an Excel file." />
+      <PageHeader title="Reports" />
 
       <div className="tabs" role="tablist" aria-label="Reports">
         {REPORTS.map((report) => (

@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useKeyTiming, useWindowFocus } from '../../hooks/useScanner';
 import useProductSuggestions from '../../hooks/useProductSuggestions';
+import { ScanBarcode } from 'lucide-react';
 import ProductSuggestionList from '../ProductSuggestionList';
 
 // Returns true if the user is busy in another text box (quantity,
@@ -100,15 +101,16 @@ const ScanBox = forwardRef(function ScanBox({ products, onSubmit, onPick, paused
   }
 
   let status = { text: 'Scanner ready', className: 'scanner-status-ready' };
-  if (!windowFocused) status = { text: 'Scanner paused: click inside this window', className: 'scanner-status-paused' };
-  else if (paused) status = { text: 'Scanner paused while a window is open', className: 'scanner-status-paused' };
-  else if (!hasFocus) status = { text: 'Scanner paused: click the barcode box or press Esc', className: 'scanner-status-paused' };
+  if (!windowFocused) status = { text: 'Scanner paused: click this window', className: 'scanner-status-paused' };
+  else if (paused) status = { text: 'Scanner paused', className: 'scanner-status-paused' };
+  else if (!hasFocus) status = { text: 'Scanner paused: press Esc', className: 'scanner-status-paused' };
 
   return (
     <div className="scan">
-      <label htmlFor="scan-input" className="scan-label">Scan a barcode or type a product name</label>
+      <label htmlFor="scan-input" className="visually-hidden">Scan a barcode or type a product name</label>
       <div className="scan-row">
         <div className="scan-field">
+          <ScanBarcode className="scan-icon" size={20} aria-hidden="true" />
           <input
             id="scan-input"
             ref={inputRef}
@@ -121,6 +123,7 @@ const ScanBox = forwardRef(function ScanBox({ products, onSubmit, onPick, paused
               setHasFocus(false);
               setTimeout(refocus, 0);
             }}
+            placeholder="Scan or type a product name"
             autoComplete="off"
             spellCheck={false}
             data-scan-input
@@ -138,7 +141,7 @@ const ScanBox = forwardRef(function ScanBox({ products, onSubmit, onPick, paused
               active={list.active}
               setActive={list.setActive}
               onPick={pick}
-              empty={<p className="scan-suggestions-empty">No product matches "{list.query}". Press Enter to search all products.</p>}
+              empty={<p className="scan-suggestions-empty">No match for "{list.query}"</p>}
             />
           )}
         </div>

@@ -82,11 +82,11 @@ function ProductsPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Products" lead="Everything the shop sells, with its price and how many are in stock.">
+      <PageHeader title="Products">
         <Link to="/products/new" className="btn btn-primary">Add product</Link>
       </PageHeader>
 
-      <ScannerStatus readyText="Scanner ready: scan a product to open it, or scan a new barcode to add a product." />
+      <ScannerStatus  />
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {message && <div className="notice notice-success" role="status">{message}</div>}
 
@@ -119,7 +119,6 @@ function ProductsPage() {
         {!loading && products.length === 0 && !error && (
           <div className="empty">
             <p className="strong">No products yet.</p>
-            <p className="muted">Add your first product, or scan its barcode to start.</p>
             <div className="btn-row"><Link to="/products/new" className="btn btn-primary">Add product</Link></div>
           </div>
         )}

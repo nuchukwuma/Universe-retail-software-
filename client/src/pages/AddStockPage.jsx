@@ -169,7 +169,7 @@ function AddStockPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Add stock" lead="Scan each product as it arrives, or type its name if the barcode will not scan. A product the shop does not have yet becomes a new product." />
+      <PageHeader title="Add stock" />
 
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {message && <div className="notice notice-success" role="status">{message}</div>}
@@ -185,7 +185,7 @@ function AddStockPage() {
             onNewProduct={startNewProductByName}
             inputRef={scanRef}
           />
-          <ScannerStatus readyText="Scanner ready: scan a product, or type part of its name (e.g. nivea) and press Enter." />
+          <ScannerStatus />
         </div>
       </section>
 
@@ -216,8 +216,8 @@ function AddStockPage() {
           <div className="span-all">
             <h2 id="new-heading">New product</h2>
             {current.barcode
-              ? <p className="muted">No product has the barcode <strong>{current.barcode}</strong> yet. Fill in its details to add it.</p>
-              : <p className="muted">A product without a barcode. It can be found by typing its name, here and at the till.</p>}
+              ? <p className="muted">New barcode <strong>{current.barcode}</strong></p>
+              : <p className="muted">No barcode</p>}
           </div>
           <div className="field span-all">
             <label className="field-label" htmlFor="new-name">Name</label>
@@ -259,7 +259,6 @@ function AddStockPage() {
         </form>
       )}
 
-      {!current && <p className="muted">Waiting for a scan or a product name.</p>}
 
       <section className="panel panel-flush" aria-labelledby="recent-heading">
         <div className="panel-head"><h2 id="recent-heading">Recently added</h2></div>

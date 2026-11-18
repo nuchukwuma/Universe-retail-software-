@@ -87,7 +87,7 @@ function BackupPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Backup and restore" lead="The shop's data is only on this laptop. Keep backups on a USB drive, away from the laptop, so a broken or stolen laptop loses nothing.">
+      <PageHeader title="Backup and restore">
         <button type="button" className="btn btn-primary" disabled={Boolean(working)} onClick={() => run('backup', async () => setMessage((await api.post('/backups')).message))}>
           {working === 'backup' ? 'Backing up...' : 'Back up now'}
         </button>

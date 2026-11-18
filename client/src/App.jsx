@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
-import BackOfficeLayout from './components/BackOfficeLayout';
+import AppShell from './components/AppShell';
 import LoginPage from './pages/LoginPage';
 import CheckoutPage from './pages/CheckoutPage';
 import DashboardPage from './pages/DashboardPage';
@@ -34,25 +34,17 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Everyone who is logged in can use the checkout */}
-      <Route
-        path="/checkout"
-        element={
-          <ProtectedRoute>
-            <CheckoutPage />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Pages with the side menu. Each page says who may open it. */}
+      {/* Every signed-in screen sits in the app shell (the sidebar).
+          Each page says who may open it. */}
       <Route
         element={
           <ProtectedRoute>
-            <BackOfficeLayout />
+            <AppShell />
           </ProtectedRoute>
         }
       >
         {/* Everyone (cashiers too) */}
+        <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/sales-history" element={<SalesHistoryPage />} />
         <Route path="/end-of-day" element={<EndOfDayPage />} />
 

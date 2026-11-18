@@ -66,7 +66,7 @@ function SettingsPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Settings" lead="The shop's details on receipts, how receipts print, and discount limits." />
+      <PageHeader title="Settings" />
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {message && <div className="notice notice-success" role="status">{message}</div>}
       {hasChanges && !message && <div className="notice notice-warning">You have changes that are not saved yet.</div>}
@@ -127,7 +127,6 @@ function SettingsPage() {
 
         <section className="panel stack" aria-label="Receipt preview">
           <h2>Receipt preview</h2>
-          <p className="muted small">Changes show here as you type.</p>
           <div className="receipt-preview receipt-preview-full">
             <div className="receipt-preview-paper">
               <SaleReceipt sale={TEST_SALE} settings={form} />
