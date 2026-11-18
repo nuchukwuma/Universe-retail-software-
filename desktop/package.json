@@ -1,10 +1,10 @@
 {
-  "name": "universe-pos",
-  "productName": "Universe POS",
-  "version": "1.4.0",
+  "name": "hordedesk",
+  "productName": "HordeDesk",
+  "version": "2.0.0",
   "private": true,
-  "description": "Universe Cosmetics and Beauty Skincare - shop till and back office (desktop app for Windows)",
-  "author": "Universe Cosmetics and Beauty Skincare",
+  "description": "HordeDesk - shop till, stock and back office (desktop app for Windows)",
+  "author": "HordeDesk",
   "main": "main.js",
   "scripts": {
     "copy-app": "node scripts/copy-app.js",
@@ -25,9 +25,9 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "ng.universe.pos",
-    "productName": "Universe POS",
-    "copyright": "Universe Cosmetics and Beauty Skincare",
+    "appId": "com.hordedesk.app",
+    "productName": "HordeDesk",
+    "copyright": "HordeDesk",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -52,8 +52,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Universe POS",
-      "artifactName": "Universe-POS-Setup-${version}.exe"
+      "shortcutName": "HordeDesk",
+      "artifactName": "HordeDesk-Setup.exe"
     }
   }
 }

@@ -1,5 +1,5 @@
 // The desktop app's own settings, kept in config.json inside the app's
-// data folder (on Windows: C:\Users\<name>\AppData\Roaming\Universe POS).
+// data folder (on Windows: C:\Users\<name>\AppData\Roaming\HordeDesk).
 // The file is made the first time the app starts.
 const fs = require('fs');
 const path = require('path');
@@ -33,11 +33,11 @@ function loadConfig(dataDir) {
 function startLogFile(dataDir) {
   const folder = path.join(dataDir, 'logs');
   fs.mkdirSync(folder, { recursive: true });
-  const file = path.join(folder, 'universe-pos.log');
+  const file = path.join(folder, 'hordedesk.log');
 
   // Start a fresh log when the old one gets big (over 5 MB).
   try {
-    if (fs.statSync(file).size > 5 * 1024 * 1024) fs.renameSync(file, path.join(folder, 'universe-pos.old.log'));
+    if (fs.statSync(file).size > 5 * 1024 * 1024) fs.renameSync(file, path.join(folder, 'hordedesk.old.log'));
   } catch (error) {
     // no log file yet
   }

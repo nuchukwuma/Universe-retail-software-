@@ -173,32 +173,33 @@ function AppShell() {
               )}
             </span>
           </div>
-          {IS_DEMO ? (
+          <div className="sidebar-foot-row">
+            {IS_DEMO ? (
+              <button
+                type="button"
+                className="sidebar-link"
+                onClick={() => window.confirm('Start the demo again with fresh sample data?') && window.hordedeskDemo?.startAgain()}
+                title={collapsed ? 'Start again' : undefined}
+              >
+                <RotateCcw size={20} strokeWidth={1.9} aria-hidden="true" />
+                <span className="sidebar-label">Start again</span>
+              </button>
+            ) : (
+              <button type="button" className="sidebar-link" onClick={handleLogout} title={collapsed ? 'Log out' : undefined}>
+                <LogOut size={20} strokeWidth={1.9} aria-hidden="true" />
+                <span className="sidebar-label">Log out</span>
+              </button>
+            )}
             <button
               type="button"
-              className="sidebar-link"
-              onClick={() => window.confirm('Start the demo again with fresh sample data?') && window.hordedeskDemo?.startAgain()}
-              title={collapsed ? 'Start again' : undefined}
+              className="icon-btn sidebar-toggle"
+              onClick={toggleCollapsed}
+              aria-label={collapsed ? 'Show menu names' : 'Hide menu names'}
+              title={collapsed ? 'Show menu names' : 'Hide menu names'}
             >
-              <RotateCcw size={20} strokeWidth={1.9} aria-hidden="true" />
-              <span className="sidebar-label">Start again</span>
+              {collapsed ? <PanelLeftOpen size={20} aria-hidden="true" /> : <PanelLeftClose size={20} aria-hidden="true" />}
             </button>
-          ) : (
-            <button type="button" className="sidebar-link" onClick={handleLogout} title={collapsed ? 'Log out' : undefined}>
-              <LogOut size={20} strokeWidth={1.9} aria-hidden="true" />
-              <span className="sidebar-label">Log out</span>
-            </button>
-          )}
-          <button
-            type="button"
-            className="sidebar-link sidebar-toggle"
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? 'Show menu names' : 'Hide menu names'}
-            title={collapsed ? 'Show menu names' : undefined}
-          >
-            {collapsed ? <PanelLeftOpen size={20} aria-hidden="true" /> : <PanelLeftClose size={20} aria-hidden="true" />}
-            <span className="sidebar-label">Hide names</span>
-          </button>
+          </div>
         </div>
       </aside>
       <div className="drawer-backdrop" onClick={() => setDrawerOpen(false)} aria-hidden="true" />

@@ -254,7 +254,7 @@ async function restoreBackup(name, fromFolder) {
 function checkFolderWritable(folder) {
   try {
     makeFolder(folder);
-    const testFile = path.join(folder, '.universe-pos-write-test');
+    const testFile = path.join(folder, '.hordedesk-write-test');
     fs.writeFileSync(testFile, 'ok');
     fs.unlinkSync(testFile);
   } catch (error) {
