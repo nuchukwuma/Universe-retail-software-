@@ -8,16 +8,16 @@ import { emptySecurityAnswers, securityAnswersProblem } from '../utils/securityQ
 // First-time setup, shown when the app has no staff accounts yet:
 // the owner names the shop and creates their own account, with three
 // security questions for "Forgot your password?".
-function SetupForm({ onDone, onRestore }) {
+function SetupForm({ sampleCatalogues = [], onDone, onRestore }) {
   const { startSession } = useAuth();
   const { reloadSettings } = useSettings();
   const [form, setForm] = useState({
-    storeName: 'Universe Cosmetics and Beauty Skincare',
+    storeName: '',
     ownerName: '',
     username: '',
     password: '',
     confirm: '',
-    loadSampleData: false,
+    loadSampleData: '',
   });
   const [questions, setQuestions] = useState(emptySecurityAnswers);
   const [saving, setSaving] = useState(false);
@@ -55,48 +55,50 @@ function SetupForm({ onDone, onRestore }) {
 
   return (
     <form className="entry-form" onSubmit={handleSubmit}>
-      <h2>First-time setup</h2>
-      <p className="muted">
-        Moving from another computer or an older version?{' '}
-        <button type="button" className="btn btn-quiet" onClick={onRestore}>Restore from a backup</button>
-      </p>
+      <div className="entry-title-row">
+        <h1>Set up your shop</h1>
+        <button type="button" className="btn btn-quiet btn-small" onClick={onRestore}>Restore a backup</button>
+      </div>
       {error && <div className="notice notice-error" role="alert">{error}</div>}
 
       <div className="field">
-        <label className="field-label" htmlFor="setup-store">Shop name (printed on receipts)</label>
-        <input id="setup-store" value={form.storeName} onChange={(e) => setField('storeName', e.target.value)} required />
+        <label className="field-label" htmlFor="setup-store">Shop name</label>
+        <input id="setup-store" value={form.storeName} onChange={(e) => setField('storeName', e.target.value)} required autoFocus placeholder="My Shop" />
       </div>
       <div className="field">
-        <label className="field-label" htmlFor="setup-owner">Your name (the owner)</label>
-        <input id="setup-owner" value={form.ownerName} onChange={(e) => setField('ownerName', e.target.value)} required autoFocus />
+        <label className="field-label" htmlFor="setup-owner">Your name</label>
+        <input id="setup-owner" value={form.ownerName} onChange={(e) => setField('ownerName', e.target.value)} required />
       </div>
       <div className="field">
-        <label className="field-label" htmlFor="setup-username">Choose a username</label>
+        <label className="field-label" htmlFor="setup-username">Username</label>
         <input id="setup-username" value={form.username} onChange={(e) => setField('username', e.target.value)} required autoComplete="username" />
       </div>
       <div className="field">
-        <label className="field-label" htmlFor="setup-password">Choose a password</label>
+        <label className="field-label" htmlFor="setup-password">Password</label>
         <input id="setup-password" type="password" minLength={6} value={form.password} onChange={(e) => setField('password', e.target.value)} required autoComplete="new-password" />
         <span className="field-help">At least 6 characters.</span>
       </div>
       <div className="field">
-        <label className="field-label" htmlFor="setup-confirm">Type the password again</label>
+        <label className="field-label" htmlFor="setup-confirm">Confirm password</label>
         <input id="setup-confirm" type="password" minLength={6} value={form.confirm} onChange={(e) => setField('confirm', e.target.value)} required autoComplete="new-password" />
       </div>
       <fieldset className="form-fieldset">
-        <legend>If you forget your password</legend>
-        <p className="muted small">Choose three questions only you can answer. If you ever forget your password, answering them lets you choose a new one.</p>
+        <legend>Password recovery questions</legend>
         <SecurityQuestionsFields idPrefix="setup" rows={questions} onChange={setQuestions} />
       </fieldset>
-      <label className="check">
-        <input type="checkbox" checked={form.loadSampleData} onChange={(e) => setField('loadSampleData', e.target.checked)} />
-        Add sample products to practise with (you can delete them later)
-      </label>
+      {sampleCatalogues.length > 0 && (
+        <div className="field">
+          <label className="field-label" htmlFor="setup-sample">Sample products</label>
+          <select id="setup-sample" value={form.loadSampleData} onChange={(e) => setField('loadSampleData', e.target.value)}>
+            <option value="">None</option>
+            {sampleCatalogues.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+          </select>
+        </div>
+      )}
 
       <button type="submit" className="btn btn-primary btn-large btn-block" disabled={saving}>
         {saving ? 'Setting up...' : 'Finish setup'}
       </button>
-      <p className="muted small">Write the username and password down somewhere safe. All data stays on this computer.</p>
     </form>
   );
 }

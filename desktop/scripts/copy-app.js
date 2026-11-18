@@ -9,7 +9,7 @@ const ROOT = path.join(__dirname, '..', '..');
 const TARGET = path.join(__dirname, '..', 'app');
 
 // Files and folders of the server that must not go into the app.
-const SKIP = new Set(['node_modules', '.env', 'data', 'uploads', 'backups', 'logs', 'scripts', 'package-lock.json']);
+const SKIP = new Set(['node_modules', '.env', 'data', 'images', 'uploads', 'backups', 'logs', 'scripts', 'package-lock.json']);
 
 // Copies a folder, leaving out anything named in SKIP and any .log file.
 function copyFolder(from, to) {

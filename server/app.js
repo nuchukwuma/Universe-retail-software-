@@ -24,6 +24,9 @@ const reportRoutes = require('./routes/reportRoutes');
 const managerReportRoutes = require('./routes/managerReportRoutes');
 const telegramRoutes = require('./routes/telegramRoutes');
 const backupRoutes = require('./routes/backupRoutes');
+const supplierRoutes = require('./routes/supplierRoutes');
+const purchaseRoutes = require('./routes/purchaseRoutes');
+const { imagePath } = require('./utils/images');
 
 // Creates the Express app with every API route.
 // "clientDir" is the built React app (client/dist). When given, the
@@ -56,6 +59,17 @@ function createApp({ clientDir } = {}) {
   app.use('/api/reports', managerReportRoutes); // Today page, sales and stock reports (managers/owners)
   app.use('/api/telegram', telegramRoutes);
   app.use('/api/backups', backupRoutes);
+  app.use('/api/suppliers', supplierRoutes);
+  app.use('/api/purchases', purchaseRoutes);
+
+  // Product photos and the shop's logo. No login needed: pictures are
+  // shown by <img> tags, which cannot send the login token.
+  app.get('/api/images/:name', (req, res) => {
+    const file = imagePath(req.params.name);
+    if (!file || !fs.existsSync(file)) return res.status(404).json({ message: 'Picture not found.' });
+    res.set('Cache-Control', 'public, max-age=31536000, immutable'); // a new picture gets a new name
+    res.sendFile(file);
+  });
 
   // Any /api address we do not know about
   app.use('/api', (req, res) => {

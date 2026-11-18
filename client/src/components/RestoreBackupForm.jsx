@@ -55,11 +55,7 @@ function RestoreBackupForm({ onDone, onCancel }) {
 
   return (
     <form className="entry-form" onSubmit={(e) => { e.preventDefault(); findBackups(); }}>
-      <h2>Restore from a backup</h2>
-      <p className="muted">
-        Moving to this computer, or bringing data from an older version of the app? Choose the folder that
-        holds the <strong>universe-pos-backup-...</strong> folders (for example your USB drive).
-      </p>
+      <h1>Restore a backup</h1>
       {error && <div className="notice notice-error" role="alert">{error}</div>}
 
       <div className="field">
@@ -71,7 +67,7 @@ function RestoreBackupForm({ onDone, onCancel }) {
         <button type="submit" className="btn btn-primary" disabled={busy}>{busy && !backups ? 'Looking...' : 'Find backups'}</button>
       </div>
 
-      {backups && backups.length === 0 && <p className="muted">No backups in this folder. Choose the folder that holds the universe-pos-backup-... folders.</p>}
+      {backups && backups.length === 0 && <p className="muted">No backups in this folder.</p>}
       {backups && backups.length > 0 && (
         <ul className="restore-list" aria-label="Backups found">
           {backups.map((backup) => (

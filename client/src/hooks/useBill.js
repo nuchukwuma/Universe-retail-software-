@@ -10,6 +10,7 @@ export const EMPTY_BILL = {
   items: [],
   discount: null, // discount on the whole bill: { type: 'percent' | 'amount', value }
   approval: null, // manager approval for a large discount: { token, approverName }
+  label: '', // the name it was held under (e.g. a customer's name), if any
 };
 
 // Reads the bill saved in the browser (or starts an empty one).
@@ -21,6 +22,7 @@ function loadSavedBill() {
       items: Array.isArray(saved.items) ? saved.items : [],
       discount: saved.discount || null,
       approval: saved.approval || null,
+      label: typeof saved.label === 'string' ? saved.label : '',
     };
   } catch {
     return EMPTY_BILL;
@@ -123,6 +125,7 @@ export function useBill() {
       ...EMPTY_BILL,
       items: savedBill.items || [],
       discount: savedBill.discount || null,
+      label: savedBill.label || '',
     });
   }
 

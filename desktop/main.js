@@ -1,4 +1,4 @@
-// Universe POS desktop app (Electron).
+// HordeDesk desktop app (Electron).
 // It runs the server (Express) inside the app, on this laptop only
 // (127.0.0.1), and shows the app's screens in a window. All the shop's
 // information stays in data files on this laptop (in the app's data folder);
@@ -9,6 +9,7 @@ const { app, BrowserWindow, Menu, session, shell } = require('electron');
 const { loadConfig, startLogFile } = require('./electron/config');
 const { registerIpcHandlers } = require('./electron/ipc');
 const { buildMenu } = require('./electron/menu');
+const { adoptOldData } = require('./electron/oldData');
 
 const APP_DIR = path.join(__dirname, 'app'); // server + built client (see scripts/copy-app.js)
 const ALLOWED_PERMISSIONS = ['clipboard-sanitized-write', 'fullscreen'];
@@ -52,7 +53,7 @@ function openApp() {
         const port = await startBackend();
         await mainWindow.loadURL(`http://127.0.0.1:${port}/`);
       } catch (error) {
-        console.error('Universe POS could not start:', error);
+        console.error('HordeDesk could not start:', error);
         await mainWindow.loadFile(path.join(__dirname, 'error.html'), { query: { message: error.message } });
       } finally {
         starting = null;
@@ -91,7 +92,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    title: 'Universe POS',
+    title: 'HordeDesk',
     icon: path.join(__dirname, 'build', 'icon.png'),
     backgroundColor: '#ffffff',
     autoHideMenuBar: false,
@@ -117,9 +118,18 @@ function createWindow() {
 // Runs once Electron is ready.
 async function onReady() {
   dataDir = app.getPath('userData');
+  let adoptedFrom = null;
+  let adoptError = null;
+  try {
+    adoptedFrom = adoptOldData(dataDir, app.getPath('appData')); // data from "Universe POS" (before version 2)
+  } catch (error) {
+    adoptError = error;
+  }
   logFolder = startLogFile(dataDir);
   config = loadConfig(dataDir);
-  console.log(`Universe POS ${app.getVersion()} starting (Electron ${process.versions.electron}, Node ${process.versions.node})`);
+  console.log(`HordeDesk ${app.getVersion()} starting (Electron ${process.versions.electron}, Node ${process.versions.node})`);
+  if (adoptedFrom) console.log(`Copied the shop's data from ${adoptedFrom}`);
+  if (adoptError) console.error('Could not copy the data of the older version:', adoptError);
 
   // Settings the server reads (see server/utils/paths.js and config/db.js).
   process.env.DATA_DIR = dataDir;

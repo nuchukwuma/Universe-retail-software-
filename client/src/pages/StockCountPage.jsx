@@ -126,7 +126,7 @@ function StockCountPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Stock count" lead="Scan every item on a shelf. Each scan adds 1. Then set the stock to what you counted." />
+      <PageHeader title="Stock count" />
 
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {message && <div className="notice notice-success" role="status">{message}</div>}
@@ -135,7 +135,7 @@ function StockCountPage() {
         <div className="field">
           <label className="field-label" htmlFor="count-barcode">Scan an item</label>
           <BarcodeInput id="count-barcode" value={barcode} onChange={setBarcode} onEnter={handleScan} inputRef={scanBoxRef} autoFocus />
-          <ScannerStatus readyText="Scanner ready: each scan adds 1 to the count." />
+          <ScannerStatus readyText="Scanner ready" />
         </div>
         <div className="field">
           <label className="field-label" htmlFor="count-search">No barcode? Find it by name</label>

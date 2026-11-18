@@ -5,6 +5,7 @@ import Modal from '../components/Modal';
 import PageHeader from '../components/PageHeader';
 import { formatDateTime } from '../utils/dates';
 import { desktop } from '../utils/desktop';
+import { DOWNLOAD_URL, IS_DEMO } from '../config';
 
 const REASON_LABELS = {
   manual: 'Made by hand',
@@ -21,7 +22,26 @@ function formatSize(bytes) {
 
 // Owner-only page: where backups are saved, "Back up now", and restore.
 // All data lives only on this laptop, so backups are the shop's safety net.
+// In the browser demo there are no folders to back up to.
+function DemoBackupPage() {
+  return (
+    <div className="page">
+      <PageHeader title="Backup and restore" />
+      <div className="notice notice-warning">
+        <span className="notice-title">Backups are made by the desktop app</span>
+        This demo keeps its data in your browser.
+        <div className="btn-row"><a href={DOWNLOAD_URL} className="btn btn-small">Download for Windows</a></div>
+      </div>
+    </div>
+  );
+}
+
 function BackupPage() {
+  if (IS_DEMO) return <DemoBackupPage />;
+  return <ShopBackupPage />;
+}
+
+function ShopBackupPage() {
   const { logout } = useAuth();
   const [info, setInfo] = useState(null);
   const [folder, setFolder] = useState('');
@@ -87,7 +107,7 @@ function BackupPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Backup and restore" lead="The shop's data is only on this laptop. Keep backups on a USB drive, away from the laptop, so a broken or stolen laptop loses nothing.">
+      <PageHeader title="Backup and restore">
         <button type="button" className="btn btn-primary" disabled={Boolean(working)} onClick={() => run('backup', async () => setMessage((await api.post('/backups')).message))}>
           {working === 'backup' ? 'Backing up...' : 'Back up now'}
         </button>

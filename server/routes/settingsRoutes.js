@@ -2,6 +2,7 @@ const express = require('express');
 const { requireLogin, requireRole } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
 const { getSettings, EDITABLE_FIELDS } = require('../utils/settings');
+const { saveImage, deleteImage } = require('../utils/images');
 
 const router = express.Router();
 
@@ -33,6 +34,41 @@ router.put('/', requireLogin, requireRole('owner'), async (req, res) => {
     res.json(forApp(settings));
   } catch (error) {
     handleError(res, error, 'Could not save settings.');
+  }
+});
+
+// PUT /api/settings/logo
+// Sets the shop's logo (shown in the app and on receipts). Owner only.
+// Body: { logo: "data:image/png;base64,..." }
+router.put('/logo', requireLogin, requireRole('owner'), async (req, res) => {
+  try {
+    const settings = await getSettings();
+    let name;
+    try {
+      name = saveImage(req.body.logo);
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
+    deleteImage(settings.shopLogo);
+    settings.shopLogo = name;
+    await settings.save();
+    res.json(forApp(settings));
+  } catch (error) {
+    handleError(res, error, 'Could not save the logo.');
+  }
+});
+
+// DELETE /api/settings/logo
+// Removes the shop's logo. Owner only.
+router.delete('/logo', requireLogin, requireRole('owner'), async (req, res) => {
+  try {
+    const settings = await getSettings();
+    deleteImage(settings.shopLogo);
+    settings.shopLogo = '';
+    await settings.save();
+    res.json(forApp(settings));
+  } catch (error) {
+    handleError(res, error, 'Could not remove the logo.');
   }
 });
 

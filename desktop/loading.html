@@ -2,31 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Universe POS</title>
+  <title>HordeDesk</title>
   <style>
-    /* The shop's colours: the logo's black and aqua. */
     body {
-      display: flex;
-      align-items: flex-end;
+      display: grid;
+      place-items: center;
       height: 100vh;
       margin: 0;
-      padding: 48px;
-      box-sizing: border-box;
-      background: #000000;
-      color: #ffffff;
-      font-family: Georgia, 'Times New Roman', serif;
+      background: #f2f4f7;
+      color: #111827;
+      font-family: 'Segoe UI', Arial, sans-serif;
     }
-    img { display: block; width: 180px; height: 180px; margin-bottom: 24px; }
-    h1 { margin: 0; color: #30e0e0; font-size: 56px; line-height: 1; }
-    p { margin: 16px 0 0; color: #9ba7a7; font-family: 'Segoe UI', Arial, sans-serif; font-size: 21px; }
+    .mark { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    img { width: 72px; height: 72px; }
+    p { margin: 0; color: #545e6e; font-size: 15px; }
+    .bar { width: 160px; height: 4px; overflow: hidden; border-radius: 4px; background: #e4e7ec; }
+    .bar span { display: block; width: 40%; height: 100%; border-radius: 4px; background: #3346d3; animation: slide 1.1s ease-in-out infinite; }
+    @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
   </style>
 </head>
 <body>
-  <!-- Shown while the app connects to the database (a few seconds). -->
-  <div>
+  <!-- Shown while the app opens the shop's data (a second or two). -->
+  <div class="mark">
     <img src="build/icon.png" alt="" />
-    <h1>Universe POS</h1>
-    <p>Starting the till...</p>
+    <div class="bar" aria-hidden="true"><span></span></div>
+    <p>Starting HordeDesk</p>
   </div>
 </body>
 </html>

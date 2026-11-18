@@ -5,7 +5,7 @@ const { dataDir } = require('../utils/paths');
 // The shop's data is kept in files on this computer, in the "data" folder
 // of the app's folder:
 // - development: server/data
-// - desktop app: C:\Users\<name>\AppData\Roaming\Universe POS\data
+// - desktop app: C:\Users\<name>\AppData\Roaming\HordeDesk\data
 // No database program needs to be installed or running.
 function databaseFolder() {
   return path.join(dataDir(), 'data');

@@ -1,26 +1,31 @@
-// The till's other buttons, in the order a cashier reaches for them.
-// Each one says its keyboard shortcut.
+import { History, Pause, Percent, Search, Undo2, X } from 'lucide-react';
+
+// The till's other buttons. Each shows its keyboard shortcut.
 function TillActions({ hasItems, actions }) {
+  const buttons = [
+    { label: 'Find', key: 'F2', icon: Search, onClick: actions.onFind },
+    { label: 'Discount', key: 'F8', icon: Percent, onClick: actions.onDiscount, needsItems: true },
+    { label: 'Hold', key: 'F6', icon: Pause, onClick: actions.onHold, needsItems: true },
+    { label: 'Recall', key: 'F7', icon: History, onClick: actions.onRecall },
+    { label: 'Return', icon: Undo2, onClick: actions.onReturn },
+    { label: 'Cancel', key: 'F9', icon: X, onClick: actions.onCancel, needsItems: true, danger: true },
+  ];
   return (
     <section className="till-actions" aria-label="Till actions">
-      <button type="button" className="btn span-all" onClick={actions.onFind}>
-        Find product <span className="key">F2</span>
-      </button>
-      <button type="button" className="btn" onClick={actions.onDiscount} disabled={!hasItems}>
-        Discount <span className="key">F8</span>
-      </button>
-      <button type="button" className="btn" onClick={actions.onHold} disabled={!hasItems}>
-        Hold bill <span className="key">F6</span>
-      </button>
-      <button type="button" className="btn" onClick={actions.onRecall}>
-        Recall bill <span className="key">F7</span>
-      </button>
-      <button type="button" className="btn" onClick={actions.onReturn}>
-        Return
-      </button>
-      <button type="button" className="btn btn-danger span-all" onClick={actions.onCancel} disabled={!hasItems}>
-        Cancel bill <span className="key">F9</span>
-      </button>
+      {buttons.map(({ label, key, icon: Icon, onClick, needsItems, danger }) => (
+        <button
+          key={label}
+          type="button"
+          className={danger ? 'till-action btn-danger' : 'till-action'}
+          onClick={onClick}
+          disabled={needsItems && !hasItems}
+          aria-keyshortcuts={key}
+        >
+          <Icon size={18} aria-hidden="true" />
+          <span>{label}</span>
+          {key && <span className="till-action-key">{key}</span>}
+        </button>
+      ))}
     </section>
   );
 }

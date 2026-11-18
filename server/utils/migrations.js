@@ -8,6 +8,8 @@
 // sales and returns) and customer feedback.
 // Version 4 corrects the shop name to "Universe Cosmetics and Beauty
 // Skincare" if it is still one of the names the app used to fill in.
+// Version 5 (HordeDesk) uses cost prices and suppliers again, so they are
+// no longer removed: data restored from an older version keeps them.
 // The app ignores those old fields anyway, so nothing breaks if they are
 // still there - this just removes them.
 //
@@ -19,19 +21,19 @@ const { getStore } = require('../db');
 const { getSettings } = require('./settings');
 const { createBackup } = require('./backup');
 
-const CURRENT_DATA_VERSION = 4;
+const CURRENT_DATA_VERSION = 5;
 
 // Which old fields to remove from which database table.
 // "items.$[].costPrice" means: from every line of the sale.
 const FIELDS_TO_REMOVE = [
-  { collection: 'products', fields: ['costPrice', 'wholesalePrice', 'expiryDate', 'image'] },
+  { collection: 'products', fields: ['wholesalePrice', 'expiryDate', 'image'] },
   { collection: 'categories', fields: ['icon', 'image'] },
-  { collection: 'sales', fields: ['priceType', 'payments', 'paymentMethod', 'amountTendered', 'change', 'items.$[].costPrice', 'customer', 'customerName'] },
+  { collection: 'sales', fields: ['priceType', 'payments', 'paymentMethod', 'amountTendered', 'change', 'customer', 'customerName'] },
   { collection: 'returns', fields: ['refundMethod', 'customerName'] },
-  { collection: 'stockmovements', fields: ['supplier', 'costPrice'] },
+  { collection: 'stockmovements', fields: ['costPrice'] }, // now "unitCost"
   { collection: 'settings', fields: ['logo', 'showLogoOnReceipt'] },
 ];
-const TABLES_TO_DELETE = ['suppliers', 'customers', 'feedbacks'];
+const TABLES_TO_DELETE = ['customers', 'feedbacks'];
 
 // Shop names the app filled in by itself in earlier versions. A name the
 // owner typed is never changed.

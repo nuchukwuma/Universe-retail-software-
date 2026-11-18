@@ -8,6 +8,7 @@ const saleItemSchema = new db.Schema(
     name: { type: String, required: true },
     barcode: { type: String, default: '' },
     unitPrice: { type: Number, required: true },
+    costPrice: { type: Number, default: 0 }, // the product's cost when sold (for profit)
     quantity: { type: Number, required: true },
     discountType: { type: String, default: '' }, // 'percent', 'amount' or '' for none
     discountValue: { type: Number, default: 0 }, // e.g. 10 (%) or 500 (Naira)

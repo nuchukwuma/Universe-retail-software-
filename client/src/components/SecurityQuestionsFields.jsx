@@ -29,7 +29,6 @@ function SecurityQuestionsFields({ idPrefix, rows, onChange }) {
           </div>
         );
       })}
-      <p className="field-help">Capital letters and extra spaces do not matter ("Lagos" and "lagos" are the same). Keep the answers private.</p>
     </div>
   );
 }

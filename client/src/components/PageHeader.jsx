@@ -1,12 +1,8 @@
-// The top of every back-office page: the title, one line saying what the
-// page is for, and the page's main action(s) on the right.
-function PageHeader({ title, lead, children }) {
+// The top of every page: the title, and the page's main action(s) on the right.
+function PageHeader({ title, children }) {
   return (
     <header className="page-head">
-      <div>
-        <h1>{title}</h1>
-        {lead && <p className="page-lead">{lead}</p>}
-      </div>
+      <h1>{title}</h1>
       {children && <div className="btn-row">{children}</div>}
     </header>
   );

@@ -6,7 +6,7 @@ function ScannerStatus({ readyText = 'Scanner ready', paused = false, pausedText
   const windowFocused = useWindowFocus();
 
   if (!windowFocused) {
-    return <p className="scanner-status scanner-status-paused" role="status">Scanner paused: click anywhere in this window to scan again.</p>;
+    return <p className="scanner-status scanner-status-paused" role="status">Scanner paused: click this window</p>;
   }
   if (paused) {
     return <p className="scanner-status scanner-status-paused" role="status">{pausedText}</p>;

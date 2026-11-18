@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
-import TopBar from '../components/TopBar';
 import Toast, { useToast } from '../components/Toast';
 import LoadingScreen from '../components/LoadingScreen';
 import ScanBox from '../components/checkout/ScanBox';
 import BillTable from '../components/checkout/BillTable';
 import PriceTicket from '../components/checkout/PriceTicket';
 import TillActions from '../components/checkout/TillActions';
+import ProductTiles from '../components/checkout/ProductTiles';
+import HeldBillTabs from '../components/checkout/HeldBillTabs';
 import CheckoutModals from '../components/checkout/CheckoutModals';
 import { useReceiptPrinting } from '../components/receipts/useReceiptPrinting';
 import { useBill } from '../hooks/useBill';
@@ -17,7 +18,6 @@ import { useShortcuts } from '../hooks/useShortcuts';
 import { useGlobalScanner } from '../hooks/useScanner';
 import { canUseBackOffice } from '../utils/roles';
 import { formatNaira } from '../utils/formatNaira';
-import '../styles/pos.css';
 
 // A receipt number like 261027-0001 (or a return, R261027-0001).
 const RECEIPT_PATTERN = /^R?\d{6}-\d{4}$/i;
@@ -45,6 +45,7 @@ function CheckoutPage() {
   const [saving, setSaving] = useState(false);
   const [saleError, setSaleError] = useState('');
   const [holdError, setHoldError] = useState('');
+  const [heldBills, setHeldBills] = useState([]);
 
   const isCashier = user.role === 'cashier';
   const modalType = typeof modal === 'string' ? modal : modal?.type;
@@ -53,7 +54,11 @@ function CheckoutPage() {
   // Refresh them every 5 minutes so price changes reach the till.
   useEffect(() => {
     loadProducts();
-    const timer = setInterval(loadProducts, 5 * 60 * 1000);
+    loadHeldBills();
+    const timer = setInterval(() => {
+      loadProducts();
+      loadHeldBills();
+    }, 5 * 60 * 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -69,6 +74,15 @@ function CheckoutPage() {
       setLoadError(err.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  // The bills on hold, shown as tabs above the bill.
+  async function loadHeldBills() {
+    try {
+      setHeldBills(await api.get('/held-bills'));
+    } catch {
+      // the tabs simply stay as they were
     }
   }
 
@@ -227,22 +241,52 @@ function CheckoutPage() {
     setSaving(true);
     setHoldError('');
     try {
-      await api.post('/held-bills', {
-        label: label || `Bill held at ${new Date().toLocaleTimeString('en-NG', { hour: 'numeric', minute: '2-digit' })}`,
-        bill,
-        itemCount: totals.quantityCount,
-        total: totals.total,
-      });
-      clearBill();
-      setLastAddedId(null);
-      setScanResult(null);
+      await saveHeld(label);
       closeModal();
-      showToast('Bill on hold. Press F7 to recall it.', 'success');
+      showToast('Bill on hold', 'success');
     } catch (err) {
       setHoldError(err.message);
     } finally {
       setSaving(false);
     }
+  }
+
+  // Puts the current bill on hold and empties the till.
+  async function saveHeld(label) {
+    await api.post('/held-bills', {
+      label: label || bill.label || `Bill ${new Date().toLocaleTimeString('en-NG', { hour: 'numeric', minute: '2-digit' })}`,
+      bill: { ...bill, label: undefined },
+      itemCount: totals.quantityCount,
+      total: totals.total,
+    });
+    clearBill();
+    setLastAddedId(null);
+    setScanResult(null);
+    await loadHeldBills();
+  }
+
+  // A held bill's tab: the current bill (if any) goes on hold, the held one comes back.
+  async function switchToHeld(held) {
+    if (bill.items.length > 0) {
+      try {
+        await saveHeld('');
+      } catch (err) {
+        showToast(err.message, 'error');
+        return;
+      }
+    }
+    recallBill(held);
+  }
+
+  // The x on a held bill's tab.
+  async function deleteHeld(held) {
+    if (!window.confirm(`Delete the held bill "${held.label || 'Held bill'}"?`)) return;
+    try {
+      await api.delete(`/held-bills/${held._id}`);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+    loadHeldBills();
   }
 
   // Opens Recall (only when the till is empty, so no bill is lost).
@@ -260,12 +304,14 @@ function CheckoutPage() {
       await api.delete(`/held-bills/${held._id}`);
     } catch (err) {
       showToast(err.message, 'error');
+      loadHeldBills();
       return;
     }
+    loadHeldBills();
     // Products deleted while the bill was on hold cannot be sold.
     const items = held.bill.items.filter((item) => productsById[item.productId]);
     const removed = held.bill.items.length - items.length;
-    loadBill({ ...held.bill, items });
+    loadBill({ ...held.bill, items, label: held.label });
     closeModal();
     showToast(removed > 0 ? `Bill recalled. ${removed} deleted product(s) were taken off.` : 'Bill recalled', 'success');
     loadProducts();
@@ -305,74 +351,66 @@ function CheckoutPage() {
 
   return (
     <div className="till">
-      <TopBar />
+      <section className="till-bill" aria-label="Bill">
+        <HeldBillTabs heldBills={heldBills} currentLabel={bill.label} currentCount={totals.quantityCount} onSwitch={switchToHeld} onDelete={deleteHeld} />
 
-      {loadError && (
-        <div className="notice notice-error" role="alert">
-          <span className="notice-title">The product list could not be loaded.</span>
-          {loadError}
-          <div className="btn-row">
-            <button type="button" className="btn btn-small" onClick={loadProducts}>Try again</button>
+        <ScanBox ref={scanRef} products={products} onSubmit={handleCode} onPick={addToBill} paused={modal !== null}>
+          {scanResult?.kind === 'added' && <p className="scan-result success-text">{scanResult.text}</p>}
+          {scanResult?.kind === 'info' && <p className="scan-result">{scanResult.text}</p>}
+        </ScanBox>
+
+        {loadError && (
+          <div className="notice notice-error till-notice" role="alert">
+            <span className="notice-title">Products could not be loaded</span>
+            {loadError}
+            <div className="btn-row">
+              <button type="button" className="btn btn-small" onClick={loadProducts}>Try again</button>
+            </div>
           </div>
+        )}
+
+        {scanResult?.kind === 'notFound' && (
+          <div className="notice notice-error till-notice" role="alert">
+            <span className="notice-title">No product has the barcode {scanResult.code}</span>
+            <div className="btn-row">
+              {canUseBackOffice(user) && (
+                <button type="button" className="btn btn-small" onClick={() => navigate(`/products/new?barcode=${encodeURIComponent(scanResult.code)}&from=checkout`)}>
+                  Add as a new product
+                </button>
+              )}
+              <button type="button" className="btn btn-small btn-quiet" onClick={() => setScanResult(null)}>Dismiss</button>
+            </div>
+          </div>
+        )}
+
+        <div className="bill-lines">
+          <BillTable billState={billState} productsById={productsById} lastAddedId={lastAddedId} />
         </div>
-      )}
 
-      <main className="till-main">
-        <section className="till-bill" aria-label="Bill">
-          <ScanBox ref={scanRef} products={products} onSubmit={handleCode} onPick={addToBill} paused={modal !== null}>
-            {scanResult?.kind === 'added' && <p className="scan-result success-text">{scanResult.text}</p>}
-            {scanResult?.kind === 'info' && <p className="scan-result">{scanResult.text}</p>}
-          </ScanBox>
-
-          {scanResult?.kind === 'notFound' && (
-            <div className="notice notice-error" role="alert">
-              <span className="notice-title">Product not found</span>
-              No product has the barcode {scanResult.code}. Check the number and scan again
-              {canUseBackOffice(user) ? ', or add it as a new product.' : ', or ask a manager to add it.'}
-              <div className="btn-row">
-                {canUseBackOffice(user) && (
-                  <button type="button" className="btn btn-small" onClick={() => navigate(`/products/new?barcode=${encodeURIComponent(scanResult.code)}&from=checkout`)}>
-                    Add as a new product
-                  </button>
-                )}
-                <button type="button" className="btn btn-small btn-quiet" onClick={() => setScanResult(null)}>Dismiss</button>
-              </div>
-            </div>
-          )}
-
-          <div className="bill-lines">
-            <BillTable billState={billState} productsById={productsById} lastAddedId={lastAddedId} />
+        {totals.billDiscount > 0 && (
+          <div className="bill-discount">
+            <span>
+              Bill discount{bill.discount.type === 'percent' ? ` ${bill.discount.value}%` : ''}: minus <strong>{formatNaira(totals.billDiscount)}</strong>
+            </span>
+            <button type="button" className="btn btn-quiet btn-danger btn-small" onClick={() => setBillDiscount(null)}>Remove</button>
           </div>
+        )}
 
-          {totals.billDiscount > 0 && (
-            <div className="bill-discount">
-              <span>
-                Discount on the whole bill{bill.discount.type === 'percent' ? ` (${bill.discount.value}%)` : ''}: minus{' '}
-                <strong>{formatNaira(totals.billDiscount)}</strong>
-              </span>
-              <button type="button" className="btn btn-quiet btn-danger" onClick={() => setBillDiscount(null)}>Remove discount</button>
-            </div>
-          )}
-        </section>
+        <TillActions
+          hasItems={bill.items.length > 0}
+          actions={{
+            onFind: () => setModal({ type: 'find' }),
+            onDiscount: () => openForBill('discount'),
+            onHold: () => openForBill('hold'),
+            onRecall: openRecall,
+            onReturn: () => setModal('return'),
+            onCancel: cancelBill,
+          }}
+        />
+        <PriceTicket totals={totals} onComplete={() => openForBill('complete')} />
+      </section>
 
-        <aside className="till-side">
-          <PriceTicket totals={totals} onComplete={() => openForBill('complete')} />
-          <div className="till-tools">
-            <TillActions
-              hasItems={bill.items.length > 0}
-              actions={{
-                onFind: () => setModal({ type: 'find' }),
-                onDiscount: () => openForBill('discount'),
-                onHold: () => openForBill('hold'),
-                onRecall: openRecall,
-                onReturn: () => setModal('return'),
-                onCancel: cancelBill,
-              }}
-            />
-            <p className="till-hint">Press F1 for all keyboard shortcuts.</p>
-          </div>
-        </aside>
-      </main>
+      <ProductTiles products={products} categories={categories} onAdd={addToBill} />
 
       <Toast toast={toast} />
       <CheckoutModals modal={modal} c={checkout} />

@@ -20,7 +20,7 @@ function buildMenu(actions) {
         { label: 'Open data folder', accelerator: 'CmdOrCtrl+Shift+D', click: actions.openDataFolder },
         { role: 'toggleDevTools', label: 'Developer tools', accelerator: 'CmdOrCtrl+Shift+I' },
         { type: 'separator' },
-        { role: 'quit', label: 'Quit Universe POS', accelerator: 'CmdOrCtrl+Q' },
+        { role: 'quit', label: 'Quit HordeDesk', accelerator: 'CmdOrCtrl+Q' },
       ],
     },
     {

@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
-import BackOfficeLayout from './components/BackOfficeLayout';
+import AppShell from './components/AppShell';
 import LoginPage from './pages/LoginPage';
 import CheckoutPage from './pages/CheckoutPage';
 import DashboardPage from './pages/DashboardPage';
@@ -15,6 +15,10 @@ import EndOfDayPage from './pages/EndOfDayPage';
 import SettingsPage from './pages/SettingsPage';
 import ReportsPage from './pages/ReportsPage';
 import BackupPage from './pages/BackupPage';
+import SuppliersPage from './pages/SuppliersPage';
+import PurchasesPage from './pages/PurchasesPage';
+import PurchaseFormPage from './pages/PurchaseFormPage';
+import PurchaseDetailPage from './pages/PurchaseDetailPage';
 
 const MANAGERS = ['owner', 'manager'];
 
@@ -34,25 +38,17 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Everyone who is logged in can use the checkout */}
-      <Route
-        path="/checkout"
-        element={
-          <ProtectedRoute>
-            <CheckoutPage />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Pages with the side menu. Each page says who may open it. */}
+      {/* Every signed-in screen sits in the app shell (the sidebar).
+          Each page says who may open it. */}
       <Route
         element={
           <ProtectedRoute>
-            <BackOfficeLayout />
+            <AppShell />
           </ProtectedRoute>
         }
       >
         {/* Everyone (cashiers too) */}
+        <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/sales-history" element={<SalesHistoryPage />} />
         <Route path="/end-of-day" element={<EndOfDayPage />} />
 
@@ -66,6 +62,11 @@ function App() {
         <Route path="/add-stock" element={managersOnly(<AddStockPage />)} />
         <Route path="/receive-stock" element={<Navigate to="/add-stock" replace />} />
         <Route path="/stock-count" element={managersOnly(<StockCountPage />)} />
+        <Route path="/suppliers" element={managersOnly(<SuppliersPage />)} />
+        <Route path="/purchases" element={managersOnly(<PurchasesPage />)} />
+        <Route path="/purchases/new" element={managersOnly(<PurchaseFormPage />)} />
+        <Route path="/purchases/:id" element={managersOnly(<PurchaseDetailPage />)} />
+        <Route path="/purchases/:id/edit" element={managersOnly(<PurchaseFormPage />)} />
 
         {/* Owner only */}
         <Route path="/staff" element={ownerOnly(<StaffPage />)} />

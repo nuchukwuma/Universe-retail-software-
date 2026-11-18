@@ -1,11 +1,26 @@
-# Builds the Windows installer (Universe-POS-Setup-x.y.z.exe) on a
-# Windows computer at GitHub. When it finishes, download it from the
-# "Actions" tab: open the run, then "Artifacts" -> Universe-POS-Setup.
+# Builds the Windows installer (HordeDesk-Setup.exe) on a Windows computer
+# at GitHub.
+# - Every push: the installer is kept for 30 days under the run's
+#   "Artifacts" (Actions tab -> the run -> HordeDesk-Setup).
+# - "Run workflow" with "Publish a release" ticked, or pushing a tag such
+#   as v2.0.0: it is also published as a GitHub Release. The website's
+#   Download button always points at the newest release:
+#   https://github.com/<owner>/<repo>/releases/latest/download/HordeDesk-Setup.exe
 name: Build Windows installer
 
 on:
   workflow_dispatch:
+    inputs:
+      release:
+        description: Publish a release (uses the version in desktop/package.json)
+        type: boolean
+        default: false
   push:
+    branches:
+      - '**'
+    tags:
+      - 'v*'
+    # (These paths apply to branch pushes; a tag push always builds.)
     paths:
       - 'client/**'
       - 'server/**'
@@ -40,6 +55,41 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Universe-POS-Setup
-          path: desktop/dist/*.exe
+          name: HordeDesk-Setup
+          path: desktop/dist/HordeDesk-Setup.exe
           retention-days: 30
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: HordeDesk-Setup
+          path: installer
+
+      - name: Work out the version
+        id: version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v$(node -p "require('./desktop/package.json').version")" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: HordeDesk ${{ steps.version.outputs.tag }}
+          make_latest: true
+          files: installer/HordeDesk-Setup.exe
+          body: |
+            Download **HordeDesk-Setup.exe** below, open it and follow the steps.
+            Works on Windows 8.1, 10 and 11 (64-bit), with no internet needed.

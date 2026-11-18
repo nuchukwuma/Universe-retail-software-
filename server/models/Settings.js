@@ -1,11 +1,13 @@
 const db = require('../db');
+const { imageUrl } = require('../utils/images');
 
 // Store-wide settings. There is only ever ONE settings record.
 // The Telegram bot token and chat id are kept here too, but they are
 // removed whenever the settings are sent to the app (see toJSON below).
 const settingsSchema = new db.Schema(
   {
-    storeName: { type: String, default: 'Universe Cosmetics and Beauty Skincare', trim: true },
+    storeName: { type: String, default: 'My Shop', trim: true },
+    shopLogo: { type: String, default: '' }, // optional picture, see utils/images.js
     address: { type: String, default: '', trim: true },
     phone: { type: String, default: '', trim: true },
     footerMessage: { type: String, default: 'Thank you for shopping with us!', trim: true },
@@ -39,6 +41,7 @@ const settingsSchema = new db.Schema(
 // "set / not set" instead.
 settingsSchema.set('toJSON', {
   transform: (doc, ret) => {
+    ret.logoUrl = imageUrl(ret.shopLogo);
     delete ret.telegramBotToken;
     delete ret.telegramChatId;
     delete ret.__v;

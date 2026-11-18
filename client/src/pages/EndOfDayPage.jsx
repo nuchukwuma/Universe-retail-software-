@@ -35,7 +35,7 @@ function EndOfDayPage() {
 
   return (
     <div className="page">
-      <PageHeader title="End of day" lead="The day's sales, refunds and takings." />
+      <PageHeader title="End of day" />
       {error && <div className="notice notice-error" role="alert">{error}</div>}
 
       <div className="panel toolbar">
@@ -61,7 +61,7 @@ function EndOfDayPage() {
           <dl className="figures">
             <div className="figure">
               <dt>Takings</dt>
-              <dd>{formatNaira(report.takings)}<span className="figure-note muted">sales minus refunds</span></dd>
+              <dd>{formatNaira(report.takings)}</dd>
             </div>
             <div className="figure">
               <dt>Sales</dt>

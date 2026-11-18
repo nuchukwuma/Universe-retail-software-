@@ -81,7 +81,7 @@ function CategoriesPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Categories" lead="Groups of products. Cashiers use them to find items without a barcode." />
+      <PageHeader title="Categories" />
 
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {message && <div className="notice notice-success" role="status">{message}</div>}
@@ -92,7 +92,6 @@ function CategoriesPage() {
           {!loading && categories.length === 0 && !error && (
             <div className="empty">
               <p className="strong">No categories yet.</p>
-              <p className="muted">Add your first one with the form.</p>
             </div>
           )}
           {categories.length > 0 && (
@@ -136,7 +135,6 @@ function CategoriesPage() {
             </button>
             {editingId && <button type="button" className="btn" onClick={resetForm}>Cancel</button>}
           </div>
-          <p className="muted small">A category can only be deleted when it has no products.</p>
         </form>
       </div>
     </div>

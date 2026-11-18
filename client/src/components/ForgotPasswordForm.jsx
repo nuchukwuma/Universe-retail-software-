@@ -52,8 +52,8 @@ function ForgotPasswordForm({ onDone, onCancel }) {
   if (!questions) {
     return (
       <form className="entry-form" onSubmit={findQuestions}>
-        <h2>Forgot your password?</h2>
-        <p className="muted">The owner can choose a new password by answering their three security questions. Other staff: ask the owner to reset your password on the Staff page.</p>
+        <h1>Reset password</h1>
+        <p className="muted small">Owner accounts only. Other staff: ask the owner.</p>
         {error && <div className="notice notice-error" role="alert">{error}</div>}
         <div className="field">
           <label className="field-label" htmlFor="forgot-username">Your username</label>
@@ -67,7 +67,7 @@ function ForgotPasswordForm({ onDone, onCancel }) {
 
   return (
     <form className="entry-form" onSubmit={resetPassword}>
-      <h2>Answer your security questions</h2>
+      <h1>Answer your security questions</h1>
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {questions.map((question, index) => (
         <div className="field" key={question}>
