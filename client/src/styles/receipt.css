@@ -27,14 +27,16 @@
 
 .receipt-logo {
   display: block;
-  width: 26mm;
-  height: 26mm;
+  max-width: 30mm;
+  max-height: 22mm;
   margin: 0 auto 2mm;
+  object-fit: contain;
+  filter: grayscale(1) contrast(1.4);
 }
 
 .receipt-58 .receipt-logo {
-  width: 20mm;
-  height: 20mm;
+  max-width: 22mm;
+  max-height: 16mm;
 }
 
 .receipt-store {

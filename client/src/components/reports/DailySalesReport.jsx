@@ -2,6 +2,7 @@ import { useReport } from '../../hooks/useReport';
 import ReportTable from './ReportTable';
 import ReportFigures from './ReportFigures';
 import { formatDate } from '../../utils/dates';
+import { Link } from 'react-router-dom';
 import { formatNaira } from '../../utils/formatNaira';
 
 const COLUMNS = [
@@ -13,6 +14,8 @@ const COLUMNS = [
   { key: 'netSales', header: 'Sales total', type: 'money' },
   { key: 'refunds', header: 'Refunds', type: 'money' },
   { key: 'takings', header: 'Takings', type: 'money' },
+  { key: 'costOfGoods', header: 'Cost of goods', type: 'money' },
+  { key: 'profit', header: 'Profit', type: 'money' },
 ];
 
 // Daily sales: one row per day in the chosen dates.
@@ -28,11 +31,18 @@ function DailySalesReport({ from, to }) {
       <ReportFigures
         figures={[
           { label: 'Takings', value: totals.takings, type: 'money' },
-          { label: 'Sales', value: totals.transactions, type: 'number', note: `${totals.itemsSold.toLocaleString('en-NG')} items sold` },
-          { label: 'Average sale', value: totals.averageSale, type: 'money' },
-          { label: 'Discounts given', value: totals.discounts, type: 'money', note: totals.grossSales ? `on ${formatNaira(totals.grossSales)} of sales` : undefined },
+          { label: 'Profit', value: totals.profit, type: 'money', note: totals.takings > 0 ? `${Math.round((totals.profit / totals.takings) * 100)}% of takings` : undefined },
+          { label: 'Sales', value: totals.transactions, type: 'number', note: `${totals.itemsSold.toLocaleString('en-NG')} items, average ${formatNaira(totals.averageSale)}` },
+          { label: 'Discounts given', value: totals.discounts, type: 'money' },
         ]}
       />
+      {totals.itemsWithoutCost > 0 && (
+        <div className="notice notice-warning">
+          <span className="notice-title">{totals.itemsWithoutCost} {totals.itemsWithoutCost === 1 ? 'item' : 'items'} sold without a cost price</span>
+          Profit is shown too high until those products have a cost price.
+          <div className="btn-row"><Link to="/products" className="btn btn-small">Products</Link></div>
+        </div>
+      )}
       <ReportTable
         title="Daily sales"
         subtitle={`${formatDate(from)} to ${formatDate(to)}`}

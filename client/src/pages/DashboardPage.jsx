@@ -70,15 +70,14 @@ function DashboardPage() {
           <span className="notice-title">
             {settings.lastBackupError ? 'The last backup failed.' : daysSinceBackup === null ? 'No backup has been made yet.' : `The last backup was ${Math.floor(daysSinceBackup)} days ago.`}
           </span>
-          {settings.lastBackupError || 'All the shop\'s data is only on this laptop. Make a backup to a USB drive.'}
-          <div className="btn-row"><Link to="/backup" className="btn btn-small">Open Backup and restore</Link></div>
+          {settings.lastBackupError}
+          <div className="btn-row"><Link to="/backup" className="btn btn-small">Back up now</Link></div>
         </div>
       )}
       {user.role === 'owner' && !user.hasSecurityQuestions && (
         <div className="notice notice-warning">
-          <span className="notice-title">Set your security questions</span>
-          If you ever forget your password, answering three questions lets you choose a new one. Without them, a forgotten owner password cannot be reset.
-          <div className="btn-row"><Link to="/settings#recovery" className="btn btn-small">Set them in Settings</Link></div>
+          <span className="notice-title">Password recovery questions are not set</span>
+          <div className="btn-row"><Link to="/settings#recovery" className="btn btn-small">Set them</Link></div>
         </div>
       )}
 
@@ -90,9 +89,9 @@ function DashboardPage() {
             <dt>Takings today</dt>
             <dd>{formatNaira(stats.today.takings)}<span className="figure-note muted">{compareWithYesterday(stats.today.takings, stats.yesterday.takings)}</span></dd>
           </Link>
-          <Link to={`/reports?report=cashiers&from=${today}&to=${today}`} className="figure figure-link">
-            <dt>Sales today</dt>
-            <dd>{stats.today.transactions}<span className="figure-note muted">{stats.today.itemsSold} items, average {formatNaira(stats.today.averageSale)}</span></dd>
+          <Link to={`/reports?report=daily&from=${today}&to=${today}`} className="figure figure-link">
+            <dt>Profit today</dt>
+            <dd>{formatNaira(stats.today.profit || 0)}<span className="figure-note muted">{stats.today.transactions} sales, {stats.today.itemsSold} items</span></dd>
           </Link>
           <Link to={`/reports?report=daily&from=${stats.weekStart}&to=${today}`} className="figure figure-link">
             <dt>This week</dt>

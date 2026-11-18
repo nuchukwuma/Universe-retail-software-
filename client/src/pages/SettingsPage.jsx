@@ -7,6 +7,8 @@ import SaleReceipt from '../components/receipts/SaleReceipt';
 import TelegramSettings from '../components/settings/TelegramSettings';
 import SecurityQuestionsSettings from '../components/settings/SecurityQuestionsSettings';
 import PrinterPicker from '../components/settings/PrinterPicker';
+import PictureField from '../components/PictureField';
+import BrandMark from '../components/BrandMark';
 
 // A made-up sale used for the preview and the "Print test receipt" button.
 const TEST_SALE = {
@@ -45,6 +47,19 @@ function SettingsPage() {
     setMessage('');
   }
 
+  // The logo saves as soon as it is chosen or removed.
+  async function changeLogo(dataUrl) {
+    setError('');
+    try {
+      const saved = dataUrl ? await api.put('/settings/logo', { logo: dataUrl }) : await api.delete('/settings/logo');
+      setSettings(saved);
+      setForm((current) => ({ ...current, logoUrl: saved.logoUrl }));
+      setMessage(dataUrl ? 'Logo saved.' : 'Logo removed.');
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   // Saves the settings and uses them straight away.
   // (The Telegram on/off switch saves itself, so it is not sent here.)
   async function handleSave(event) {
@@ -69,11 +84,14 @@ function SettingsPage() {
       <PageHeader title="Settings" />
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {message && <div className="notice notice-success" role="status">{message}</div>}
-      {hasChanges && !message && <div className="notice notice-warning">You have changes that are not saved yet.</div>}
+      {hasChanges && !message && <div className="notice notice-warning">Unsaved changes</div>}
 
       <div className="columns">
         <form className="panel form-grid" onSubmit={handleSave}>
-          <h2 className="form-section">Shop details on receipts</h2>
+          <h2 className="form-section">Shop</h2>
+          <div className="span-all">
+            <PictureField id="settings-logo" label="Logo" value={form.logoUrl || ''} onChange={changeLogo} maxSize={512} fallback={<BrandMark size={64} />} />
+          </div>
           <div className="field span-all">
             <label className="field-label" htmlFor="settings-name">Shop name</label>
             <input id="settings-name" value={form.storeName} onChange={(e) => setField('storeName', e.target.value)} required />
@@ -103,18 +121,17 @@ function SettingsPage() {
           <PrinterPicker value={form.printerName} onChange={(name) => setField('printerName', name)} />
           <label className="check span-all">
             <input type="checkbox" checked={form.receiptLogo !== false} onChange={(e) => setField('receiptLogo', e.target.checked)} />
-            Print the shop's logo at the top of receipts
+            Print the logo on receipts
           </label>
           <label className="check span-all">
             <input type="checkbox" checked={form.autoPrint} onChange={(e) => setField('autoPrint', e.target.checked)} />
-            Print the receipt as soon as a sale is completed, without showing it first
+            Print receipts automatically after each sale
           </label>
 
           <h2 className="form-section">Discounts</h2>
           <div className="field">
             <label className="field-label" htmlFor="settings-discount">Largest discount a cashier can give alone (%)</label>
             <input id="settings-discount" type="number" min="0" max="100" value={form.maxCashierDiscountPercent} onChange={(e) => setField('maxCashierDiscountPercent', e.target.value)} />
-            <span className="field-help">Above this, a manager types their password on the till.</span>
           </div>
 
           <div className="span-all btn-row">

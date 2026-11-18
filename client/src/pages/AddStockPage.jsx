@@ -8,6 +8,7 @@ import { formatNaira } from '../utils/formatNaira';
 import { formatDateTime } from '../utils/dates';
 
 const EMPTY_NEW_PRODUCT = { name: '', barcode: '', category: '', sellingPrice: '', reorderLevel: '5' };
+const EMPTY_COST = { unitCost: '', supplierId: '' };
 
 // Add stock with the barcode scanner, or by typing the product's name.
 // - Scan (or type the name of) a product the shop already has: it is chosen
@@ -24,6 +25,8 @@ function AddStockPage() {
   const [current, setCurrent] = useState(null);
   const [quantity, setQuantity] = useState('1');
   const [newProduct, setNewProduct] = useState(EMPTY_NEW_PRODUCT);
+  const [cost, setCost] = useState(EMPTY_COST); // what the delivery cost, and who sent it
+  const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -37,12 +40,14 @@ function AddStockPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [productList, categoryList, movements] = await Promise.all([
+        const [productList, categoryList, movements, supplierList] = await Promise.all([
           api.get('/products'),
           api.get('/categories'),
           api.get('/stock/movements?type=receive&limit=20'),
+          api.get('/suppliers').catch(() => []),
         ]);
         setProducts(productList);
+        setSuppliers(supplierList);
         setCategories(categoryList);
         setHistory(movements);
       } catch (err) {
@@ -63,6 +68,7 @@ function AddStockPage() {
     } else {
       setCurrent({ kind: 'existing', product });
       setQuantity('1');
+      setCost({ unitCost: product.costPrice ? String(product.costPrice) : '', supplierId: product.supplier?._id || product.supplier || '' });
     }
     setTimeout(() => quantityRef.current?.select(), 0);
   }
@@ -81,6 +87,7 @@ function AddStockPage() {
     }
     setCurrent({ kind: 'new', barcode: code });
     setNewProduct(EMPTY_NEW_PRODUCT);
+    setCost(EMPTY_COST);
     setQuantity('1');
     setTimeout(() => nameRef.current?.focus(), 0);
   }
@@ -91,6 +98,7 @@ function AddStockPage() {
     setMessage('');
     setCurrent({ kind: 'new', barcode: '' });
     setNewProduct({ ...EMPTY_NEW_PRODUCT, name });
+    setCost(EMPTY_COST);
     setQuantity('1');
     setTimeout(() => priceRef.current?.focus(), 0);
   }
@@ -110,12 +118,16 @@ function AddStockPage() {
     setCurrent(null);
     setQuantity('1');
     setNewProduct(EMPTY_NEW_PRODUCT);
+    setCost(EMPTY_COST);
     setTimeout(() => scanRef.current?.focus(), 0);
   }
 
   // Adds the quantity to the stock of the chosen product.
   async function addToStock(product, amount) {
-    const data = await api.post('/stock/receive', { productId: product._id, quantity: amount, note: '' });
+    const body = { productId: product._id, quantity: amount, note: '' };
+    if (cost.unitCost !== '') body.unitCost = Number(cost.unitCost);
+    if (cost.supplierId) body.supplierId = cost.supplierId;
+    const data = await api.post('/stock/receive', body);
     setProducts((list) => {
       const exists = list.some((p) => p._id === data.product._id);
       const updated = { ...product, ...data.product, category: product.category };
@@ -147,6 +159,8 @@ function AddStockPage() {
           barcode: current.barcode || newProduct.barcode.trim(),
           category: newProduct.category,
           sellingPrice: Number(newProduct.sellingPrice),
+          costPrice: Number(cost.unitCost) || 0,
+          supplier: cost.supplierId || null,
           quantity: 0,
           reorderLevel: Number(newProduct.reorderLevel) || 0,
         });
@@ -194,13 +208,23 @@ function AddStockPage() {
           <div className="span-all">
             <h2 id="existing-heading">{current.product.name}</h2>
             <p className="muted">
-              {current.product.quantity} in stock now. {formatNaira(current.product.sellingPrice)}. Barcode {current.product.barcode || 'none'}.
+              {current.product.quantity} in stock, {formatNaira(current.product.sellingPrice)}{current.product.barcode ? `, ${current.product.barcode}` : ''}
             </p>
           </div>
           <div className="field">
             <label className="field-label" htmlFor="stock-quantity">How many arrived</label>
             <input id="stock-quantity" ref={quantityRef} type="number" min="1" step="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
-            <span className="field-help">Scan it again to add 1 more, or type the number.</span>
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="stock-cost">Cost each (₦)</label>
+            <input id="stock-cost" type="number" min="0" step="any" inputMode="decimal" value={cost.unitCost} onChange={(e) => setCost((c) => ({ ...c, unitCost: e.target.value }))} />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="stock-supplier">Supplier</label>
+            <select id="stock-supplier" value={cost.supplierId} onChange={(e) => setCost((c) => ({ ...c, supplierId: e.target.value }))}>
+              <option value="">None</option>
+              {suppliers.map((sup) => <option key={sup._id} value={sup._id}>{sup.name}</option>)}
+            </select>
           </div>
           <div className="span-all btn-row">
             <button type="submit" className="btn btn-primary btn-large" disabled={saving}>
@@ -237,13 +261,22 @@ function AddStockPage() {
           <div className="field">
             <label className="field-label" htmlFor="stock-quantity">How many arrived</label>
             <input id="stock-quantity" ref={quantityRef} type="number" min="1" step="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
-            <span className="field-help">{current.barcode ? 'Scan the same barcode again to add 1 more.' : 'Type the number that arrived.'}</span>
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="stock-cost">Cost each (₦)</label>
+            <input id="stock-cost" type="number" min="0" step="any" inputMode="decimal" value={cost.unitCost} onChange={(e) => setCost((c) => ({ ...c, unitCost: e.target.value }))} />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="stock-supplier">Supplier</label>
+            <select id="stock-supplier" value={cost.supplierId} onChange={(e) => setCost((c) => ({ ...c, supplierId: e.target.value }))}>
+              <option value="">None</option>
+              {suppliers.map((sup) => <option key={sup._id} value={sup._id}>{sup.name}</option>)}
+            </select>
           </div>
           {!current.barcode && (
             <div className="field">
               <label className="field-label" htmlFor="new-barcode">Barcode (optional)</label>
               <input id="new-barcode" inputMode="numeric" value={newProduct.barcode} onChange={(e) => setField('barcode', e.target.value)} placeholder="Type the digits, or scan" />
-              <span className="field-help">Leave empty if the product has none.</span>
             </div>
           )}
           <div className="field">

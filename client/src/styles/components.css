@@ -12,7 +12,7 @@
   gap: var(--space-3);
   min-height: var(--control-height);
   padding: 0 var(--button-padding-x);
-  border: var(--line-strong) solid var(--color-text);
+  border: var(--line-thin) solid var(--color-control-border);
   border-radius: var(--corner-control);
   background: var(--color-surface);
   color: var(--color-text);
@@ -24,6 +24,7 @@
 }
 
 .btn:hover {
+  border-color: var(--grey-600);
   background: var(--color-surface-hover);
   color: var(--color-text);
 }
@@ -39,7 +40,7 @@
   cursor: not-allowed;
 }
 
-/* The one main action on a screen: Night, turning deep aqua. */
+/* The main action on a screen. */
 .btn-primary {
   border-color: var(--color-action);
   background: var(--color-action);
@@ -58,11 +59,11 @@
 }
 
 .btn-danger {
-  border-color: var(--color-danger-text);
   color: var(--color-danger-text);
 }
 
 .btn-danger:hover {
+  border-color: var(--color-danger-text);
   background: var(--color-danger-surface);
   color: var(--color-danger-hover);
 }
@@ -95,8 +96,6 @@
   border-color: transparent;
   background: transparent;
   color: var(--color-accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 .btn-quiet:hover {
@@ -114,6 +113,7 @@
 }
 
 .btn-quiet.btn-danger:hover {
+  border-color: var(--color-danger-text);
   background: var(--color-danger-surface);
   color: var(--color-danger-hover);
 }
@@ -199,9 +199,8 @@ textarea {
   resize: vertical;
 }
 
-/* No browser-drawn symbols inside boxes (the brief: no icons). Date boxes
-   open their calendar when clicked instead (see DateInput.jsx), and number
-   boxes have - and + buttons where they are used a lot. */
+/* No browser-drawn spinners or symbols inside boxes. Date boxes open
+   their calendar when clicked (see DateInput.jsx). */
 input[type='search']::-webkit-search-cancel-button,
 input[type='search']::-webkit-search-decoration,
 input[type='number']::-webkit-inner-spin-button,
@@ -377,8 +376,10 @@ input[type='date'] {
 
 .table th {
   padding: var(--space-3) var(--table-cell-padding-x);
-  border-bottom: var(--line-strong) solid var(--color-rule-strong);
-  font-weight: 700;
+  border-bottom: var(--line-thin) solid var(--color-control-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+  font-weight: 650;
   text-align: left;
   white-space: nowrap;
   vertical-align: bottom;
@@ -411,7 +412,7 @@ input[type='date'] {
 }
 
 .table tfoot td {
-  border-top: var(--line-strong) solid var(--color-rule-strong);
+  border-top: var(--line-thin) solid var(--color-control-border);
   border-bottom: none;
   font-weight: 700;
 }
@@ -676,8 +677,8 @@ a.figure-link:hover dd {
    says what kind of message it is. */
 .toast {
   position: fixed;
-  bottom: var(--space-6);
-  left: 50%;
+  top: var(--space-5);
+  right: var(--space-5);
   z-index: 60;
   max-width: calc(100vw - 32px);
   padding: var(--space-4) var(--space-6);
@@ -686,7 +687,7 @@ a.figure-link:hover dd {
   background: var(--color-night);
   color: var(--color-on-night);
   font-weight: 650;
-  transform: translateX(-50%);
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.2);
 }
 
 .toast-success {
@@ -796,4 +797,70 @@ a.figure-link:hover dd {
   font-size: var(--font-size-5);
   font-weight: 750;
   letter-spacing: 0.02em;
+}
+
+/* Icon buttons in tables (edit, delete, remove). */
+.table .icon-btn {
+  width: var(--control-height-small);
+  height: var(--control-height-small);
+  color: var(--color-text-muted);
+}
+
+.table .icon-btn:hover {
+  background: var(--color-accent-tint);
+  color: var(--color-accent);
+}
+
+.icon-btn-danger:hover,
+.table .icon-btn-danger:hover {
+  background: var(--color-danger-surface);
+  color: var(--color-danger-text);
+}
+
+/* ---------- Picture field (product photo, shop logo) ---------- */
+
+.picture-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.picture-preview {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  overflow: hidden;
+  border: var(--line-thin) solid var(--color-rule);
+  border-radius: var(--radius-12);
+  background: var(--color-surface-sunken);
+}
+
+.picture-preview img,
+.picture-preview .thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cell-product {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.thumb-small {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-8);
+  font-size: var(--text-small);
+}
+
+.btn svg {
+  flex: none;
+}
+
+.nowrap {
+  white-space: nowrap;
 }

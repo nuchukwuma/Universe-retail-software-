@@ -15,6 +15,10 @@ import EndOfDayPage from './pages/EndOfDayPage';
 import SettingsPage from './pages/SettingsPage';
 import ReportsPage from './pages/ReportsPage';
 import BackupPage from './pages/BackupPage';
+import SuppliersPage from './pages/SuppliersPage';
+import PurchasesPage from './pages/PurchasesPage';
+import PurchaseFormPage from './pages/PurchaseFormPage';
+import PurchaseDetailPage from './pages/PurchaseDetailPage';
 
 const MANAGERS = ['owner', 'manager'];
 
@@ -58,6 +62,11 @@ function App() {
         <Route path="/add-stock" element={managersOnly(<AddStockPage />)} />
         <Route path="/receive-stock" element={<Navigate to="/add-stock" replace />} />
         <Route path="/stock-count" element={managersOnly(<StockCountPage />)} />
+        <Route path="/suppliers" element={managersOnly(<SuppliersPage />)} />
+        <Route path="/purchases" element={managersOnly(<PurchasesPage />)} />
+        <Route path="/purchases/new" element={managersOnly(<PurchaseFormPage />)} />
+        <Route path="/purchases/:id" element={managersOnly(<PurchaseDetailPage />)} />
+        <Route path="/purchases/:id/edit" element={managersOnly(<PurchaseFormPage />)} />
 
         {/* Owner only */}
         <Route path="/staff" element={ownerOnly(<StaffPage />)} />

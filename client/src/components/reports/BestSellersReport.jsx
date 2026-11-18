@@ -10,6 +10,8 @@ const COLUMNS = [
   { key: 'category', header: 'Category', type: 'text', width: 16 },
   { key: 'quantity', header: 'Quantity sold', type: 'number', width: 12 },
   { key: 'revenue', header: 'Sales value', type: 'money', width: 16 },
+  { key: 'cost', header: 'Cost', type: 'money', width: 14 },
+  { key: 'profit', header: 'Profit', type: 'money', width: 14 },
 ];
 
 // Best-selling products, most sold first (returns taken off).

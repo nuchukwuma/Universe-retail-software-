@@ -4,13 +4,18 @@ import { api } from '../api/api';
 import PageHeader from '../components/PageHeader';
 import BarcodeInput from '../components/BarcodeInput';
 import ScannerStatus from '../components/ScannerStatus';
+import PictureField from '../components/PictureField';
+import ProductThumb from '../components/ProductThumb';
 import { useGlobalScanner } from '../hooks/useScanner';
+import { formatNaira } from '../utils/formatNaira';
 
 const EMPTY_PRODUCT = {
   name: '',
   barcode: '',
   category: '',
   sellingPrice: '',
+  costPrice: '',
+  supplier: '',
   quantity: '0',
   reorderLevel: '5',
 };
@@ -22,6 +27,8 @@ function productToForm(product) {
     barcode: product.barcode || '',
     category: product.category?._id || '',
     sellingPrice: String(product.sellingPrice ?? ''),
+    costPrice: product.costPrice ? String(product.costPrice) : '',
+    supplier: product.supplier?._id || product.supplier || '',
     quantity: String(product.quantity ?? 0),
     reorderLevel: String(product.reorderLevel ?? 0),
   };
@@ -32,6 +39,8 @@ function formToProduct(form) {
   return {
     ...form,
     sellingPrice: Number(form.sellingPrice),
+    costPrice: Number(form.costPrice) || 0,
+    supplier: form.supplier || null,
     quantity: Number(form.quantity) || 0,
     reorderLevel: Number(form.reorderLevel) || 0,
   };
@@ -52,6 +61,9 @@ function ProductFormPage() {
 
   const [form, setForm] = useState({ ...EMPTY_PRODUCT, barcode: searchParams.get('barcode') || '' });
   const [categories, setCategories] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [picture, setPicture] = useState(''); // URL or a new data URL
+  const [savedPicture, setSavedPicture] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -61,8 +73,15 @@ function ProductFormPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        setCategories(await api.get('/categories'));
-        if (isEditing) setForm(productToForm(await api.get(`/products/${id}`)));
+        const [categoryList, supplierList] = await Promise.all([api.get('/categories'), api.get('/suppliers').catch(() => [])]);
+        setCategories(categoryList);
+        setSuppliers(supplierList);
+        if (isEditing) {
+          const product = await api.get(`/products/${id}`);
+          setForm(productToForm(product));
+          setPicture(product.pictureUrl || '');
+          setSavedPicture(product.pictureUrl || '');
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -93,8 +112,13 @@ function ProductFormPage() {
     }
     setSaving(true);
     try {
-      if (isEditing) await api.put(`/products/${id}`, formToProduct(form));
-      else await api.post('/products', formToProduct(form));
+      const product = isEditing
+        ? await api.put(`/products/${id}`, formToProduct(form))
+        : await api.post('/products', formToProduct(form));
+      if (picture !== savedPicture) {
+        if (picture) await api.put(`/products/${product._id}/picture`, { picture });
+        else await api.delete(`/products/${product._id}/picture`);
+      }
       navigate(backTo);
     } catch (err) {
       setError(err.message);
@@ -102,7 +126,12 @@ function ProductFormPage() {
     }
   }
 
-  if (loading) return <p className="loading">Loading the product...</p>;
+  const cost = Number(form.costPrice);
+  const price = Number(form.sellingPrice);
+  const margin = form.costPrice !== '' && cost > 0 && form.sellingPrice !== '' ? price - cost : null;
+  const marginPercent = margin !== null && price > 0 ? Math.round((margin / price) * 100) : null;
+
+  if (loading) return <p className="loading">Loading...</p>;
 
   return (
     <div className="page">
@@ -131,20 +160,40 @@ function ProductFormPage() {
           </select>
         </div>
 
+        <div className="span-all">
+          <PictureField
+            id="product-picture"
+            label="Picture"
+            value={picture}
+            onChange={setPicture}
+            fallback={<ProductThumb product={{ name: form.name || '?' }} />}
+          />
+        </div>
+
         <h2 className="form-section">Price and stock</h2>
         <div className="field">
           <label className="field-label" htmlFor="product-price">Selling price (₦)</label>
           <input id="product-price" type="number" min="0" step="any" inputMode="decimal" value={form.sellingPrice} onChange={(e) => setField('sellingPrice', e.target.value)} required />
         </div>
         <div className="field">
+          <label className="field-label" htmlFor="product-cost">Cost price (₦)</label>
+          <input id="product-cost" type="number" min="0" step="any" inputMode="decimal" value={form.costPrice} onChange={(e) => setField('costPrice', e.target.value)} />
+          {margin !== null && <span className={margin < 0 ? 'field-help danger-text' : 'field-help'}>Profit {formatNaira(margin)} each{marginPercent !== null ? ` (${marginPercent}%)` : ''}</span>}
+        </div>
+        <div className="field">
+          <label className="field-label" htmlFor="product-supplier">Supplier</label>
+          <select id="product-supplier" value={form.supplier} onChange={(e) => setField('supplier', e.target.value)}>
+            <option value="">None</option>
+            {suppliers.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+          </select>
+        </div>
+        <div className="field">
           <label className="field-label" htmlFor="product-quantity">Quantity in stock</label>
           <input id="product-quantity" type="number" step="1" value={form.quantity} onChange={(e) => setField('quantity', e.target.value)} />
-          {isEditing && <span className="field-help">Use Receive stock for deliveries, so the stock history stays clear.</span>}
         </div>
         <div className="field">
           <label className="field-label" htmlFor="product-low">Low-stock level</label>
           <input id="product-low" type="number" min="0" step="1" value={form.reorderLevel} onChange={(e) => setField('reorderLevel', e.target.value)} />
-          <span className="field-help">When stock falls to this number, the product shows as low.</span>
         </div>
 
         <div className="span-all btn-row">

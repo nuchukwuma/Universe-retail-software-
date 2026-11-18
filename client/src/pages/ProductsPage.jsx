@@ -6,6 +6,9 @@ import ScannerStatus from '../components/ScannerStatus';
 import { useGlobalScanner } from '../hooks/useScanner';
 import { formatNaira } from '../utils/formatNaira';
 import { stockStatus } from '../utils/stock';
+import { categoryTone } from '../utils/categoryTone';
+import ProductThumb from '../components/ProductThumb';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 
 // Returns true if the product matches the search box, category and "show" filters.
 function matchesFilters(product, { search, categoryId, show }) {
@@ -83,10 +86,10 @@ function ProductsPage() {
   return (
     <div className="page">
       <PageHeader title="Products">
-        <Link to="/products/new" className="btn btn-primary">Add product</Link>
+        <Link to="/products/new" className="btn btn-primary"><Plus size={18} aria-hidden="true" /> Add product</Link>
       </PageHeader>
 
-      <ScannerStatus  />
+      <ScannerStatus />
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {message && <div className="notice notice-success" role="status">{message}</div>}
 
@@ -126,7 +129,7 @@ function ProductsPage() {
         {!loading && products.length > 0 && (
           <>
             <div className="panel-head">
-              <p>Showing {visibleProducts.length} of {products.length} products</p>
+              <p>{visibleProducts.length} of {products.length}</p>
             </div>
             {visibleProducts.length === 0 ? (
               <div className="empty">
@@ -141,6 +144,7 @@ function ProductsPage() {
                       <th>Product</th>
                       <th>Category</th>
                       <th className="num">Price</th>
+                      <th className="num">Cost</th>
                       <th className="num">In stock</th>
                       <th className="num">Low at</th>
                       <th>Status</th>
@@ -153,18 +157,26 @@ function ProductsPage() {
                       return (
                         <tr key={product._id}>
                           <td>
-                            <span className="cell-main">{product.name}</span>
-                            <span className="cell-sub">{product.barcode || 'No barcode'}</span>
+                            <span className="cell-product">
+                              <ProductThumb product={product} tone={categoryTone(product.category?._id, categories)} className="thumb-small" />
+                              <span>
+                                <span className="cell-main">{product.name}</span>
+                                <span className="cell-sub">{product.barcode || 'No barcode'}</span>
+                              </span>
+                            </span>
                           </td>
                           <td>{product.category?.name || <span className="muted">None</span>}</td>
                           <td className="num">{formatNaira(product.sellingPrice)}</td>
+                          <td className="num muted">{product.costPrice ? formatNaira(product.costPrice) : '-'}</td>
                           <td className="num strong">{product.quantity}</td>
                           <td className="num muted">{product.reorderLevel}</td>
                           <td><span className={`status status-${status.key}`}>{status.label}</span></td>
                           <td className="actions">
-                            <Link to={`/products/${product._id}/edit`} className="btn btn-quiet">Edit<span className="visually-hidden"> {product.name}</span></Link>
-                            <button type="button" className="btn btn-quiet btn-danger" onClick={() => handleDelete(product)}>
-                              Delete<span className="visually-hidden"> {product.name}</span>
+                            <Link to={`/products/${product._id}/edit`} className="icon-btn" aria-label={`Edit ${product.name}`} title="Edit">
+                              <Pencil size={18} aria-hidden="true" />
+                            </Link>
+                            <button type="button" className="icon-btn icon-btn-danger" onClick={() => handleDelete(product)} aria-label={`Delete ${product.name}`} title="Delete">
+                              <Trash2 size={18} aria-hidden="true" />
                             </button>
                           </td>
                         </tr>
