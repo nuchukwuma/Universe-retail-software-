@@ -8,3 +8,8 @@ desktop/app/
 desktop/dist/
 server/backups/
 server/data/
+
+# The browser demo bundle (made by demo/build.mjs)
+client/src/demo/demoServer.gen.js
+# The built website
+site/demo/

@@ -520,3 +520,20 @@
     padding-right: var(--space-5);
   }
 }
+
+/* Demo only: the role switcher under the name. */
+.sidebar-role {
+  width: auto;
+  min-height: 0;
+  margin-top: var(--space-1);
+  padding: var(--space-1) var(--space-6) var(--space-1) var(--space-2);
+  border: var(--line-thin) solid var(--color-night-line);
+  border-radius: var(--radius-6);
+  background-color: var(--color-night-hover);
+  color: var(--color-on-night);
+  font-size: var(--text-small);
+}
+
+.sidebar-role:hover:not(:disabled) {
+  border-color: var(--color-on-night-muted);
+}

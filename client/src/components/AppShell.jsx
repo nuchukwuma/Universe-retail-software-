@@ -14,6 +14,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ReceiptText,
+  RotateCcw,
   Settings,
   ShoppingCart,
   Tags,
@@ -24,6 +25,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { ROLE_LABELS, hasRole } from '../utils/roles';
+import { IS_DEMO } from '../config';
 import BrandMark from './BrandMark';
 
 const EVERYONE = ['owner', 'manager', 'cashier'];
@@ -69,6 +71,7 @@ export const MENU = [
 ];
 
 const COLLAPSED_KEY = 'hd_sidebar_collapsed';
+
 
 function readCollapsed() {
   try {
@@ -156,13 +159,36 @@ function AppShell() {
             <span className="avatar" aria-hidden="true">{initials(user?.name)}</span>
             <span className="sidebar-label sidebar-person">
               <strong>{user?.name}</strong>
-              <span>{ROLE_LABELS[user?.role]}</span>
+              {IS_DEMO ? (
+                <select
+                  className="sidebar-role"
+                  value={user?.role}
+                  onChange={(e) => window.hordedeskDemo?.switchRole(e.target.value)}
+                  aria-label="View as"
+                >
+                  {Object.entries(ROLE_LABELS).map(([role, label]) => <option key={role} value={role}>{label}</option>)}
+                </select>
+              ) : (
+                <span>{ROLE_LABELS[user?.role]}</span>
+              )}
             </span>
           </div>
-          <button type="button" className="sidebar-link" onClick={handleLogout} title={collapsed ? 'Log out' : undefined}>
-            <LogOut size={20} strokeWidth={1.9} aria-hidden="true" />
-            <span className="sidebar-label">Log out</span>
-          </button>
+          {IS_DEMO ? (
+            <button
+              type="button"
+              className="sidebar-link"
+              onClick={() => window.confirm('Start the demo again with fresh sample data?') && window.hordedeskDemo?.startAgain()}
+              title={collapsed ? 'Start again' : undefined}
+            >
+              <RotateCcw size={20} strokeWidth={1.9} aria-hidden="true" />
+              <span className="sidebar-label">Start again</span>
+            </button>
+          ) : (
+            <button type="button" className="sidebar-link" onClick={handleLogout} title={collapsed ? 'Log out' : undefined}>
+              <LogOut size={20} strokeWidth={1.9} aria-hidden="true" />
+              <span className="sidebar-label">Log out</span>
+            </button>
+          )}
           <button
             type="button"
             className="sidebar-link sidebar-toggle"

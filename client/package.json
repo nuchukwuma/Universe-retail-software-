@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:demo": "node ../demo/build.mjs && vite build --mode demo --outDir ../site/demo --emptyOutDir",
     "preview": "vite preview"
   },
   "dependencies": {

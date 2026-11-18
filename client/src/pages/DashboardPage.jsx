@@ -7,6 +7,7 @@ import PageHeader from '../components/PageHeader';
 import { formatDate, shiftDate, todayDateValue } from '../utils/dates';
 import { formatNaira } from '../utils/formatNaira';
 import { stockStatus } from '../utils/stock';
+import { IS_DEMO } from '../config';
 
 // Says how today compares with yesterday, in words.
 function compareWithYesterday(today, yesterday) {
@@ -56,7 +57,7 @@ function DashboardPage() {
   }, [reloadSettings]);
 
   const daysSinceBackup = settings.lastBackupAt ? (Date.now() - new Date(settings.lastBackupAt)) / 86400000 : null;
-  const backupWarning = user.role === 'owner' && (settings.lastBackupError || daysSinceBackup === null || daysSinceBackup > 2);
+  const backupWarning = !IS_DEMO && user.role === 'owner' && (settings.lastBackupError || daysSinceBackup === null || daysSinceBackup > 2);
 
   return (
     <div className="page">
