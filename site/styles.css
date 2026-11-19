@@ -460,3 +460,105 @@ h1 {
     width: 100%;
   }
 }
+
+/* ---------- Pricing ---------- */
+
+.plans {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  max-width: 880px;
+  margin-top: 40px;
+}
+
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+
+.plan-main {
+  border: 2px solid var(--blue);
+}
+
+.plan h3 {
+  font-size: 19px;
+}
+
+.plan-price {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.plan-price span {
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.plan ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan li {
+  display: flex;
+  gap: 10px;
+}
+
+.plan li .icon {
+  margin-top: 3px;
+  color: var(--blue);
+}
+
+.plan > .btn {
+  margin-top: auto;
+}
+
+.buy-form {
+  display: grid;
+  gap: 6px;
+}
+
+.buy-form label {
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.buy-form input {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.buy-form .btn {
+  margin-top: 12px;
+}
+
+.buy-form .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.buy-message {
+  min-height: 1.5em;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+@media (max-width: 760px) {
+  .plans {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

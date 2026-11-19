@@ -1,0 +1,12 @@
+# The HordeDesk licence server on Cloudflare Workers.
+# Deployed by .github/workflows/licence-server.yml (or "npx wrangler deploy" here).
+name = "hordedesk-licence"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+[vars]
+PAYSTACK_PLAN_CODE = ""   # the ₦5,000 monthly plan from Paystack (PLN_...), set by the workflow
+SITE_URL = "https://nuchukwuma.github.io/Universe-retail-software-/"
+DOWNLOAD_URL = "https://github.com/nuchukwuma/Universe-retail-software-/releases/latest/download/HordeDesk-Setup.exe"
+
+# Secrets (never in this file): PAYSTACK_SECRET_KEY, LICENCE_PRIVATE_KEY

@@ -117,7 +117,7 @@ async function renewOnline() {
   const licence = readLicenceKey(settings.licenceKey);
   let reply;
   try {
-    reply = (await postJson(`${serverUrl.replace(/\/$/, '')}/renew`, { licenceId: licence.id })).data;
+    reply = (await postJson(`${serverUrl.replace(/\/$/, '')}/renew`, { licenceId: licence.id, shop: licence.shop })).data;
   } catch (error) {
     throw new Error(`Could not reach the licence server. Check the internet connection. (${error.message})`);
   }

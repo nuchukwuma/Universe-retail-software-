@@ -1,0 +1,11 @@
+{
+  "name": "hordedesk-licence-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "HordeDesk licence server (Cloudflare Worker + Paystack)",
+  "scripts": {
+    "test": "node test/test.mjs",
+    "deploy": "wrangler deploy"
+  }
+}

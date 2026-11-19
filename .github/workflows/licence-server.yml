@@ -1,0 +1,54 @@
+# Deploys the licence server (licence-server/) to Cloudflare Workers.
+# One-time setup (see README, "Selling HordeDesk"):
+#   Repository secrets:   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID,
+#                         PAYSTACK_SECRET_KEY, LICENCE_PRIVATE_KEY
+#   Repository variable:  PAYSTACK_PLAN_CODE (the ₦5,000 monthly plan, PLN_...)
+name: Licence server
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - hordedesk
+    paths:
+      - 'licence-server/**'
+      - '.github/workflows/licence-server.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HAS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && 'yes' || 'no' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Test
+        working-directory: licence-server
+        run: npm test
+
+      - name: Deploy to Cloudflare
+        if: ${{ env.HAS_TOKEN == 'yes' }}
+        uses: cloudflare/wrangler-action@v3
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PAYSTACK_SECRET_KEY: ${{ secrets.PAYSTACK_SECRET_KEY }}
+          LICENCE_PRIVATE_KEY: ${{ secrets.LICENCE_PRIVATE_KEY }}
+          PAYSTACK_PLAN_CODE: ${{ vars.PAYSTACK_PLAN_CODE }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: licence-server
+          wranglerVersion: '3.114.0'
+          secrets: |
+            PAYSTACK_SECRET_KEY
+            LICENCE_PRIVATE_KEY
+          vars: |
+            PAYSTACK_PLAN_CODE
+
+      - name: Not deployed
+        if: ${{ env.HAS_TOKEN != 'yes' }}
+        run: echo "::warning::Add the CLOUDFLARE_API_TOKEN secret (see README) to deploy the licence server."

@@ -47,6 +47,11 @@ jobs:
         working-directory: desktop
         run: npm ci
 
+      - name: Point the app at the licence server
+        env:
+          LICENCE_SERVER_URL: ${{ vars.LICENCE_SERVER_URL }}
+        run: node -e "const f='server/config/licence.json'; const c=JSON.parse(require('fs').readFileSync(f,'utf8')); c.serverUrl=process.env.LICENCE_SERVER_URL||''; require('fs').writeFileSync(f, JSON.stringify(c,null,2))"
+
       - name: Build the installer
         working-directory: desktop
         run: |

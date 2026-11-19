@@ -10,6 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="config.js"></script>
+  <script src="buy.js" defer></script>
 </head>
 <body>
   <header class="site-head">
@@ -18,6 +20,7 @@
       <nav class="head-nav" aria-label="Main">
         <a href="#features">Features</a>
         <a href="#screens">Screens</a>
+        <a href="#buy">Pricing</a>
         <a href="#download">Download</a>
       </nav>
       <a href="demo/" class="btn btn-small">Try the demo</a>
@@ -35,7 +38,7 @@
             <a href="demo/" class="btn btn-primary btn-large"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>Try it in your browser</a>
             <a href="https://github.com/nuchukwuma/Universe-retail-software-/releases/latest/download/HordeDesk-Setup.exe" class="btn btn-large"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>Download for Windows</a>
           </div>
-          <p class="fine">Free. Windows 8.1, 10 and 11. No account needed.</p>
+          <p class="fine">14 days free, then ₦5,000 a month. Windows 8.1, 10 and 11.</p>
         </div>
         <figure class="hero-shot frame">
           <img src="images/till.jpg" width="2160" height="1290" alt="The HordeDesk till: the bill on the left, product tiles by category on the right, and a large total with Complete sale." />
@@ -108,14 +111,49 @@
       </div>
     </section>
 
+    <section id="buy" class="section">
+      <div class="wrap">
+        <h2 class="section-title">One price, everything included</h2>
+        <div class="plans">
+          <article class="plan">
+            <h3>Free trial</h3>
+            <p class="plan-price">₦0 <span>for 14 days</span></p>
+            <ul>
+              <li><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Every feature, no card needed</li>
+              <li><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Your data stays when you buy</li>
+            </ul>
+            <a href="https://github.com/nuchukwuma/Universe-retail-software-/releases/latest/download/HordeDesk-Setup.exe" class="btn btn-large">Download free trial</a>
+          </article>
+          <article class="plan plan-main">
+            <h3>HordeDesk licence</h3>
+            <p class="plan-price">₦5,000 <span>a month</span></p>
+            <ul>
+              <li><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>One shop, as many staff as you need</li>
+              <li><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Every feature and every update</li>
+              <li><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Cancel any time; your data stays yours</li>
+            </ul>
+            <form id="buy-form" class="buy-form">
+              <label for="buy-shop">Shop name</label>
+              <input id="buy-shop" name="shop" required autocomplete="organization" />
+              <label for="buy-email">Email</label>
+              <input id="buy-email" name="email" type="email" required autocomplete="email" />
+              <button type="submit" class="btn btn-primary btn-large">Pay ₦5,000 with Paystack</button>
+              <p id="buy-message" class="buy-message" role="status"></p>
+            </form>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section id="download" class="section section-dark">
       <div class="wrap download-grid">
         <div>
           <h2 class="section-title">Get HordeDesk for Windows</h2>
           <ol class="steps">
-            <li><span>1</span>Download the installer.</li>
+            <li><span>1</span>Download the installer (14 days free).</li>
             <li><span>2</span>Open it and follow the steps.</li>
             <li><span>3</span>Name your shop, create your account and add your products, or start with sample products.</li>
+            <li><span>4</span>Buy a licence, then paste the key in Settings, Licence.</li>
           </ol>
           <a href="https://github.com/nuchukwuma/Universe-retail-software-/releases/latest/download/HordeDesk-Setup.exe" class="btn btn-light btn-large"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>Download HordeDesk</a>
         </div>

@@ -44,9 +44,12 @@ jobs:
         run: npm run build:demo
 
       - name: Put the site together
+        env:
+          LICENCE_SERVER_URL: ${{ vars.LICENCE_SERVER_URL }}
         run: |
           mkdir -p _site
-          cp -r site/index.html site/styles.css site/favicon.svg site/images site/demo _site/
+          cp -r site/index.html site/styles.css site/favicon.svg site/buy.js site/images site/demo _site/
+          node -e "require('fs').writeFileSync('_site/config.js', 'window.HORDEDESK_LICENCE_SERVER = ' + JSON.stringify(process.env.LICENCE_SERVER_URL || '') + ';\n')"
 
       - uses: actions/upload-pages-artifact@v3
         with:
