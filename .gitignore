@@ -13,3 +13,6 @@ server/data/
 client/src/demo/demoServer.gen.js
 # The built website
 site/demo/
+
+# The licence signing key: secret, never committed
+licence-server/keys/

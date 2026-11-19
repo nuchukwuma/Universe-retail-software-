@@ -6,6 +6,7 @@ const Customer = require('../models/Customer');
 const Product = require('../models/Product');
 const { requireLogin } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
+const { requireLicence } = require('../utils/licence');
 const { nextReturnNumber } = require('../utils/counters');
 const { logStockMovement } = require('../utils/stockHelpers');
 const { findApprover } = require('../utils/approval');
@@ -48,7 +49,7 @@ router.get('/', async (req, res) => {
 // Returns items from an earlier sale, refunds the customer and puts the
 // items back in stock. Needs a manager/owner (or a cashier with an approvalToken).
 // Body: { saleId, items: [{ lineIndex, quantity }], reason, approvalToken? }
-router.post('/', async (req, res) => {
+router.post('/', requireLicence, async (req, res) => {
   try {
     const approver = await findApprover(req);
     if (!approver) {

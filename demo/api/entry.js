@@ -26,6 +26,7 @@ const ROUTES = {
   '/suppliers': require('../../server/routes/supplierRoutes'),
   '/purchases': require('../../server/routes/purchaseRoutes'),
   '/customers': require('../../server/routes/customerRoutes'),
+  '/licence': require('../../server/routes/licenceRoutes'),
 };
 
 const NOT_IN_DEMO = {
@@ -242,6 +243,7 @@ function ready() {
   if (!readyPromise) {
     readyPromise = (async () => {
       process.env.JWT_SECRET = 'demo';
+      process.env.HORDEDESK_DEMO = '1'; // the demo needs no licence
       store = db.openStore('/demo');
       if ((await User.countDocuments()) === 0) {
         store.paused = true;

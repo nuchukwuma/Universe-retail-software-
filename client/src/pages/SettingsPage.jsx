@@ -8,7 +8,9 @@ import TelegramSettings from '../components/settings/TelegramSettings';
 import SecurityQuestionsSettings from '../components/settings/SecurityQuestionsSettings';
 import PrinterPicker from '../components/settings/PrinterPicker';
 import PictureField from '../components/PictureField';
+import { IS_DEMO } from '../config';
 import BrandMark from '../components/BrandMark';
+import LicencePanel from '../components/LicencePanel';
 
 // A made-up sale used for the preview and the "Print test receipt" button.
 const TEST_SALE = {
@@ -174,6 +176,13 @@ function SettingsPage() {
           </div>
         </section>
       </div>
+
+      {!IS_DEMO && (
+        <section className="panel stack" id="licence" aria-labelledby="licence-heading">
+          <h2 id="licence-heading">Licence</h2>
+          <LicencePanel />
+        </section>
+      )}
 
       <SecurityQuestionsSettings />
 

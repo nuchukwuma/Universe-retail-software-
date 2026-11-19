@@ -28,6 +28,9 @@ import { useSettings } from '../context/SettingsContext';
 import { ROLE_LABELS, hasRole } from '../utils/roles';
 import { IS_DEMO } from '../config';
 import BrandMark from './BrandMark';
+import LicenceLock from './LicenceLock';
+import { licenceSummary } from './LicencePanel';
+import { useLicence } from '../context/LicenceContext';
 
 const EVERYONE = ['owner', 'manager', 'cashier'];
 const MANAGERS = ['owner', 'manager'];
@@ -73,6 +76,8 @@ export const MENU = [
 ];
 
 const COLLAPSED_KEY = 'hd_sidebar_collapsed';
+// Pages that stop when the licence (or trial) has run out.
+const LOCKED_PATHS = ['/checkout', '/add-stock', '/stock-count'];
 
 
 function readCollapsed() {
@@ -89,6 +94,7 @@ function readCollapsed() {
 function AppShell() {
   const { user, logout } = useAuth();
   const { settings } = useSettings();
+  const { licence } = useLicence();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(readCollapsed);
@@ -207,7 +213,13 @@ function AppShell() {
       <div className="drawer-backdrop" onClick={() => setDrawerOpen(false)} aria-hidden="true" />
 
       <main className="shell-main">
-        <Outlet />
+        {licence && (licence.state === 'expired' || licence.renewSoon || (licence.state === 'trial' && user?.role !== 'cashier')) && (
+          <div className={licence.state === 'expired' ? 'licence-banner is-expired' : 'licence-banner'} role="status">
+            <span>{licenceSummary(licence)}</span>
+            {user?.role === 'owner' && <NavLink to="/settings#licence">{licence.state === 'trial' ? 'Buy a licence' : 'Renew'}</NavLink>}
+          </div>
+        )}
+        {licence?.state === 'expired' && LOCKED_PATHS.some((p) => pathname.startsWith(p)) ? <LicenceLock /> : <Outlet />}
       </main>
     </div>
   );

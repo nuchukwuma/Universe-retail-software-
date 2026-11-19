@@ -27,6 +27,7 @@ const backupRoutes = require('./routes/backupRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
 const customerRoutes = require('./routes/customerRoutes');
+const licenceRoutes = require('./routes/licenceRoutes');
 const { imagePath } = require('./utils/images');
 
 // Creates the Express app with every API route.
@@ -63,6 +64,7 @@ function createApp({ clientDir } = {}) {
   app.use('/api/suppliers', supplierRoutes);
   app.use('/api/purchases', purchaseRoutes);
   app.use('/api/customers', customerRoutes);
+  app.use('/api/licence', licenceRoutes);
 
   // Product photos and the shop's logo. No login needed: pictures are
   // shown by <img> tags, which cannot send the login token.

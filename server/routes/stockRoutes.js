@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const StockMovement = require('../models/StockMovement');
 const { requireLogin, requireRole } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
+const { requireLicence } = require('../utils/licence');
 const { logStockMovement } = require('../utils/stockHelpers');
 const { isValidId } = require('../db');
 
@@ -15,7 +16,7 @@ router.use(requireLogin, requireRole('owner', 'manager'));
 // Adds delivered stock to a product. If the cost of one is given, it
 // becomes the product's cost price (for profit).
 // Body: { productId, quantity, unitCost?, supplierId?, note? }
-router.post('/receive', async (req, res) => {
+router.post('/receive', requireLicence, async (req, res) => {
   try {
     const { productId, note } = req.body;
     const quantity = Number(req.body.quantity);
@@ -56,7 +57,7 @@ router.post('/receive', async (req, res) => {
 // Saves the results of a stock count: each product's quantity is set
 // to what was counted on the shelf.
 // Body: { counts: [{ productId, countedQuantity }] }
-router.post('/count', async (req, res) => {
+router.post('/count', requireLicence, async (req, res) => {
   try {
     const counts = Array.isArray(req.body.counts) ? req.body.counts : [];
     if (counts.length === 0) {

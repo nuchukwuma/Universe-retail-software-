@@ -6,6 +6,7 @@ const Customer = require('../models/Customer');
 const { pointsEarned, pointsDiscount } = require('../utils/loyalty');
 const { requireLogin } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
+const { requireLicence } = require('../utils/licence');
 const { nextReceiptNumber } = require('../utils/counters');
 const { logStockMovement, escapeRegex } = require('../utils/stockHelpers');
 const { getSettings } = require('../utils/settings');
@@ -75,7 +76,7 @@ router.get('/by-receipt/:receiptNumber', async (req, res) => {
 // Completes a sale. Body:
 // { items: [{ productId, quantity, discountType?, discountValue? }],
 //   billDiscount?: { type, value }, approvalToken? }
-router.post('/', async (req, res) => {
+router.post('/', requireLicence, async (req, res) => {
   try {
     const { items, billDiscount } = req.body;
 

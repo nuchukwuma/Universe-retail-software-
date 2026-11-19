@@ -35,6 +35,11 @@ const settingsSchema = new db.Schema(
     lastBackupAt: { type: Date, default: null },
     lastBackupError: { type: String, default: '' },
 
+    // Licence (see utils/licence.js)
+    licenceKey: { type: String, default: '' },
+    trialStartedAt: { type: Date, default: null },
+    licenceSeenAt: { type: Date, default: null }, // latest time seen (clock set back = no help)
+
     // Which data clean-ups have been run (see utils/migrations.js).
     dataVersion: { type: Number, default: 0 },
   },
@@ -49,6 +54,8 @@ settingsSchema.set('toJSON', {
     ret.logoUrl = imageUrl(ret.shopLogo);
     delete ret.telegramBotToken;
     delete ret.telegramChatId;
+    delete ret.licenceKey; // see GET /api/licence
+    delete ret.licenceSeenAt;
     delete ret.__v;
     return ret;
   },

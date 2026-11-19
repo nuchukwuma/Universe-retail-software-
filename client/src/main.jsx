@@ -6,6 +6,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { PrintProvider } from './context/PrintContext';
+import { LicenceProvider } from './context/LicenceContext';
 import '@fontsource-variable/plus-jakarta-sans/wght.css';
 import './styles/tokens.css';
 import './styles/base.css';
@@ -24,9 +25,11 @@ installDemo().then(() => {
       <Router>
         <SettingsProvider>
           <AuthProvider>
-            <PrintProvider>
-              <App />
-            </PrintProvider>
+            <LicenceProvider>
+              <PrintProvider>
+                <App />
+              </PrintProvider>
+            </LicenceProvider>
           </AuthProvider>
         </SettingsProvider>
       </Router>

@@ -2,6 +2,7 @@ const express = require('express');
 const Product = require('../models/Product');
 const { requireLogin, requireRole } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
+const { requireLicence } = require('../utils/licence');
 const { logStockMovement } = require('../utils/stockHelpers');
 const { saveImage, deleteImage } = require('../utils/images');
 
@@ -80,7 +81,7 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/products
 // Creates a new product (owner/manager).
-router.post('/', canManage, async (req, res) => {
+router.post('/', requireLicence, canManage, async (req, res) => {
   try {
     const product = new Product(pickProductFields(req.body));
     await product.save();
@@ -100,7 +101,7 @@ router.post('/', canManage, async (req, res) => {
 
 // PUT /api/products/:id
 // Updates a product (owner/manager). A change of quantity is logged.
-router.put('/:id', canManage, async (req, res) => {
+router.put('/:id', requireLicence, canManage, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {

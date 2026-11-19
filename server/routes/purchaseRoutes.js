@@ -4,6 +4,7 @@ const Supplier = require('../models/Supplier');
 const Product = require('../models/Product');
 const { requireLogin, requireRole } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
+const { requireLicence } = require('../utils/licence');
 const { nextPurchaseNumber } = require('../utils/counters');
 const { logStockMovement } = require('../utils/stockHelpers');
 const { roundMoney } = require('../utils/saleCalculations');
@@ -123,7 +124,7 @@ router.put('/:id', async (req, res) => {
 // POST /api/purchases/:id/receive
 // Adds the delivered stock and sets each product's cost price.
 // Body: { items?: [{ lineIndex, quantity, unitCost? }] }  (none = everything still to come)
-router.post('/:id/receive', async (req, res) => {
+router.post('/:id/receive', requireLicence, async (req, res) => {
   try {
     const purchase = await Purchase.findById(req.params.id);
     if (!purchase) return res.status(404).json({ message: 'Purchase order not found.' });
