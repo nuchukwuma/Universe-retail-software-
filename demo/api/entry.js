@@ -25,6 +25,7 @@ const ROUTES = {
   '/backups': require('../../server/routes/backupRoutes'),
   '/suppliers': require('../../server/routes/supplierRoutes'),
   '/purchases': require('../../server/routes/purchaseRoutes'),
+  '/customers': require('../../server/routes/customerRoutes'),
 };
 
 const NOT_IN_DEMO = {
@@ -147,7 +148,18 @@ async function seedShop() {
     loadSampleData: 'general',
   });
   const owner = await loginAs('owner');
-  await call('PUT', '/settings', { address: '14 Market Road, Yaba, Lagos', phone: '0803 555 0199', footerMessage: 'Thank you for shopping with us!' }, owner);
+  await call('PUT', '/settings', {
+    address: '14 Market Road, Yaba, Lagos',
+    phone: '0803 555 0199',
+    footerMessage: 'Thank you for shopping with us!',
+    loyaltyEnabled: true,
+    loyaltyEarnEvery: 100,
+    loyaltyPointValue: 1,
+  }, owner);
+  const customers = [];
+  for (const [name, phone] of [['Bola Adeyemi', '08031110001'], ['Chioma Okeke', '08031110002'], ['Musa Ibrahim', '08031110003'], ['Funke Ade', '08031110004'], ['Emeka Nwosu', '08031110005'], ['Halima Bello', '08031110006']]) {
+    customers.push(await call('POST', '/customers', { name, phone }, owner));
+  }
   await call('POST', '/users', { name: 'Chidi Okafor', username: 'manager', password: STAFF.manager.password, role: 'manager' }, owner);
   await call('POST', '/users', { name: 'Amaka Eze', username: 'cashier', password: STAFF.cashier.password, role: 'cashier' }, owner);
   const cashier = await loginAs('cashier');
@@ -175,7 +187,9 @@ async function seedShop() {
         lines.set(product._id, { productId: product._id, quantity: rand(1, product.sellingPrice <= 1000 ? 4 : 2) });
       }
       const token = i % 5 === 4 ? manager : cashier;
-      const sale = await call('POST', '/sales', { items: [...lines.values()] }, token);
+      // About one sale in three is to a regular customer collecting points.
+      const regular = i % 3 === 0 ? customers[rand(0, customers.length - 1)] : null;
+      const sale = await call('POST', '/sales', { items: [...lines.values()], ...(regular ? { customerId: regular._id } : {}) }, token);
       const when = lagosTime(daysAgo, times[i][0], times[i][1]);
       const receiptNumber = `${yymmdd(when)}-${String(i + 1).padStart(4, '0')}`;
       backdate('sales', sale._id, when, { receiptNumber });

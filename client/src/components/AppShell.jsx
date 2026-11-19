@@ -4,6 +4,7 @@ import {
   CalendarCheck,
   ChartColumn,
   ClipboardList,
+  Contact,
   DatabaseBackup,
   LayoutDashboard,
   ListChecks,
@@ -47,13 +48,14 @@ export const MENU = [
       { to: '/sales-history', label: 'Sales history', icon: ReceiptText, roles: EVERYONE },
       { to: '/end-of-day', label: 'End of day', icon: CalendarCheck, roles: EVERYONE },
       { to: '/reports', label: 'Reports', icon: ChartColumn, roles: MANAGERS },
+      { to: '/customers', label: 'Customers', icon: Contact, roles: MANAGERS },
     ],
   },
   {
     heading: 'Stock',
     links: [
       { to: '/products', label: 'Products', icon: Package, roles: MANAGERS },
-      { to: '/add-stock', label: 'Add stock', icon: PackagePlus, roles: MANAGERS },
+      { to: '/add-stock', label: 'Stock', icon: PackagePlus, roles: MANAGERS },
       { to: '/purchases', label: 'Purchase orders', icon: ClipboardList, roles: MANAGERS },
       { to: '/suppliers', label: 'Suppliers', icon: Truck, roles: MANAGERS },
       { to: '/stock-count', label: 'Stock count', icon: ListChecks, roles: MANAGERS },

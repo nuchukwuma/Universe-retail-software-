@@ -864,3 +864,42 @@ a.figure-link:hover dd {
 .nowrap {
   white-space: nowrap;
 }
+
+/* A list of choices in a dialog (e.g. customers). */
+.pick-list {
+  max-height: 46vh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: var(--line-thin) solid var(--color-rule);
+  border-radius: var(--corner-control);
+  list-style: none;
+}
+
+.pick-list li + li {
+  border-top: var(--line-thin) solid var(--color-rule);
+}
+
+.pick-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: var(--table-row-height);
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pick-list button:hover,
+.pick-list button:focus-visible {
+  background: var(--color-accent-tint);
+}
+
+.pick-list-empty {
+  padding: var(--space-4);
+}

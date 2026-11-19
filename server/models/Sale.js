@@ -30,6 +30,15 @@ const saleSchema = new db.Schema(
     billDiscount: { type: Number, default: 0 }, // Naira off the whole bill
     discountTotal: { type: Number, default: 0 }, // line discounts + bill discount
     discountApprovedBy: { type: String, default: '' }, // manager who approved a large discount
+    // Loyalty: the customer, points spent (pointsDiscount Naira off, also
+    // counted in discountTotal), points earned and their balance after.
+    customer: { type: db.Schema.Types.ObjectId, ref: 'Customer', default: null },
+    customerName: { type: String, default: '' },
+    pointsRedeemed: { type: Number, default: 0 },
+    pointsDiscount: { type: Number, default: 0 },
+    pointsEarned: { type: Number, default: 0 },
+    pointsBalance: { type: Number, default: 0 },
+    pointsTakenBack: { type: Number, default: 0 }, // earned points removed again by returns
     total: { type: Number, required: true },
     cashier: { type: db.Schema.Types.ObjectId, ref: 'User' },
     cashierName: { type: String, default: '' },

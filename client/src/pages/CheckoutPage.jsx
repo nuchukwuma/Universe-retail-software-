@@ -10,7 +10,7 @@ import BillTable from '../components/checkout/BillTable';
 import PriceTicket from '../components/checkout/PriceTicket';
 import TillActions from '../components/checkout/TillActions';
 import ProductTiles from '../components/checkout/ProductTiles';
-import HeldBillTabs from '../components/checkout/HeldBillTabs';
+import BillTabs from '../components/checkout/BillTabs';
 import CheckoutModals from '../components/checkout/CheckoutModals';
 import { useReceiptPrinting } from '../components/receipts/useReceiptPrinting';
 import { useBill } from '../hooks/useBill';
@@ -18,6 +18,7 @@ import { useShortcuts } from '../hooks/useShortcuts';
 import { useGlobalScanner } from '../hooks/useScanner';
 import { canUseBackOffice } from '../utils/roles';
 import { formatNaira } from '../utils/formatNaira';
+import { pointsDiscount } from '../utils/loyalty';
 
 // A receipt number like 261027-0001 (or a return, R261027-0001).
 const RECEIPT_PATTERN = /^R?\d{6}-\d{4}$/i;
@@ -28,7 +29,7 @@ function CheckoutPage() {
   const { settings } = useSettings();
   const navigate = useNavigate();
   const billState = useBill();
-  const { bill, totals, addProduct, clearBill, loadBill, setItemDiscount, setBillDiscount, setApproval, updatePrices } = billState;
+  const { bill, bills, activeIndex, totals: billOnlyTotals, setCustomer, setPointsToUse, addProduct, clearBill, newBill, switchBill, closeBill, setItemDiscount, setBillDiscount, setApproval, updatePrices } = billState;
   const { toast, showToast } = useToast();
   const { printSale } = useReceiptPrinting();
   const scanRef = useRef(null);
@@ -44,21 +45,29 @@ function CheckoutPage() {
   const [modal, setModal] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saleError, setSaleError] = useState('');
-  const [holdError, setHoldError] = useState('');
-  const [heldBills, setHeldBills] = useState([]);
 
   const isCashier = user.role === 'cashier';
+  const loyalty = Boolean(settings.loyaltyEnabled);
+
+  // The bill's totals with any loyalty points spent taken off.
+  const spent = loyalty && bill.customer
+    ? pointsDiscount(settings, Math.min(bill.pointsToUse, bill.customer.points), billOnlyTotals.total)
+    : { points: 0, amount: 0 };
+  const totals = {
+    ...billOnlyTotals,
+    pointsUsed: spent.points,
+    pointsDiscount: spent.amount,
+    discountTotal: billOnlyTotals.discountTotal + spent.amount,
+    total: Math.round((billOnlyTotals.total - spent.amount) * 100) / 100,
+  };
   const modalType = typeof modal === 'string' ? modal : modal?.type;
 
   // Load all products and categories, so adding items is instant.
   // Refresh them every 5 minutes so price changes reach the till.
   useEffect(() => {
     loadProducts();
-    loadHeldBills();
-    const timer = setInterval(() => {
-      loadProducts();
-      loadHeldBills();
-    }, 5 * 60 * 1000);
+    bringInHeldBills();
+    const timer = setInterval(loadProducts, 5 * 60 * 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -77,12 +86,16 @@ function CheckoutPage() {
     }
   }
 
-  // The bills on hold, shown as tabs above the bill.
-  async function loadHeldBills() {
+  // Bills put on hold by an older version (on the server) open as tabs.
+  async function bringInHeldBills() {
     try {
-      setHeldBills(await api.get('/held-bills'));
+      const held = await api.get('/held-bills');
+      for (const h of held) {
+        if (!newBill({ ...h.bill, label: h.label })) break;
+        await api.delete(`/held-bills/${h._id}`);
+      }
     } catch {
-      // the tabs simply stay as they were
+      // nothing to bring in
     }
   }
 
@@ -159,7 +172,6 @@ function CheckoutPage() {
       return;
     }
     setSaleError('');
-    setHoldError('');
     setModal(name);
   }
 
@@ -179,6 +191,8 @@ function CheckoutPage() {
         })),
         billDiscount: bill.discount,
         approvalToken,
+        customerId: loyalty && bill.customer ? bill.customer._id : undefined,
+        pointsToUse: spent.points,
       });
 
       // Show the new stock straight away, then refresh quietly from the server.
@@ -234,87 +248,30 @@ function CheckoutPage() {
     showToast(type ? 'Discount applied' : 'Discount removed', 'success');
   }
 
-  // ----- Hold and recall -----
+  // ----- Open bills (tabs) -----
 
-  // Saves the bill on the server to finish later, and empties the till.
-  async function holdBill(label) {
-    setSaving(true);
-    setHoldError('');
-    try {
-      await saveHeld(label);
-      closeModal();
-      showToast('Bill on hold', 'success');
-    } catch (err) {
-      setHoldError(err.message);
-    } finally {
-      setSaving(false);
+  // Opens a new, empty bill; the one being served stays open in its tab.
+  function openNewBill() {
+    if (!newBill()) {
+      showToast(`At most ${billState.maxBills} bills can be open. Complete or close one first.`, 'error');
+      return;
     }
-  }
-
-  // Puts the current bill on hold and empties the till.
-  async function saveHeld(label) {
-    await api.post('/held-bills', {
-      label: label || bill.label || `Bill ${new Date().toLocaleTimeString('en-NG', { hour: 'numeric', minute: '2-digit' })}`,
-      bill: { ...bill, label: undefined },
-      itemCount: totals.quantityCount,
-      total: totals.total,
-    });
-    clearBill();
     setLastAddedId(null);
     setScanResult(null);
-    await loadHeldBills();
   }
 
-  // A held bill's tab: the current bill (if any) goes on hold, the held one comes back.
-  async function switchToHeld(held) {
-    if (bill.items.length > 0) {
-      try {
-        await saveHeld('');
-      } catch (err) {
-        showToast(err.message, 'error');
-        return;
-      }
-    }
-    recallBill(held);
+  // Serves the next open bill (F7), round the tabs.
+  function nextBill() {
+    if (bills.length > 1) switchBill((activeIndex + 1) % bills.length);
   }
 
-  // The x on a held bill's tab.
-  async function deleteHeld(held) {
-    if (!window.confirm(`Delete the held bill "${held.label || 'Held bill'}"?`)) return;
-    try {
-      await api.delete(`/held-bills/${held._id}`);
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-    loadHeldBills();
-  }
-
-  // Opens Recall (only when the till is empty, so no bill is lost).
-  function openRecall() {
-    if (bill.items.length > 0) {
-      showToast('Complete, hold or cancel this bill first.', 'error');
-      return;
-    }
-    setModal('recall');
-  }
-
-  // Puts a held bill back on the till, with today's prices.
-  async function recallBill(held) {
-    try {
-      await api.delete(`/held-bills/${held._id}`);
-    } catch (err) {
-      showToast(err.message, 'error');
-      loadHeldBills();
-      return;
-    }
-    loadHeldBills();
-    // Products deleted while the bill was on hold cannot be sold.
-    const items = held.bill.items.filter((item) => productsById[item.productId]);
-    const removed = held.bill.items.length - items.length;
-    loadBill({ ...held.bill, items, label: held.label });
-    closeModal();
-    showToast(removed > 0 ? `Bill recalled. ${removed} deleted product(s) were taken off.` : 'Bill recalled', 'success');
-    loadProducts();
+  // The x on a tab: a bill with items is cancelled after asking.
+  function closeTab(index) {
+    const b = bills[index];
+    if (b.items.length > 0 && !window.confirm(`Close ${b.label || b.customer?.name || `Bill ${index + 1}`} and take every item off it?`)) return;
+    closeBill(index);
+    setLastAddedId(null);
+    setScanResult(null);
   }
 
   // ----- Returns -----
@@ -330,9 +287,10 @@ function CheckoutPage() {
     {
       F1: () => setModal('shortcuts'),
       F2: () => setModal({ type: 'find' }),
-      F6: () => openForBill('hold'),
-      F7: openRecall,
+      F6: openNewBill,
+      F7: nextBill,
       F8: () => openForBill('discount'),
+      F4: () => loyalty && setModal('customer'),
       F9: cancelBill,
       F10: () => openForBill('complete'),
       Escape: () => scanRef.current?.focus(),
@@ -344,15 +302,26 @@ function CheckoutPage() {
 
   // Everything the dialogs need.
   const checkout = {
-    bill, totals, settings, isCashier, lastAddedId, saving, saleError, holdError, products, categories,
-    closeModal, addToBill, completeSale, approveAndRetrySale, printLater, applyDiscount, holdBill, recallBill,
+    bill, totals, settings, isCashier, lastAddedId, saving, saleError, products, categories,
+    closeModal, addToBill, completeSale, approveAndRetrySale, printLater, applyDiscount, setCustomer, setPointsToUse, billOnlyTotals,
     returnDone,
   };
 
   return (
     <div className="till">
       <section className="till-bill" aria-label="Bill">
-        <HeldBillTabs heldBills={heldBills} currentLabel={bill.label} currentCount={totals.quantityCount} onSwitch={switchToHeld} onDelete={deleteHeld} />
+        <BillTabs
+          bills={bills}
+          activeIndex={activeIndex}
+          onSwitch={(index) => {
+            switchBill(index);
+            setLastAddedId(null);
+            setScanResult(null);
+          }}
+          onClose={closeTab}
+          onNew={openNewBill}
+          canAddMore={bills.length < billState.maxBills}
+        />
 
         <ScanBox ref={scanRef} products={products} onSubmit={handleCode} onPick={addToBill} paused={modal !== null}>
           {scanResult?.kind === 'added' && <p className="scan-result success-text">{scanResult.text}</p>}
@@ -398,11 +367,13 @@ function CheckoutPage() {
 
         <TillActions
           hasItems={bill.items.length > 0}
+          loyalty={loyalty}
+          customerName={bill.customer?.name}
           actions={{
             onFind: () => setModal({ type: 'find' }),
             onDiscount: () => openForBill('discount'),
-            onHold: () => openForBill('hold'),
-            onRecall: openRecall,
+            onNewBill: openNewBill,
+            onCustomer: () => setModal('customer'),
             onReturn: () => setModal('return'),
             onCancel: cancelBill,
           }}

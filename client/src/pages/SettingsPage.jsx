@@ -68,7 +68,12 @@ function SettingsPage() {
     setError('');
     try {
       const { telegramAlertsEnabled, ...fields } = form;
-      const saved = await api.put('/settings', { ...fields, maxCashierDiscountPercent: Number(form.maxCashierDiscountPercent) });
+      const saved = await api.put('/settings', {
+        ...fields,
+        maxCashierDiscountPercent: Number(form.maxCashierDiscountPercent),
+        loyaltyEarnEvery: Number(form.loyaltyEarnEvery) || 100,
+        loyaltyPointValue: Number(form.loyaltyPointValue) || 0,
+      });
       setSettings(saved);
       setHasChanges(false);
       setMessage('Settings saved.');
@@ -133,6 +138,24 @@ function SettingsPage() {
             <label className="field-label" htmlFor="settings-discount">Largest discount a cashier can give alone (%)</label>
             <input id="settings-discount" type="number" min="0" max="100" value={form.maxCashierDiscountPercent} onChange={(e) => setField('maxCashierDiscountPercent', e.target.value)} />
           </div>
+
+          <h2 className="form-section">Loyalty points</h2>
+          <label className="check span-all">
+            <input type="checkbox" checked={Boolean(form.loyaltyEnabled)} onChange={(e) => setField('loyaltyEnabled', e.target.checked)} />
+            Customers collect points
+          </label>
+          {form.loyaltyEnabled && (
+            <>
+              <div className="field">
+                <label className="field-label" htmlFor="settings-earn">1 point for every (₦)</label>
+                <input id="settings-earn" type="number" min="1" step="1" value={form.loyaltyEarnEvery} onChange={(e) => setField('loyaltyEarnEvery', e.target.value)} />
+              </div>
+              <div className="field">
+                <label className="field-label" htmlFor="settings-point-value">1 point is worth (₦)</label>
+                <input id="settings-point-value" type="number" min="0" step="any" value={form.loyaltyPointValue} onChange={(e) => setField('loyaltyPointValue', e.target.value)} />
+              </div>
+            </>
+          )}
 
           <div className="span-all btn-row">
             <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save settings'}</button>

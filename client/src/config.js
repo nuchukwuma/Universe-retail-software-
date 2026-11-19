@@ -16,5 +16,8 @@ export const DEFAULT_SETTINGS = {
   receiptLogo: true,
   printerName: '',
   maxCashierDiscountPercent: 10,
+  loyaltyEnabled: false,
+  loyaltyEarnEvery: 100,
+  loyaltyPointValue: 1,
   telegramAlertsEnabled: true,
 };

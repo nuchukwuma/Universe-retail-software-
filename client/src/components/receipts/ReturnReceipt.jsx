@@ -26,6 +26,7 @@ function ReturnReceipt({ ret, settings, paper, duplicate = false }) {
       <Divider />
 
       <Row strong left="REFUND" right={money(ret.refundTotal)} />
+      {ret.pointsTakenBack > 0 && <Row left="Loyalty points taken back" right={String(ret.pointsTakenBack)} />}
       <div className="receipt-small">Reason: {ret.reason}</div>
       <Divider />
     </ReceiptFrame>

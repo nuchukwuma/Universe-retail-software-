@@ -683,3 +683,46 @@
     overflow: visible;
   }
 }
+
+.till-action-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.till-action.is-active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-tint);
+  color: var(--color-accent);
+}
+
+.till-action.is-active svg {
+  color: var(--color-accent);
+}
+
+/* "+" at the end of the bill tabs: a new bill. */
+.bill-tab-new {
+  display: grid;
+  flex: none;
+  place-items: center;
+  align-self: center;
+  width: 36px;
+  height: 36px;
+  margin: 0 var(--space-2) var(--space-2);
+  border: var(--line-thin) dashed var(--color-control-border);
+  border-radius: var(--radius-8);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.bill-tab-new:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.bill-tab-new:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

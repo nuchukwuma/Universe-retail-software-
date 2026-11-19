@@ -21,6 +21,7 @@ const returnSchema = new db.Schema(
     receiptNumber: { type: String, required: true }, // the original receipt
     items: [returnItemSchema],
     refundTotal: { type: Number, required: true },
+    pointsTakenBack: { type: Number, default: 0 }, // loyalty points the customer loses with this refund
     reason: { type: String, required: true, trim: true },
     processedBy: { type: db.Schema.Types.ObjectId, ref: 'User' },
     processedByName: { type: String, default: '' },

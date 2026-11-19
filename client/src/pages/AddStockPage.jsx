@@ -183,7 +183,7 @@ function AddStockPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Add stock" />
+      <PageHeader title="Stock" />
 
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       {message && <div className="notice notice-success" role="status">{message}</div>}

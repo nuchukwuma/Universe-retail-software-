@@ -28,12 +28,12 @@ const CURRENT_DATA_VERSION = 5;
 const FIELDS_TO_REMOVE = [
   { collection: 'products', fields: ['wholesalePrice', 'expiryDate', 'image'] },
   { collection: 'categories', fields: ['icon', 'image'] },
-  { collection: 'sales', fields: ['priceType', 'payments', 'paymentMethod', 'amountTendered', 'change', 'customer', 'customerName'] },
+  { collection: 'sales', fields: ['priceType', 'payments', 'paymentMethod', 'amountTendered', 'change'] },
   { collection: 'returns', fields: ['refundMethod', 'customerName'] },
   { collection: 'stockmovements', fields: ['costPrice'] }, // now "unitCost"
   { collection: 'settings', fields: ['logo', 'showLogoOnReceipt'] },
 ];
-const TABLES_TO_DELETE = ['customers', 'feedbacks'];
+const TABLES_TO_DELETE = ['feedbacks']; // customers are used again (loyalty points)
 
 // Shop names the app filled in by itself in earlier versions. A name the
 // owner typed is never changed.

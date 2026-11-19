@@ -1,9 +1,8 @@
 import CompleteSaleModal from './CompleteSaleModal';
 import SaleCompleteModal from './SaleCompleteModal';
 import ShortcutsModal from './ShortcutsModal';
+import CustomerModal from './CustomerModal';
 import DiscountModal from './DiscountModal';
-import HoldBillModal from './HoldBillModal';
-import RecallModal from './RecallModal';
 import FindProductModal from './FindProductModal';
 import { ManagerApprovalModal } from './ManagerApprovalForm';
 import ReturnModal from '../returns/ReturnModal';
@@ -32,6 +31,17 @@ function CheckoutModals({ modal, c }) {
       );
     case 'find':
       return <FindProductModal products={c.products} categories={c.categories} startText={modal.text || ''} onAdd={c.addToBill} onClose={close} />;
+    case 'customer':
+      return (
+        <CustomerModal
+          bill={c.bill}
+          settings={c.settings}
+          billTotal={c.billOnlyTotals.total}
+          onChoose={c.setCustomer}
+          onSetPoints={c.setPointsToUse}
+          onClose={close}
+        />
+      );
     case 'shortcuts':
       return <ShortcutsModal onClose={close} />;
     case 'discount':
@@ -45,10 +55,6 @@ function CheckoutModals({ modal, c }) {
           onClose={close}
         />
       );
-    case 'hold':
-      return <HoldBillModal saving={c.saving} error={c.holdError} onHold={c.holdBill} onClose={close} />;
-    case 'recall':
-      return <RecallModal onRecall={c.recallBill} onClose={close} />;
     case 'return':
       return <ReturnModal onDone={c.returnDone} onClose={close} />;
     case 'returnReceipt':

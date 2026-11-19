@@ -26,6 +26,7 @@ const telegramRoutes = require('./routes/telegramRoutes');
 const backupRoutes = require('./routes/backupRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
+const customerRoutes = require('./routes/customerRoutes');
 const { imagePath } = require('./utils/images');
 
 // Creates the Express app with every API route.
@@ -61,6 +62,7 @@ function createApp({ clientDir } = {}) {
   app.use('/api/backups', backupRoutes);
   app.use('/api/suppliers', supplierRoutes);
   app.use('/api/purchases', purchaseRoutes);
+  app.use('/api/customers', customerRoutes);
 
   // Product photos and the shop's logo. No login needed: pictures are
   // shown by <img> tags, which cannot send the login token.

@@ -4,8 +4,9 @@ import Modal from '../Modal';
 export const SHORTCUT_LIST = [
   ['F1', 'Show this list'],
   ['F2', 'Find a product by name'],
-  ['F6', 'Hold the bill'],
-  ['F7', 'Recall a held bill'],
+  ['F4', 'Customer and loyalty points'],
+  ['F6', 'New bill (the current one stays open in its tab)'],
+  ['F7', 'Next open bill'],
   ['F8', 'Discount'],
   ['F9', 'Cancel the bill'],
   ['F10', 'Complete the sale'],

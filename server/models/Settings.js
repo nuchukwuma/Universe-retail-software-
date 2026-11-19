@@ -19,6 +19,11 @@ const settingsSchema = new db.Schema(
     // Cashiers can give discounts up to this % of the bill without a manager.
     maxCashierDiscountPercent: { type: Number, default: 10, min: 0, max: 100 },
 
+    // Loyalty points (see utils/loyalty.js)
+    loyaltyEnabled: { type: Boolean, default: false },
+    loyaltyEarnEvery: { type: Number, default: 100, min: 1 }, // 1 point for every N Naira paid
+    loyaltyPointValue: { type: Number, default: 1, min: 0 }, // Naira one point is worth
+
     // Telegram sales alerts
     telegramAlertsEnabled: { type: Boolean, default: true },
     telegramBotToken: { type: String, default: '', trim: true }, // secret - never sent to the app

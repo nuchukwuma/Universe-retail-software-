@@ -2,6 +2,8 @@ const express = require('express');
 const { isValidId } = require('../db');
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
+const Customer = require('../models/Customer');
+const { pointsEarned, pointsDiscount } = require('../utils/loyalty');
 const { requireLogin } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
 const { nextReceiptNumber } = require('../utils/counters');
@@ -10,7 +12,7 @@ const { getSettings } = require('../utils/settings');
 const { findApprover } = require('../utils/approval');
 const { createdAtFilter } = require('../utils/dates');
 const { queueSaleAlert } = require('../utils/telegramQueue');
-const { SaleError, buildSaleItems, calculateTotals, discountPercent } = require('../utils/saleCalculations');
+const { SaleError, buildSaleItems, calculateTotals, discountPercent, roundMoney } = require('../utils/saleCalculations');
 
 const router = express.Router();
 
@@ -104,11 +106,36 @@ router.post('/', async (req, res) => {
       discountApprovedBy = approver ? approver.name : '';
     }
 
+    // 3b. Loyalty: the customer spends points (Naira off the bill, no
+    //     approval needed) and earns points on what is left to pay.
+    let loyalty = {};
+    const settings = await getSettings();
+    if (req.body.customerId) {
+      if (!settings.loyaltyEnabled) throw new SaleError('Loyalty points are switched off in Settings.');
+      const customer = isValidId(req.body.customerId) ? await Customer.findById(req.body.customerId) : null;
+      if (!customer) throw new SaleError('That customer no longer exists. Choose the customer again.');
+      const wanted = Math.max(0, Math.floor(Number(req.body.pointsToUse) || 0));
+      if (wanted > customer.points) throw new SaleError(`${customer.name} has only ${customer.points} points.`);
+      const spent = pointsDiscount(settings, wanted, totals.total);
+      totals.discountTotal = roundMoney(totals.discountTotal + spent.amount);
+      totals.total = roundMoney(totals.total - spent.amount);
+      const earned = pointsEarned(settings, totals.total);
+      loyalty = {
+        customer: customer._id,
+        customerName: customer.name,
+        pointsRedeemed: spent.points,
+        pointsDiscount: spent.amount,
+        pointsEarned: earned,
+        pointsBalance: customer.points - spent.points + earned,
+      };
+    }
+
     // 4. Save the sale with the next receipt number.
     const sale = await Sale.create({
       receiptNumber: await nextReceiptNumber(),
       items: saleItems,
       ...totals,
+      ...loyalty,
       discountApprovedBy,
       cashier: req.user._id,
       cashierName: req.user.name,
@@ -116,6 +143,14 @@ router.post('/', async (req, res) => {
 
     // 5. Take the items off the stock.
     await reduceStockForSale(sale, req.user);
+
+    // 6. The customer's points, visits and spending (only once the sale is saved).
+    if (sale.customer) {
+      await Customer.findByIdAndUpdate(sale.customer, {
+        $inc: { points: sale.pointsEarned - sale.pointsRedeemed, totalSpent: sale.total, visits: 1 },
+        $set: { lastVisitAt: new Date() },
+      });
+    }
 
     res.status(201).json(sale);
 

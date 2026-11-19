@@ -16,6 +16,7 @@ import SettingsPage from './pages/SettingsPage';
 import ReportsPage from './pages/ReportsPage';
 import BackupPage from './pages/BackupPage';
 import SuppliersPage from './pages/SuppliersPage';
+import CustomersPage from './pages/CustomersPage';
 import PurchasesPage from './pages/PurchasesPage';
 import PurchaseFormPage from './pages/PurchaseFormPage';
 import PurchaseDetailPage from './pages/PurchaseDetailPage';
@@ -63,6 +64,7 @@ function App() {
         <Route path="/receive-stock" element={<Navigate to="/add-stock" replace />} />
         <Route path="/stock-count" element={managersOnly(<StockCountPage />)} />
         <Route path="/suppliers" element={managersOnly(<SuppliersPage />)} />
+        <Route path="/customers" element={managersOnly(<CustomersPage />)} />
         <Route path="/purchases" element={managersOnly(<PurchasesPage />)} />
         <Route path="/purchases/new" element={managersOnly(<PurchaseFormPage />)} />
         <Route path="/purchases/:id" element={managersOnly(<PurchaseDetailPage />)} />

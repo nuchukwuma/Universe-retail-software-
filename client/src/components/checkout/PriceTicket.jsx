@@ -12,10 +12,16 @@ function PriceTicket({ totals, onComplete }) {
         <dd>{totals.quantityCount}</dd>
         <dt>Subtotal</dt>
         <dd>{formatNaira(totals.subtotal)}</dd>
-        {totals.discountTotal > 0 && (
+        {totals.discountTotal - (totals.pointsDiscount || 0) > 0 && (
           <>
             <dt>Discount</dt>
-            <dd className="success-text">minus {formatNaira(totals.discountTotal)}</dd>
+            <dd className="success-text">minus {formatNaira(totals.discountTotal - (totals.pointsDiscount || 0))}</dd>
+          </>
+        )}
+        {totals.pointsDiscount > 0 && (
+          <>
+            <dt>Points ({totals.pointsUsed})</dt>
+            <dd className="success-text">minus {formatNaira(totals.pointsDiscount)}</dd>
           </>
         )}
       </dl>

@@ -2,6 +2,7 @@ const express = require('express');
 const { isValidId } = require('../db');
 const Return = require('../models/Return');
 const Sale = require('../models/Sale');
+const Customer = require('../models/Customer');
 const Product = require('../models/Product');
 const { requireLogin } = require('../middleware/auth');
 const handleError = require('../utils/handleError');
@@ -72,12 +73,21 @@ router.post('/', async (req, res) => {
       stillRefundable
     );
 
+    // Loyalty: the points earned on what is refunded are taken back.
+    let pointsTakenBack = 0;
+    if (sale.customer && sale.pointsEarned > 0 && sale.total > 0) {
+      const refundedAfter = roundMoney((sale.refundedTotal || 0) + refundTotal);
+      const owed = Math.round((sale.pointsEarned * Math.min(refundedAfter, sale.total)) / sale.total);
+      pointsTakenBack = Math.max(0, owed - (sale.pointsTakenBack || 0));
+    }
+
     const ret = await Return.create({
       returnNumber: await nextReturnNumber(),
       sale: sale._id,
       receiptNumber: sale.receiptNumber,
       items: returnItems,
       refundTotal,
+      pointsTakenBack,
       reason,
       processedBy: req.user._id,
       processedByName: req.user.name,
@@ -89,11 +99,20 @@ router.post('/', async (req, res) => {
       sale.items[item.lineIndex].returnedQuantity += item.quantity;
     });
     sale.refundedTotal = roundMoney((sale.refundedTotal || 0) + refundTotal);
+    sale.pointsTakenBack = (sale.pointsTakenBack || 0) + pointsTakenBack;
     const everythingBack = sale.items.every((item) => item.returnedQuantity >= item.quantity);
     sale.status = everythingBack ? 'returned' : 'partly_returned';
     await sale.save();
 
     await addStockForReturn(ret, req.user);
+    if (pointsTakenBack > 0) {
+      const customer = await Customer.findById(sale.customer);
+      if (customer) {
+        customer.points = Math.max(0, customer.points - pointsTakenBack); // never below 0
+        customer.totalSpent = roundMoney(Math.max(0, customer.totalSpent - refundTotal));
+        await customer.save();
+      }
+    }
 
     res.status(201).json({ return: ret, sale });
   } catch (error) {

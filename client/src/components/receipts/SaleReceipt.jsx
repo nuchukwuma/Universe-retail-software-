@@ -32,9 +32,23 @@ function SaleReceipt({ sale, settings, paper, duplicate = false }) {
           right={`-${money(sale.billDiscount)}`}
         />
       )}
+      {sale.pointsRedeemed > 0 && <Row left={`Points used (${sale.pointsRedeemed})`} right={`-${money(sale.pointsDiscount)}`} />}
       {sale.discountTotal > 0 && <Row left="Total discount" right={`-${money(sale.discountTotal)}`} />}
       <Row strong left="TOTAL" right={money(sale.total)} />
       <Divider />
+
+      {sale.customerName && (
+        <>
+          <Row left="Customer" right={sale.customerName} />
+          {(sale.pointsEarned > 0 || sale.pointsRedeemed > 0 || sale.pointsBalance > 0) && (
+            <>
+              <Row left="Points earned" right={String(sale.pointsEarned || 0)} />
+              <Row left="Points balance" right={String(sale.pointsBalance || 0)} />
+            </>
+          )}
+          <Divider />
+        </>
+      )}
 
       {sale.refundedTotal > 0 && (
         <>

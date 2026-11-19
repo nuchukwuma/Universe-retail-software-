@@ -4,6 +4,7 @@ const Settings = require('../models/Settings');
 const EDITABLE_FIELDS = [
   'storeName', 'address', 'phone', 'footerMessage',
   'paperSize', 'autoPrint', 'receiptLogo', 'printerName', 'maxCashierDiscountPercent', 'telegramAlertsEnabled',
+  'loyaltyEnabled', 'loyaltyEarnEvery', 'loyaltyPointValue',
 ];
 
 // Returns the one settings record, creating it with default values
