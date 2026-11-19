@@ -65,7 +65,7 @@ function PurchaseFormPage() {
       if (current.some((line) => line.productId === product._id)) {
         return current.map((line) => (line.productId === product._id ? { ...line, quantity: Number(line.quantity) + quantity } : line));
       }
-      return [...current, { productId: product._id, name: product.name, quantity, unitCost: product.costPrice || 0 }];
+      return [...current, { productId: product._id, name: product.name, quantity, unitCost: product.costPrice || '' }];
     });
   }
 
@@ -178,7 +178,7 @@ function PurchaseFormPage() {
                         value={line.unitCost}
                         onChange={(e) => setLine(line.productId, 'unitCost', e.target.value)}
                         aria-label={`Cost of one ${line.name}`}
-                        required
+                        placeholder="0"
                       />
                     </td>
                     <td className="num strong">{formatNaira((Number(line.quantity) || 0) * (Number(line.unitCost) || 0))}</td>

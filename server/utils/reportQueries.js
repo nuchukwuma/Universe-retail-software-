@@ -7,6 +7,9 @@
 //   sales total = what customers paid after discounts (sale.total)
 //   refunds     = money given back for returns (counted on the ORIGINAL sale's day)
 //   takings     = sales total - refunds
+//   profit      = takings from items with a cost price - what they cost
+//                 (a cost price is optional: items without one are left out
+//                 of profit, and counted in itemsWithoutCost / uncostedSales)
 
 const Sale = require('../models/Sale');
 const { roundMoney } = require('./saleCalculations');
@@ -15,10 +18,20 @@ const { mondayOf } = require('./dates');
 // Lagos time. Nigeria is always UTC+1 (no summer time), and the fixed
 // offset is about 25 times quicker to work out than the zone's name.
 const TIMEZONE = '+01:00';
-const MONEY_FIELDS = ['grossSales', 'discounts', 'netSales', 'refunds', 'costOfGoods'];
+const MONEY_FIELDS = ['grossSales', 'discounts', 'netSales', 'refunds', 'costOfGoods', 'uncostedSales'];
 
 // How many of a sale line the customer kept (sold minus returned).
 const KEPT = { $subtract: ['$$line.quantity', { $ifNull: ['$$line.returnedQuantity', 0] }] };
+const HAS_COST = { $gt: [{ $ifNull: ['$$line.costPrice', 0] }, 0] };
+// What the customer paid for the kept items of a line, after its share of
+// any whole-bill discount ("$$share" = sale total / the lines' total).
+const PAID_FOR_KEPT = {
+  $cond: [
+    { $gt: ['$$line.quantity', 0] },
+    { $multiply: ['$$line.lineTotal', '$$share', { $divide: [KEPT, '$$line.quantity'] }] },
+    0,
+  ],
+};
 
 // Step that works out the useful numbers for each single sale.
 const SALE_NUMBERS_STEP = {
@@ -33,8 +46,23 @@ const SALE_NUMBERS_STEP = {
     itemsSold: { $sum: '$items.quantity' },
     // What the kept items cost the shop (cost price when sold x kept).
     costOfGoods: { $sum: { $map: { input: '$items', as: 'line', in: { $multiply: [{ $ifNull: ['$$line.costPrice', 0] }, KEPT] } } } },
-    // Kept items whose cost was not known (their profit is overstated).
-    itemsWithoutCost: { $sum: { $map: { input: '$items', as: 'line', in: { $cond: [{ $gt: [{ $ifNull: ['$$line.costPrice', 0] }, 0] }, 0, KEPT] } } } },
+    // Kept items sold without a cost price, and what was paid for them
+    // (left out of profit: their profit is not known).
+    itemsWithoutCost: { $sum: { $map: { input: '$items', as: 'line', in: { $cond: [HAS_COST, 0, KEPT] } } } },
+    uncostedSales: {
+      $let: {
+        vars: {
+          share: {
+            $cond: [
+              { $gt: [{ $sum: '$items.lineTotal' }, 0] },
+              { $divide: ['$total', { $sum: '$items.lineTotal' }] },
+              0,
+            ],
+          },
+        },
+        in: { $sum: { $map: { input: '$items', as: 'line', in: { $cond: [HAS_COST, 0, PAID_FOR_KEPT] } } } },
+      },
+    },
   },
 };
 
@@ -48,11 +76,12 @@ const GROUP_TOTALS = {
   refunds: { $sum: '$refunds' },
   costOfGoods: { $sum: '$costOfGoods' },
   itemsWithoutCost: { $sum: '$itemsWithoutCost' },
+  uncostedSales: { $sum: '$uncostedSales' },
 };
 
 // Rounds every money field and adds takings, profit and the average sale.
 //   takings = sales total - refunds
-//   profit  = takings - what the kept items cost the shop
+//   profit  = takings from items with a cost price - what they cost
 function finishRow(row) {
   const rounded = { ...row };
   MONEY_FIELDS.forEach((key) => {
@@ -62,7 +91,7 @@ function finishRow(row) {
   rounded.itemsSold = row.itemsSold || 0;
   rounded.itemsWithoutCost = row.itemsWithoutCost || 0;
   rounded.takings = roundMoney(rounded.netSales - rounded.refunds);
-  rounded.profit = roundMoney(rounded.takings - rounded.costOfGoods);
+  rounded.profit = roundMoney(rounded.takings - rounded.uncostedSales - rounded.costOfGoods);
   rounded.averageSale = rounded.transactions ? Math.round(rounded.netSales / rounded.transactions) : 0;
   return rounded;
 }
@@ -160,9 +189,20 @@ async function productSales(createdAt) {
         kept: 1,
         revenue: { $multiply: ['$lineTotal', '$paidShare', { $divide: ['$kept', '$quantity'] }] },
         cost: { $multiply: ['$costPrice', '$kept'] },
+        hasCost: { $gt: ['$costPrice', 0] },
       },
     },
-    { $group: { _id: '$product', name: { $last: '$name' }, quantity: { $sum: '$kept' }, revenue: { $sum: '$revenue' }, cost: { $sum: '$cost' } } },
+    {
+      $group: {
+        _id: '$product',
+        name: { $last: '$name' },
+        quantity: { $sum: '$kept' },
+        revenue: { $sum: '$revenue' },
+        cost: { $sum: '$cost' },
+        costedQuantity: { $sum: { $cond: ['$hasCost', '$kept', 0] } },
+        costedRevenue: { $sum: { $cond: ['$hasCost', '$revenue', 0] } },
+      },
+    },
     { $sort: { quantity: -1, revenue: -1 } },
   ]);
 
@@ -172,7 +212,9 @@ async function productSales(createdAt) {
     quantity: row.quantity,
     revenue: Math.round(row.revenue),
     cost: Math.round(row.cost),
-    profit: Math.round(row.revenue) - Math.round(row.cost),
+    // Profit on the items sold with a cost price (null: none had one).
+    profit: row.costedQuantity > 0 ? Math.round(row.costedRevenue) - Math.round(row.cost) : null,
+    withoutCost: row.quantity - row.costedQuantity,
   }));
 }
 

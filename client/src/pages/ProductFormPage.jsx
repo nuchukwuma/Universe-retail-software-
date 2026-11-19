@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api/api';
 import PageHeader from '../components/PageHeader';
@@ -64,6 +64,7 @@ function ProductFormPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [picture, setPicture] = useState(''); // URL or a new data URL
   const [savedPicture, setSavedPicture] = useState('');
+  const createdId = useRef(null); // the new product, once it has been made
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -112,9 +113,13 @@ function ProductFormPage() {
     }
     setSaving(true);
     try {
-      const product = isEditing
-        ? await api.put(`/products/${id}`, formToProduct(form))
+      // A product made on an earlier try (whose picture then failed) is
+      // saved again, never made twice.
+      const savedId = id || createdId.current;
+      const product = savedId
+        ? await api.put(`/products/${savedId}`, formToProduct(form))
         : await api.post('/products', formToProduct(form));
+      createdId.current = product._id;
       if (picture !== savedPicture) {
         if (picture) await api.put(`/products/${product._id}/picture`, { picture });
         else await api.delete(`/products/${product._id}/picture`);

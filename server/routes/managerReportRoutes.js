@@ -132,6 +132,8 @@ router.get('/best-sellers', async (req, res) => {
     const totals = {
       quantity: rows.reduce((sum, row) => sum + row.quantity, 0),
       revenue: roundMoney(rows.reduce((sum, row) => sum + row.revenue, 0)),
+      cost: roundMoney(rows.reduce((sum, row) => sum + row.cost, 0)),
+      profit: roundMoney(rows.reduce((sum, row) => sum + (row.profit || 0), 0)),
     };
     res.json({ ...rangeInfo(range), rows, totals });
   } catch (error) {

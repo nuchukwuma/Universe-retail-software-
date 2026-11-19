@@ -7,6 +7,9 @@ const fs = require('fs');
 const path = require('path');
 
 const OLD_FOLDER_NAMES = ['Universe POS', 'universe-pos'];
+// Written before the copy starts and deleted when it has finished, so a
+// copy cut short (power cut, full disk) is done again at the next start.
+const COPYING_MARKER = 'copying-from-universe-pos';
 const SKIP = new Set(['logs', 'Cache', 'Code Cache', 'GPUCache', 'blob_storage', 'Local Storage', 'Session Storage', 'Network Persistent State', 'Preferences', 'DawnCache']);
 
 // True if a folder holds the shop's data files.
@@ -32,11 +35,16 @@ function copyFolder(from, to) {
 // Copies the old app's data into "dataDir" if this app has none yet.
 // "appDataDir" is AppData\Roaming. Answers the folder copied from, or null.
 function adoptOldData(dataDir, appDataDir) {
-  if (hasShopData(dataDir)) return null;
+  const marker = path.join(dataDir, COPYING_MARKER);
+  const unfinished = fs.existsSync(marker);
+  if (hasShopData(dataDir) && !unfinished) return null;
   for (const name of OLD_FOLDER_NAMES) {
     const oldDir = path.join(appDataDir, name);
     if (path.resolve(oldDir) === path.resolve(dataDir) || !hasShopData(oldDir)) continue;
+    fs.mkdirSync(dataDir, { recursive: true });
+    fs.writeFileSync(marker, oldDir);
     copyFolder(oldDir, dataDir);
+    fs.unlinkSync(marker);
     return oldDir;
   }
   return null;

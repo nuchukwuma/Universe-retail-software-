@@ -14,10 +14,15 @@ export function formatDateTime(value) {
   });
 }
 
-// Returns today's date as "YYYY-MM-DD" (this computer's local day),
+// Returns today's date as "YYYY-MM-DD" in Lagos time (the same day the
+// receipts and reports use, whatever the computer's clock is set to),
 // ready for an <input type="date">.
 export function todayDateValue() {
-  return new Date().toLocaleDateString('en-CA');
+  try {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
+  } catch {
+    return new Date().toLocaleDateString('en-CA');
+  }
 }
 
 // Moves a "YYYY-MM-DD" date by a number of days, e.g. ('2026-10-27', -1) -> '2026-10-26'.

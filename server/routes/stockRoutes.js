@@ -36,7 +36,9 @@ router.post('/receive', async (req, res) => {
     // $inc adds to the quantity in one step, so two people receiving
     // stock at the same time cannot overwrite each other.
     const change = { $inc: { quantity } };
-    if (hasCost || supplier) change.$set = { ...(hasCost ? { costPrice: unitCost } : {}), ...(supplier ? { supplier } : {}) };
+    // A cost of 0 means "not known": the product keeps the cost price it has.
+    const setsCost = hasCost && unitCost > 0;
+    if (setsCost || supplier) change.$set = { ...(setsCost ? { costPrice: unitCost } : {}), ...(supplier ? { supplier } : {}) };
     const product = await Product.findByIdAndUpdate(productId, change, { new: true });
     if (!product) {
       return res.status(404).json({ message: 'Product not found.' });

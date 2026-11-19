@@ -27,9 +27,11 @@ async function buildItems(requestItems) {
     const product = products.find((p) => String(p._id) === String(line.productId));
     if (!product) throw new PurchaseError('A product on the order no longer exists. Remove it and try again.');
     const quantity = Number(line.quantity);
-    const unitCost = Number(line.unitCost);
+    // The cost is optional (empty = 0, "not known").
+    const noCost = line.unitCost === undefined || line.unitCost === null || line.unitCost === '';
+    const unitCost = noCost ? 0 : Number(line.unitCost);
     if (!Number.isInteger(quantity) || quantity <= 0) throw new PurchaseError(`Quantity for ${product.name} must be a whole number above 0.`);
-    if (!Number.isFinite(unitCost) || unitCost < 0) throw new PurchaseError(`Enter the cost of one ${product.name}.`);
+    if (!Number.isFinite(unitCost) || unitCost < 0) throw new PurchaseError(`The cost of one ${product.name} must be a number, 0 or more.`);
     return { product: product._id, name: product.name, quantity, unitCost, receivedQuantity: 0, lineTotal: roundMoney(quantity * unitCost) };
   });
 }
@@ -148,8 +150,12 @@ router.post('/:id/receive', async (req, res) => {
     }
 
     for (const entry of deliveries) {
-      const unitCost = entry.unitCost !== undefined ? Number(entry.unitCost) : entry.line.unitCost;
-      const product = await Product.findByIdAndUpdate(entry.line.product, { $inc: { quantity: entry.quantity }, $set: { costPrice: unitCost } }, { new: true });
+      // An empty or 0 cost means "not given": the line keeps its own cost.
+      const unitCost = Number(entry.unitCost) > 0 ? Number(entry.unitCost) : entry.line.unitCost;
+      // A cost of 0 means "not known": the product keeps the cost price it has.
+      const change = { $inc: { quantity: entry.quantity } };
+      if (unitCost > 0) change.$set = { costPrice: unitCost };
+      const product = await Product.findByIdAndUpdate(entry.line.product, change, { new: true });
       entry.line.receivedQuantity = (entry.line.receivedQuantity || 0) + entry.quantity;
       entry.line.unitCost = unitCost;
       entry.line.lineTotal = roundMoney(entry.line.quantity * unitCost);

@@ -31,7 +31,7 @@ function DailySalesReport({ from, to }) {
       <ReportFigures
         figures={[
           { label: 'Takings', value: totals.takings, type: 'money' },
-          { label: 'Profit', value: totals.profit, type: 'money', note: totals.takings > 0 ? `${Math.round((totals.profit / totals.takings) * 100)}% of takings` : undefined },
+          { label: 'Profit', value: totals.profit, type: 'money', note: totals.takings - totals.uncostedSales > 0 ? `${Math.round((totals.profit / (totals.takings - totals.uncostedSales)) * 100)}% margin` : undefined },
           { label: 'Sales', value: totals.transactions, type: 'number', note: `${totals.itemsSold.toLocaleString('en-NG')} items, average ${formatNaira(totals.averageSale)}` },
           { label: 'Discounts given', value: totals.discounts, type: 'money' },
         ]}
@@ -39,7 +39,7 @@ function DailySalesReport({ from, to }) {
       {totals.itemsWithoutCost > 0 && (
         <div className="notice notice-warning">
           <span className="notice-title">{totals.itemsWithoutCost} {totals.itemsWithoutCost === 1 ? 'item' : 'items'} sold without a cost price</span>
-          Profit is shown too high until those products have a cost price.
+          They are left out of profit ({formatNaira(totals.uncostedSales)} of sales).
           <div className="btn-row"><Link to="/products" className="btn btn-small">Products</Link></div>
         </div>
       )}

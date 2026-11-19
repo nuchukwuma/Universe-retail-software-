@@ -157,7 +157,8 @@ router.put('/:id/picture', canManage, async (req, res) => {
     product.picture = name;
     await product.save();
     await product.populate('category', 'name');
-    res.json(product);
+    await product.populate('supplier', 'name');
+    res.json(forViewer(req, product));
   } catch (error) {
     handleError(res, error, 'Could not save the picture.');
   }
@@ -173,7 +174,8 @@ router.delete('/:id/picture', canManage, async (req, res) => {
     product.picture = '';
     await product.save();
     await product.populate('category', 'name');
-    res.json(product);
+    await product.populate('supplier', 'name');
+    res.json(forViewer(req, product));
   } catch (error) {
     handleError(res, error, 'Could not remove the picture.');
   }

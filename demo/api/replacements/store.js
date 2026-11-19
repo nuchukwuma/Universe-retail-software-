@@ -5,6 +5,38 @@ const { stringify, parse, clone } = require('../../../server/db/ejson');
 
 const PREFIX = 'hd_demo_table:';
 
+// The browser's storage, or (if the browser blocks it) a stand-in that
+// keeps the demo's data for this visit only.
+function browserStorage() {
+  try {
+    const test = '__hd_test__';
+    window.localStorage.setItem(test, '1');
+    window.localStorage.removeItem(test);
+    return window.localStorage;
+  } catch {
+    const data = new Map();
+    return {
+      get length() { return data.size; },
+      key: (i) => [...data.keys()][i] ?? null,
+      getItem: (k) => (data.has(k) ? data.get(k) : null),
+      setItem: (k, v) => data.set(k, String(v)),
+      removeItem: (k) => data.delete(k),
+      clear: () => data.clear(),
+    };
+  }
+}
+const localStorage = browserStorage();
+// Let the rest of the page (sign-in token, saved bill) use it too.
+try {
+  if (localStorage !== window.localStorage) throw new Error('blocked');
+} catch {
+  try {
+    Object.defineProperty(window, 'localStorage', { value: localStorage, configurable: true });
+  } catch {
+    // the demo's data still works; only the page's own settings are not kept
+  }
+}
+
 class Store {
   constructor() {
     this.tables = new Map(); // name -> Map(id -> record)
@@ -118,4 +150,4 @@ Store.clearAll = () => {
   keys.forEach((key) => localStorage.removeItem(key));
 };
 
-module.exports = { Store };
+module.exports = { Store, localStorage };

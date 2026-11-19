@@ -41,12 +41,25 @@ const ScanBox = forwardRef(function ScanBox({ products, onSubmit, onPick, paused
   useImperativeHandle(ref, () => ({ focus: () => inputRef.current?.focus({ preventScroll: true }) }), []);
 
   // Focus now (and every time a dialog closes), and after every click.
+  // Not after a finger tap, and not on touch-only screens: focusing the box
+  // there opens the on-screen keyboard over the till. (Scans still work:
+  // the till listens for the scanner anywhere on the page.)
   useEffect(() => {
-    refocus();
-    const handleClick = () => setTimeout(refocus, 0);
+    const touchOnly = window.matchMedia?.('(hover: none) and (pointer: coarse)').matches;
+    if (!touchOnly) refocus();
+    let lastPointer = 'mouse';
+    const handlePointer = (event) => {
+      lastPointer = event.pointerType || 'mouse';
+    };
+    const handleClick = () => {
+      if (lastPointer === 'touch' || lastPointer === 'pen') return;
+      setTimeout(refocus, 0);
+    };
+    document.addEventListener('pointerdown', handlePointer, true);
     document.addEventListener('click', handleClick);
     window.addEventListener('focus', refocus);
     return () => {
+      document.removeEventListener('pointerdown', handlePointer, true);
       document.removeEventListener('click', handleClick);
       window.removeEventListener('focus', refocus);
     };
