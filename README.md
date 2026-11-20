@@ -14,8 +14,10 @@ keeps every sale, product and setting **on that laptop**. It works without inter
 What it does:
 
 - **Till:** product tiles by category (with optional pictures), barcode scanning, typing
-  a name with live suggestions, held bills as tabs, discounts (large ones need a manager),
-  returns, receipts on 58mm, 80mm or A4.
+  a name with live suggestions, many bills open at once (one tab each), discounts (large
+  ones need a manager), returns, receipts on 58mm, 80mm or A4.
+- **Loyalty points (optional):** customers collect points on what they pay and spend
+  them as Naira off later.
 - **Stock:** products with cost and selling price, add stock by scanning or typing,
   stock counts, low-stock lists, categories.
 - **Suppliers and purchase orders:** order from a supplier, receive deliveries in full or
@@ -24,7 +26,9 @@ What it does:
   profit (daily, weekly, best sellers, the Today page). Export to Excel.
 - **Staff:** owner, manager and cashier accounts. Cashiers never see cost prices.
 - **Backups:** automatic daily backups (to a USB drive), restore on a new laptop.
-- **Optional:** a Telegram message after every sale (the only thing that uses internet).
+- **Optional:** a Telegram message after every sale.
+- **Licence:** 14 days free, then ₦5,000 a month (see *Licence* below). Renewing the
+  licence online and Telegram are the only things that use the internet.
 
 The design rules (colours, type, the till layout) are in [DESIGN.md](DESIGN.md).
 
@@ -69,7 +73,7 @@ Then, signed in as the owner:
    phone, the message at the bottom of receipts, the receipt paper size and printer, and
    the largest discount a cashier can give alone.
 3. **Backup:** choose the USB drive as the backup folder. Do this on day one.
-4. **Suppliers, Categories, Products / Add stock:** enter your stock.
+4. **Suppliers, Categories, Products / Stock:** enter your stock.
 
 ### Coming from Universe POS (versions 1.x)
 
@@ -77,6 +81,7 @@ HordeDesk is the new name of Universe POS. Install HordeDesk as above. On its fi
 it **copies the shop's data** from the old `Universe POS` folder (nothing there is deleted),
 so all products, sales, staff, passwords and settings carry on. You can then uninstall
 Universe POS from *Programs and Features*. (Make a backup first, just in case.)
+Its 14-day trial starts then: paste the shop's licence key in **Settings → Licence**.
 
 ---
 
@@ -90,9 +95,13 @@ Universe POS from *Programs and Features*. (Make a backup first, just in case.)
 - **Scan** at any time; there is no need to click first. Scanning again adds 1.
 - **Type a name** in the same box (`palm`, `nivea`, `cocoa but`): matching products appear
   as you type. **Enter** adds the highlighted one, **Up/Down** choose, or click.
-- **Held bills are tabs** above the bill. **Hold (F6)** parks the bill (give it a name if you
-  like) and starts a new one. Click a held bill's tab to switch to it: the bill you were on
-  is held in its place. The **x** on a tab deletes that held bill.
+- **Many bills at once:** each open bill is a tab above the bill. **New bill (F6)** or **+**
+  opens another one while the first customer finds their money; click a tab (or **F7**) to
+  switch. Completing a sale closes its tab; the **x** on a tab cancels that bill. Open bills
+  are kept if the app is closed.
+- **Customer (F4)**, when loyalty points are on: find the customer by name or phone (or add
+  a new one), and choose how many of their points to spend. The receipt shows the points
+  used, earned and the new balance.
 - **Discount (F8):** on one line or the whole bill. Above the cashier limit (Settings), a
   manager types their username and password on the till.
 - **Complete sale (F10, then Enter):** the sale is saved and the receipt is shown, or printed
@@ -106,7 +115,7 @@ Universe POS from *Programs and Features*. (Make a backup first, just in case.)
 - **Products:** search and filter; scan a product to open it, scan an unknown barcode to add
   it. Each product can have a picture, a cost price (the form shows the profit on each one)
   and a supplier.
-- **Add stock:** scan or type what arrived, with its cost and supplier if you like; a new
+- **Stock:** scan or type what arrived, with its cost and supplier if you like; a new
   barcode or an unknown name becomes a new product.
 - **Purchase orders:** **New order**, choose the supplier, add products (or **Add low-stock
   items** for that supplier), quantities and cost each. When the delivery comes, open the
@@ -133,6 +142,28 @@ Universe POS from *Programs and Features*. (Make a backup first, just in case.)
 | Owner | Everything, including Staff, Settings, Telegram and Backup |
 | Manager | The till, products, stock, suppliers, purchase orders, returns, any discount, Today and reports |
 | Cashier | The till, Sales history, End of day. Returns and big discounts need a manager. Never sees cost prices or profit |
+
+### Loyalty points
+
+Switch them on in **Settings → Loyalty points**: how much a customer pays for 1 point (for
+example 1 point for every ₦100) and what a point is worth when spent (for example ₦1).
+Points are spent at the till with no manager approval, never more than the bill. A return
+takes back the points earned on what is refunded. **Customers** lists everyone with their
+points, visits and spending; the owner or a manager can correct a balance.
+
+### Licence
+
+HordeDesk is free for 14 days from the first start. After that it needs a licence:
+₦5,000 a month, bought on the website (Paystack: card, bank transfer or USSD). The payment
+page shows the **licence key**: paste it in **Settings → Licence → Save licence key**. Each
+month, after the payment, press **Renew online** there (internet needed for a moment).
+
+- The key is checked on the laptop itself, so day-to-day use needs no internet.
+- A paid month keeps working 3 days after its end date, to give time to renew.
+- Without a licence, **selling, returns and stock changes pause** ("Selling is paused" on
+  the till and the stock pages). Reports, backups, Settings and all the data stay
+  available, and nothing is deleted.
+- The browser demo needs no licence.
 
 ### Backups
 
@@ -197,6 +228,47 @@ backups on a USB drive, and move to a Windows 10/11 laptop (install, then restor
 when you can.
 
 ---
+
+## Selling HordeDesk (for the owner of HordeDesk)
+
+Payments go through **Paystack** to your account; a small **licence server** on
+**Cloudflare Workers** (free plan) turns each payment into a signed licence key. It keeps no
+database: Paystack holds the customers and their subscriptions.
+
+**The signing key.** Licence keys are signed with a private key that only you hold. Its
+public half is built into the app (`server/utils/licence.js`). Keep the private key secret
+and never commit it (`licence-server/keys/` is ignored by git). With it you can also make
+keys by hand, for example a free one for a shop:
+
+```bash
+node licence-server/scripts/make-licence.mjs --shop "Shop name" --lifetime
+node licence-server/scripts/make-licence.mjs --shop "Shop name" --days 31 --email owner@shop.ng
+```
+
+**One-time setup:**
+
+1. **Paystack:** create a business account. In *Products → Plans*, create a plan:
+   ₦5,000, **monthly**. Copy its **plan code** (`PLN_...`) and, from *Settings → API Keys*,
+   your **secret key** (`sk_live_...`; use `sk_test_...` to try it first).
+2. **Cloudflare:** create a free account. Copy your **Account ID** (on the dashboard) and
+   create an **API token** with the *Edit Cloudflare Workers* template.
+3. **GitHub → Settings → Secrets and variables → Actions:**
+   - Secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `PAYSTACK_SECRET_KEY`,
+     `LICENCE_PRIVATE_KEY` (the text of the private key file).
+   - Variables: `PAYSTACK_PLAN_CODE` (the `PLN_...` code).
+4. **Actions → Licence server → Run workflow.** It tests and deploys the server. Its address
+   is shown in Cloudflare (*Workers & Pages → hordedesk-licence*), like
+   `https://hordedesk-licence.<your-name>.workers.dev`.
+5. Add the variable `LICENCE_SERVER_URL` with that address. Then run **Website** and
+   **Build Windows installer** (with *Publish a release* ticked) again: the website's
+   *Pay ₦5,000* button and the app's *Renew online* button now use it.
+
+**How a sale works:** the shop fills in its name and email on the website → pays on
+Paystack (the plan charges ₦5,000 every month after that) → the licence page shows the key
+and the download → the shop pastes the key into Settings. Each month **Renew online** asks
+the licence server, which checks the Paystack subscription and returns a key up to the next
+payment date. A shop that cancels on Paystack keeps working until the month it paid for
+ends (plus 3 days).
 
 ## The website
 
@@ -297,6 +369,8 @@ normal backup folder from a MongoDB or Atlas database, which can then be restore
 ```
 /site                 the website: landing page, screenshots; the demo is built into site/demo
 /demo                 builds the server code for the browser demo (build.mjs, api/)
+/licence-server       the licence server (Cloudflare Worker + Paystack), its tests,
+                      and scripts/make-licence.mjs; keys/ (never committed) holds the private key
 /desktop              the Windows app (Electron)
   main.js             starts the server inside the app and opens the window
   /electron           config.json + log file, printing, menu, copying "Universe POS" data
@@ -335,13 +409,17 @@ normal backup folder from a MongoDB or Atlas database, which can then be restore
 | GET | `/api/images/:name` | anyone | A product picture or the logo |
 | POST | `/api/stock/receive` (`unitCost`, `supplierId` optional), `/api/stock/count` | owner, manager | Add stock, save a count |
 | GET | `/api/stock/movements` | owner, manager | Stock history |
+| GET / POST | `/api/customers(?search=)`, `/api/customers/:id` | logged in | Loyalty customers (find, add at the till, one with their sales) |
+| PUT / DELETE | `/api/customers/:id` | owner, manager | Edit (including points), delete |
+| GET / PUT | `/api/licence` | logged in / owner | The licence (trial, licensed, expired); save a key |
+| POST | `/api/licence/renew` | owner | Next month's key from the licence server |
 | GET / POST / PUT / DELETE | `/api/suppliers(/:id)` | owner, manager | Suppliers (with product counts and open orders) |
 | GET / POST / PUT | `/api/purchases(/:id)` | owner, manager | Purchase orders (`?status=&supplier=`) |
 | POST | `/api/purchases/:id/receive`, `/api/purchases/:id/cancel` | owner, manager | Receive a delivery (all or some lines), cancel |
-| POST / GET | `/api/sales`, `/api/sales/:id`, `/api/sales/by-receipt/:number` | logged in | Complete and find sales |
+| POST / GET | `/api/sales`, `/api/sales/:id`, `/api/sales/by-receipt/:number` | logged in | Complete (optional `customerId`, `pointsToUse`) and find sales |
 | POST | `/api/sales/:id/printed` | logged in | Count a print (later ones say DUPLICATE COPY) |
 | GET / POST | `/api/returns` | logged in (manager approval to POST) | Returns |
-| GET / POST / DELETE | `/api/held-bills(/:id)` | logged in | Held bills |
+| GET / DELETE | `/api/held-bills(/:id)` | logged in | Bills held by older versions (they open as tabs) |
 | GET / PUT | `/api/settings` | anyone / owner | Shop settings |
 | PUT / DELETE | `/api/settings/logo` | owner | The shop's logo |
 | GET | `/api/reports/end-of-day` | logged in | End of day |
